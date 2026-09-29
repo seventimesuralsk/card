@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Seven Times · Карта</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --bg: var(--tg-theme-bg-color, #181412);
+    --card: var(--tg-theme-secondary-bg-color, #231d1a);
+    --text: var(--tg-theme-text-color, #f5efe8);
+    --muted: var(--tg-theme-hint-color, #a8998b);
+    --gold: #c8a06e; --ok: #4caf50; --bad: #e0574c;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.45 -apple-system, Roboto, sans-serif; }
+  main { max-width: 460px; margin: 0 auto; padding: 16px 16px 40px; }
+  h1 { font-size: 18px; letter-spacing: .14em; text-transform: uppercase; margin: 4px 0 2px; }
+  .sub { color: var(--muted); font-size: 14px; margin: 0 0 16px; }
+  .box { background: var(--card); border-radius: 18px; padding: 16px; margin-bottom: 12px; }
+  h2 { font-size: 16px; margin: 0 0 10px; }
+  .stamps { display: flex; gap: 8px; margin: 8px 0; }
+  .stamp { flex: 1; aspect-ratio: 1; border-radius: 50%; border: 2px dashed color-mix(in srgb, var(--muted) 50%, transparent); display: grid; place-items: center; font-size: 20px; }
+  .stamp.on { border: 0; background: var(--gold); }
+  .muted { color: var(--muted); font-size: 13px; }
+  .pill { display: inline-block; padding: 4px 12px; border-radius: 999px; background: color-mix(in srgb, var(--gold) 25%, transparent); color: var(--gold); font-weight: 600; font-size: 14px; }
+  button { display: block; width: 100%; padding: 14px; margin-top: 10px; border: 0; border-radius: 12px; background: var(--gold); color: #1b1410; font-weight: 700; font-size: 16px; cursor: pointer; }
+  button.ghost { background: transparent; color: var(--text); border: 1px solid color-mix(in srgb, var(--muted) 40%, transparent); }
+  button:disabled { opacity: .5; }
+  input, select { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--muted) 40%, transparent); background: var(--bg); color: var(--text); font-size: 16px; margin-top: 6px; }
+  .qrwrap { background: #fff; border-radius: 14px; padding: 14px; width: 230px; margin: 6px auto 8px; }
+  #qr img, #qr canvas { width: 100% !important; height: auto !important; display: block; }
+  .code { text-align: center; font-size: 26px; font-weight: 800; letter-spacing: .2em; font-variant-numeric: tabular-nums; }
+  .bar { height: 4px; background: color-mix(in srgb, var(--muted) 30%, transparent); border-radius: 2px; overflow: hidden; margin-top: 6px; }
+  .bar i { display: block; height: 100%; background: var(--gold); }
+  .msg { margin-top: 10px; padding: 12px; border-radius: 12px; font-size: 14px; display: none; }
+  .msg.ok { display: block; background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok); }
+  .msg.err { display: block; background: color-mix(in srgb, var(--bad) 15%, transparent); color: var(--bad); }
+  .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+  .tabs button { margin: 0; padding: 10px; }
+  .hidden { display: none !important; }
+  .row { display: flex; gap: 8px; } .row > * { flex: 1; }
+  .big { font-size: 34px; font-weight: 800; margin: 6px 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Seven Times</h1>
+  <p class="sub" id="hello">Загрузка…</p>
+
+  <div class="tabs hidden" id="tabs">
+    <button id="tabCard">Моя карта</button>
+    <button id="tabKassa" class="ghost">Касса</button>
+  </div>
+
+  <!-- ═════ КАРТА ГОСТЯ ═════ -->
+  <section id="guest" class="hidden">
+    <div class="box" style="text-align:center">
+      <div class="qrwrap"><div id="qr"></div></div>
+      <div class="code" id="code">······</div>
+      <div class="muted">Карта <b id="cardNo"></b> · код меняется каждые 30 сек</div>
+      <div class="bar"><i id="timer"></i></div>
+    </div>
+
+    <div class="box" id="stampsBox">
+      <h2>Штампы</h2>
+      <div class="stamps" id="stamps"></div>
+      <div class="muted" id="stampsText"></div>
+      <div id="rewards" style="margin-top:8px"></div>
+      <button id="scanReceipt">📷 Сканировать чек</button>
+      <div class="muted" id="rules" style="margin-top:8px"></div>
+      <div class="msg" id="scanMsg"></div>
+    </div>
+
+    <div class="box hidden" id="familyBox">
+      <span class="pill">Семейная карта</span>
+      <div class="big" id="famDiscount"></div>
+      <div class="muted" id="famInfo"></div>
+    </div>
+
+    <div class="box hidden" id="couponsBox">
+      <h2>Купоны</h2>
+      <div id="coupons"></div>
+    </div>
+  </section>
+
+  <!-- ═════ КАССА ═════ -->
+  <section id="kassa" class="hidden">
+    <div class="box">
+      <button id="scanGuest">📷 Сканировать карту гостя</button>
+      <p class="muted" style="margin:12px 0 0">Или вручную (номер карты и 6 цифр под QR):</p>
+      <div class="row"><input id="mCard" placeholder="ABC123" maxlength="6" autocapitalize="characters"><input id="mCode" placeholder="000000" inputmode="numeric" maxlength="6"></div>
+      <button class="ghost" id="findManual">Найти</button>
+      <div class="msg" id="kMsg"></div>
+    </div>
+
+    <div class="box hidden" id="gBox">
+      <h2 id="gName"></h2>
+      <div class="muted" id="gInfo"></div>
+      <div id="gRegular">
+        <div id="gRewards" style="margin-top:8px"></div>
+        <button id="bRedeem" class="hidden">Выдать бесплатный кофе</button>
+      </div>
+      <div id="gFamily" class="hidden">
+        <input id="fSum" type="number" inputmode="numeric" placeholder="Сумма чека, ₸">
+        <button id="bFamily">Применить семейную скидку</button>
+      </div>
+      <div id="gCoupons" class="hidden">
+        <select id="couponSel"></select>
+        <button id="bCoupon" class="ghost">Применить купон</button>
+      </div>
+      <div class="msg" id="gMsg"></div>
+    </div>
+  </section>
+
+  <div class="box hidden" id="noCard">
+    <h2>У тебя ещё нет карты</h2>
+    <p class="muted">Вернись в чат с ботом, нажми /start и «📱 Поделиться номером».</p>
+    <button id="closeApp">Вернуться в бот</button>
+  </div>
+</main>
+
+<script>
+// ⚙️ ВСТАВЬ СЮДА URL своего Apps Script (…/exec)
+const API_URL = 'https://script.google.com/macros/s/AKfycbzps78YWTZ-UK60VjbGeDwRsgQ6_BS8Y_23-MTo7l1HjH1hZkqHU4TZGJ51__vQ9cq3Wg/exec';
+
+const tg = window.Telegram?.WebApp;
+tg?.ready(); tg?.expand();
+const $ = (id) => document.getElementById(id);
+const show = (el, text, ok) => { el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'err'); };
+const haptic = (t) => { try { tg?.HapticFeedback?.notificationOccurred(t); } catch {} };
+
+async function api(action, data = {}) {
+  // text/plain — без CORS-предзапроса, Apps Script такое принимает
+  const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action, initData: tg?.initData || '', ...data }) });
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.error || 'Ошибка');
+  return j;
+}
+
+function scan(text) {
+  return new Promise((resolve, reject) => {
+    if (!tg?.showScanQrPopup || !tg.isVersionAtLeast?.('6.4')) return reject(new Error('Обнови Telegram — нужен встроенный сканер QR'));
+    let done = false;
+    tg.showScanQrPopup({ text }, (value) => { done = true; resolve(value); return true; });
+    tg.onEvent('scanQrPopupClosed', function h() { tg.offEvent('scanQrPopupClosed', h); if (!done) reject(new Error('')); });
+  });
+}
+
+// ── Карта гостя ──────────────────────────────
+let qrObj = null, codeTimer = null;
+function renderCard(c) {
+  $('guest').classList.remove('hidden');
+  $('hello').textContent = `Привет, ${c.name}!`;
+  $('cardNo').textContent = c.id;
+  const fam = c.type === 'family';
+  $('stampsBox').classList.toggle('hidden', fam);
+  $('familyBox').classList.toggle('hidden', !fam);
+  if (fam) {
+    $('famDiscount').textContent = `−${c.family.discount}%`;
+    $('famInfo').textContent = `Макс ${c.family.max} ₸ на чек · использовано ${c.family.usedWeek} из ${c.family.weekLimit} за 7 дней. Покажи QR кассиру.`;
+  } else {
+    $('stamps').innerHTML = Array.from({ length: c.stampsForReward }, (_, i) => `<div class="stamp ${i < c.stamps ? 'on' : ''}">${i < c.stamps ? '☕' : ''}</div>`).join('');
+    $('stampsText').textContent = `${c.stamps} из ${c.stampsForReward}. Ещё ${c.stampsForReward - c.stamps} — и кофе бесплатно.`;
+    $('rewards').innerHTML = c.rewards ? `<span class="pill">Бесплатный кофе: ${c.rewards} — покажи QR кассиру</span>` : '';
+    $('rules').textContent = `После оплаты отсканируй QR внизу чека. Штамп от ${c.minSum} ₸, один в день.`;
+  }
+  $('couponsBox').classList.toggle('hidden', !c.coupons.length);
+  $('coupons').innerHTML = c.coupons.map((x) => `<p style="margin:0 0 8px"><b>${x.title}</b> −${x.discount}%<br><span class="muted">до ${new Date(x.expires).toLocaleDateString('ru')} · покажи QR кассиру</span></p>`).join('');
+  if (c.blocked) $('hello').textContent = 'Карта заблокирована';
+}
+
+async function refreshCode() {
+  clearTimeout(codeTimer);
+  try {
+    const r = await api('code');
+    $('code').textContent = r.code.replace(/(\d{3})(\d{3})/, '$1 $2');
+    if (!qrObj) qrObj = new QRCode($('qr'), { text: r.qr, width: 400, height: 400, correctLevel: QRCode.CorrectLevel.M });
+    else qrObj.makeCode(r.qr);
+    const bar = $('timer');
+    bar.style.transition = 'none'; bar.style.width = (r.secondsLeft / 30 * 100) + '%';
+    requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.transition = `width ${r.secondsLeft}s linear`; bar.style.width = '0%'; }));
+    codeTimer = setTimeout(refreshCode, r.secondsLeft * 1000 + 300);
+  } catch { codeTimer = setTimeout(refreshCode, 5000); }
+}
+
+$('scanReceipt').onclick = async () => {
+  try {
+    const text = await scan('Наведи на QR внизу чека');
+    const r = await api('receipt', { qr: text });
+    haptic('success');
+    show($('scanMsg'), r.gotReward ? '🎉 Бесплатный кофе твой!' : `Штамп засчитан: ${r.stamps} из 6`, true);
+    load();
+  } catch (e) { if (e.message) { haptic('error'); show($('scanMsg'), e.message); } }
+};
+
+// ── Касса ────────────────────────────────────
+let guest = null;   // { qr } или { cardId, code }
+function renderGuest(c) {
+  $('gBox').classList.remove('hidden'); $('gMsg').className = 'msg';
+  $('gName').textContent = `${c.name} · ${c.id}`;
+  const fam = c.type === 'family';
+  $('gInfo').textContent = fam
+    ? `Семейная: −${c.family.discount}% (макс ${c.family.max} ₸), использовано ${c.family.usedWeek}/${c.family.weekLimit} за 7 дней`
+    : `Штампы ${c.stamps}/${c.stampsForReward}`;
+  $('gRegular').classList.toggle('hidden', fam);
+  $('gRewards').innerHTML = c.rewards ? `<span class="pill">Бесплатный кофе: ${c.rewards}</span>` : '<span class="muted">Бесплатного кофе нет</span>';
+  $('bRedeem').classList.toggle('hidden', fam || !c.rewards);
+  $('gFamily').classList.toggle('hidden', !fam); $('fSum').value = '';
+  $('gCoupons').classList.toggle('hidden', !c.coupons.length);
+  $('couponSel').innerHTML = c.coupons.map((x) => `<option value="${x.id}">${x.title} −${x.discount}%</option>`).join('');
+}
+async function lookup(g) {
+  try { guest = g; const r = await api('lookup', g); $('kMsg').className = 'msg'; renderGuest(r.card); haptic('success'); }
+  catch (e) { guest = null; $('gBox').classList.add('hidden'); show($('kMsg'), e.message); haptic('error'); }
+}
+$('scanGuest').onclick = async () => { try { lookup({ qr: await scan('Наведи на QR с карты гостя') }); } catch (e) { if (e.message) show($('kMsg'), e.message); } };
+$('findManual').onclick = () => lookup({ cardId: $('mCard').value.trim().toUpperCase(), code: $('mCode').value.replace(/\D/g, '') });
+
+async function act(action, extra, btn) {
+  btn.disabled = true;
+  try {
+    const r = await api(action, { ...guest, ...extra });
+    haptic('success');
+    show($('gMsg'), (r.discount !== undefined ? `Скидка ${r.discount} ₸, к оплате ${r.toPay} ₸. ` : '') + r.note, true);
+    $('bRedeem').classList.add('hidden');
+  } catch (e) { haptic('error'); show($('gMsg'), e.message); }
+  btn.disabled = false;
+}
+$('bRedeem').onclick = () => act('redeem', {}, $('bRedeem'));
+$('bFamily').onclick = () => act('family', { sum: $('fSum').value }, $('bFamily'));
+$('bCoupon').onclick = () => act('coupon', { couponId: $('couponSel').value }, $('bCoupon'));
+
+// ── Вкладки ──────────────────────────────────
+function tab(which) {
+  $('guest').classList.toggle('hidden', which !== 'card');
+  $('kassa').classList.toggle('hidden', which !== 'kassa');
+  $('tabCard').classList.toggle('ghost', which !== 'card');
+  $('tabKassa').classList.toggle('ghost', which !== 'kassa');
+}
+$('tabCard').onclick = () => tab('card');
+$('tabKassa').onclick = () => tab('kassa');
+$('closeApp').onclick = () => tg?.close();
+
+async function load() {
+  try {
+    const r = await api('me');
+    if (r.cashier) {
+      $('tabs').classList.remove('hidden');
+      $('hello').textContent = `${r.cashier.name} · ${r.cashier.branch}`;
+    }
+    if (r.card) { renderCard(r.card); if (!qrObj) refreshCode(); }
+    else if (r.cashier) tab('kassa');
+    else $('noCard').classList.remove('hidden');
+    if (r.cashier && !r.card) $('tabCard').classList.add('hidden');
+  } catch (e) { $('hello').textContent = e.message; }
+}
+if (!tg?.initData) $('hello').textContent = 'Открой карту через бота Seven Times в Telegram';
+else load();
+</script>
+</body>
+</html>
