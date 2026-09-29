@@ -13,6 +13,7 @@
     --text: var(--tg-theme-text-color, #f5efe8);
     --muted: var(--tg-theme-hint-color, #a8998b);
     --gold: #c8a06e; --ok: #4caf50; --bad: #e0574c;
+    --line: color-mix(in srgb, var(--muted) 35%, transparent);
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.45 -apple-system, Roboto, sans-serif; }
@@ -22,27 +23,33 @@
   .box { background: var(--card); border-radius: 18px; padding: 16px; margin-bottom: 12px; }
   h2 { font-size: 16px; margin: 0 0 10px; }
   .stamps { display: flex; gap: 8px; margin: 8px 0; }
-  .stamp { flex: 1; aspect-ratio: 1; border-radius: 50%; border: 2px dashed color-mix(in srgb, var(--muted) 50%, transparent); display: grid; place-items: center; font-size: 20px; }
+  .stamp { flex: 1; aspect-ratio: 1; border-radius: 50%; border: 2px dashed var(--line); display: grid; place-items: center; font-size: 20px; }
   .stamp.on { border: 0; background: var(--gold); }
   .muted { color: var(--muted); font-size: 13px; }
   .pill { display: inline-block; padding: 4px 12px; border-radius: 999px; background: color-mix(in srgb, var(--gold) 25%, transparent); color: var(--gold); font-weight: 600; font-size: 14px; }
   button { display: block; width: 100%; padding: 14px; margin-top: 10px; border: 0; border-radius: 12px; background: var(--gold); color: #1b1410; font-weight: 700; font-size: 16px; cursor: pointer; }
-  button.ghost { background: transparent; color: var(--text); border: 1px solid color-mix(in srgb, var(--muted) 40%, transparent); }
+  button.ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }
+  button.small { width: auto; display: inline-block; padding: 6px 12px; margin: 0 0 0 6px; font-size: 13px; }
   button:disabled { opacity: .5; }
-  input, select { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--muted) 40%, transparent); background: var(--bg); color: var(--text); font-size: 16px; margin-top: 6px; }
+  input, select, textarea { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit; margin-top: 6px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin-top: 10px; }
   .qrwrap { background: #fff; border-radius: 14px; padding: 14px; width: 230px; margin: 6px auto 8px; }
   #qr img, #qr canvas { width: 100% !important; height: auto !important; display: block; }
   .code { text-align: center; font-size: 26px; font-weight: 800; letter-spacing: .2em; font-variant-numeric: tabular-nums; }
-  .bar { height: 4px; background: color-mix(in srgb, var(--muted) 30%, transparent); border-radius: 2px; overflow: hidden; margin-top: 6px; }
+  .bar { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; margin-top: 6px; }
   .bar i { display: block; height: 100%; background: var(--gold); }
-  .msg { margin-top: 10px; padding: 12px; border-radius: 12px; font-size: 14px; display: none; }
+  .msg { margin-top: 10px; padding: 12px; border-radius: 12px; font-size: 14px; display: none; white-space: pre-line; }
   .msg.ok { display: block; background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok); }
   .msg.err { display: block; background: color-mix(in srgb, var(--bad) 15%, transparent); color: var(--bad); }
   .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
-  .tabs button { margin: 0; padding: 10px; }
+  .tabs button { margin: 0; padding: 10px 6px; font-size: 14px; }
   .hidden { display: none !important; }
-  .row { display: flex; gap: 8px; } .row > * { flex: 1; }
+  .row { display: flex; gap: 8px; } .row > * { flex: 1; min-width: 0; }
   .big { font-size: 34px; font-weight: 800; margin: 6px 0; }
+  .item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .item:last-child { border-bottom: 0; }
+  .report { font-size: 14px; white-space: pre-line; }
+  .link { background: none; border: 0; color: var(--muted); text-decoration: underline; font-weight: 400; font-size: 13px; padding: 8px; margin-top: 16px; }
 </style>
 </head>
 <body>
@@ -51,12 +58,20 @@
   <p class="sub" id="hello">Загрузка…</p>
 
   <div class="tabs hidden" id="tabs">
-    <button id="tabCard">Моя карта</button>
-    <button id="tabKassa" class="ghost">Касса</button>
+    <button id="tabCard">Карта</button>
+    <button id="tabKassa" class="ghost hidden">Касса</button>
+    <button id="tabAdmin" class="ghost hidden">Админ</button>
   </div>
 
   <!-- ═════ КАРТА ГОСТЯ ═════ -->
   <section id="guest" class="hidden">
+    <div class="box hidden" id="phoneBox">
+      <h2>Подтверди номер телефона</h2>
+      <div class="muted">Одно нажатие — и мы сможем восстановить карту, если сменишь телефон.</div>
+      <button id="phoneBtn">📱 Подтвердить номер</button>
+      <div class="msg" id="phoneMsg"></div>
+    </div>
+
     <div class="box" style="text-align:center">
       <div class="qrwrap"><div id="qr"></div></div>
       <div class="code" id="code">······</div>
@@ -84,6 +99,15 @@
       <h2>Купоны</h2>
       <div id="coupons"></div>
     </div>
+
+    <button class="link" id="iamCashier">Я кассир Seven Times</button>
+    <div class="box hidden" id="joinBox">
+      <h2>Стать кассиром</h2>
+      <label>Код приглашения</label><input id="joinCode" autocapitalize="characters">
+      <label>Точка</label><select id="joinBranch"></select>
+      <button id="joinBtn">Отправить заявку</button>
+      <div class="msg" id="joinMsg"></div>
+    </div>
   </section>
 
   <!-- ═════ КАССА ═════ -->
@@ -95,7 +119,6 @@
       <button class="ghost" id="findManual">Найти</button>
       <div class="msg" id="kMsg"></div>
     </div>
-
     <div class="box hidden" id="gBox">
       <h2 id="gName"></h2>
       <div class="muted" id="gInfo"></div>
@@ -115,22 +138,65 @@
     </div>
   </section>
 
-  <div class="box hidden" id="noCard">
-    <h2>У тебя ещё нет карты</h2>
-    <p class="muted">Вернись в чат с ботом, нажми /start и «📱 Поделиться номером».</p>
-    <button id="closeApp">Вернуться в бот</button>
-  </div>
+  <!-- ═════ АДМИН ═════ -->
+  <section id="admin" class="hidden">
+    <div class="box"><h2>Отчёт за 7 дней</h2><div class="report" id="report">…</div></div>
+
+    <div class="box"><h2>Кассиры</h2><div id="cashiers" class="muted">…</div></div>
+
+    <div class="box">
+      <h2>Рассылка всем гостям</h2>
+      <textarea id="pushText" rows="3" maxlength="500" placeholder="Сегодня до 17:00 два капучино по цене одного ☕"></textarea>
+      <button id="pushBtn">Отправить</button>
+      <div class="msg" id="pushMsg"></div>
+    </div>
+
+    <div class="box">
+      <h2>Купон всем</h2>
+      <div class="row">
+        <div><label>Название</label><input id="cTitle" placeholder="Десерт"></div>
+        <div><label>Скидка %</label><input id="cDisc" type="number" value="20"></div>
+        <div><label>Дней</label><input id="cDays" type="number" value="7"></div>
+      </div>
+      <button id="couponBtn">Выпустить и разослать</button>
+      <div class="msg" id="couponMsg"></div>
+    </div>
+
+    <div class="box">
+      <h2>Семейные карты</h2>
+      <div id="famList" class="muted"></div>
+      <div class="row">
+        <div><label>Телефон</label><input id="aPhone" type="tel" placeholder="+7 701 000 00 01"></div>
+        <div><label>Имя</label><input id="aName" placeholder="Айгуль"></div>
+      </div>
+      <div class="row">
+        <div><label>Скидка %</label><input id="aDisc" type="number" value="20"></div>
+        <div><label>Раз/нед</label><input id="aLimit" type="number" value="3"></div>
+        <div><label>Макс ₸</label><input id="aMax" type="number" value="5000"></div>
+      </div>
+      <button id="famBtn">Добавить</button>
+      <div class="msg" id="famMsg"></div>
+    </div>
+
+    <div class="box">
+      <h2>Найти карту</h2>
+      <div class="row"><input id="q" placeholder="телефон, имя или номер карты"><button id="qBtn" style="margin-top:6px;flex:0 0 90px">Найти</button></div>
+      <div id="found"></div>
+    </div>
+  </section>
 </main>
 
 <script>
-// ⚙️ ВСТАВЬ СЮДА URL своего Apps Script (…/exec)
+// ⚙️ URL своего Apps Script (…/exec)
 const API_URL = 'https://script.google.com/macros/s/AKfycbwB5LyS92RsQfrw3Z0vvw0m8gkPiFpQ65bd0yuxWaUth7hmXYCDGC61Ea3FTwGrg11NCw/exec';
 
 const tg = window.Telegram?.WebApp;
 tg?.ready(); tg?.expand();
 const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const show = (el, text, ok) => { el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'err'); };
 const haptic = (t) => { try { tg?.HapticFeedback?.notificationOccurred(t); } catch {} };
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function api(action, data = {}) {
   // text/plain — без CORS-предзапроса, Apps Script такое принимает
@@ -151,11 +217,11 @@ function scan(text) {
 }
 
 // ── Карта гостя ──────────────────────────────
-let qrObj = null, codeTimer = null;
+let qrObj = null, codeTimer = null, me = null;
 function renderCard(c) {
   $('guest').classList.remove('hidden');
-  $('hello').textContent = `Привет, ${c.name}!`;
   $('cardNo').textContent = c.id;
+  $('phoneBox').classList.toggle('hidden', c.phoneVerified);
   const fam = c.type === 'family';
   $('stampsBox').classList.toggle('hidden', fam);
   $('familyBox').classList.toggle('hidden', !fam);
@@ -169,7 +235,7 @@ function renderCard(c) {
     $('rules').textContent = `После оплаты отсканируй QR внизу чека. Штамп от ${c.minSum} ₸, один в день.`;
   }
   $('couponsBox').classList.toggle('hidden', !c.coupons.length);
-  $('coupons').innerHTML = c.coupons.map((x) => `<p style="margin:0 0 8px"><b>${x.title}</b> −${x.discount}%<br><span class="muted">до ${new Date(x.expires).toLocaleDateString('ru')} · покажи QR кассиру</span></p>`).join('');
+  $('coupons').innerHTML = c.coupons.map((x) => `<p style="margin:0 0 8px"><b>${esc(x.title)}</b> −${x.discount}%<br><span class="muted">до ${new Date(x.expires).toLocaleDateString('ru')} · покажи QR кассиру</span></p>`).join('');
   if (c.blocked) $('hello').textContent = 'Карта заблокирована';
 }
 
@@ -197,8 +263,29 @@ $('scanReceipt').onclick = async () => {
   } catch (e) { if (e.message) { haptic('error'); show($('scanMsg'), e.message); } }
 };
 
+// Номер: Telegram показывает «Поделиться номером», контакт уходит боту, а мы сразу просим скрипт его забрать
+$('phoneBtn').onclick = () => {
+  if (!tg?.requestContact || !tg.isVersionAtLeast?.('6.9')) return show($('phoneMsg'), 'Обнови Telegram или напиши боту /start');
+  tg.requestContact(async (sent) => {
+    if (!sent) return show($('phoneMsg'), 'Без номера карта тоже работает — подтвердишь позже');
+    show($('phoneMsg'), 'Проверяю номер…', true);
+    for (let i = 0; i < 6; i++) {
+      try { await api('poll'); const r = await api('me'); if (r.card.phoneVerified) { haptic('success'); show($('phoneMsg'), '✅ Номер подтверждён', true); return load(); } } catch {}
+      await sleep(1500);
+    }
+    show($('phoneMsg'), 'Номер отправлен, подтверждение придёт в течение минуты');
+  });
+};
+
+// Заявка кассира
+$('iamCashier').onclick = () => { $('joinBox').classList.toggle('hidden'); };
+$('joinBtn').onclick = async () => {
+  try { const r = await api('kassaJoin', { code: $('joinCode').value, branch: $('joinBranch').value }); show($('joinMsg'), r.message + '. Как примут — появится вкладка «Касса».', true); }
+  catch (e) { show($('joinMsg'), e.message); }
+};
+
 // ── Касса ────────────────────────────────────
-let guest = null;   // { qr } или { cardId, code }
+let guest = null;
 function renderGuest(c) {
   $('gBox').classList.remove('hidden'); $('gMsg').className = 'msg';
   $('gName').textContent = `${c.name} · ${c.id}`;
@@ -211,7 +298,7 @@ function renderGuest(c) {
   $('bRedeem').classList.toggle('hidden', fam || !c.rewards);
   $('gFamily').classList.toggle('hidden', !fam); $('fSum').value = '';
   $('gCoupons').classList.toggle('hidden', !c.coupons.length);
-  $('couponSel').innerHTML = c.coupons.map((x) => `<option value="${x.id}">${x.title} −${x.discount}%</option>`).join('');
+  $('couponSel').innerHTML = c.coupons.map((x) => `<option value="${esc(x.id)}">${esc(x.title)} −${x.discount}%</option>`).join('');
 }
 async function lookup(g) {
   try { guest = g; const r = await api('lookup', g); $('kMsg').className = 'msg'; renderGuest(r.card); haptic('success'); }
@@ -234,32 +321,96 @@ $('bRedeem').onclick = () => act('redeem', {}, $('bRedeem'));
 $('bFamily').onclick = () => act('family', { sum: $('fSum').value }, $('bFamily'));
 $('bCoupon').onclick = () => act('coupon', { couponId: $('couponSel').value }, $('bCoupon'));
 
+// ── Админ ────────────────────────────────────
+async function loadAdmin() {
+  try {
+    const d = await api('adminData');
+    $('report').innerHTML = d.report; // текст собран на сервере, имена экранированы
+    $('cashiers').innerHTML = d.cashiers.length ? d.cashiers.map((k) => `<div class="item"><span>${esc(k.name)}<br><span class="muted">${esc(k.branch)} · ${k.status === 'active' ? 'работает' : k.status === 'pending' ? '⏳ ждёт подтверждения' : 'отключён'}</span></span>
+      <span>${k.status !== 'active' ? `<button class="small" data-k="${k.tgId}" data-s="active">Принять</button>` : ''}${k.status !== 'off' ? `<button class="small ghost" data-k="${k.tgId}" data-s="off">${k.status === 'pending' ? 'Отклонить' : 'Отключить'}</button>` : ''}</span></div>`).join('')
+      : 'Кассиров нет. Кассир открывает карту → «Я кассир Seven Times» → вводит код приглашения.';
+    $('famList').innerHTML = d.family.map((f) => `<div class="item"><span>${esc(f.name)} · +${esc(f.phone)}<br><span class="muted">−${f.discount}%, ${f.weekLimit} раз/нед, до ${f.max} ₸</span></span><button class="small ghost" data-f="${esc(f.phone)}">Убрать</button></div>`).join('');
+    $('joinBranch').innerHTML = d.branches.map((b) => `<option>${esc(b)}</option>`).join('');
+  } catch (e) { $('report').textContent = e.message; }
+}
+$('cashiers').onclick = async (e) => {
+  const b = e.target.closest('button[data-k]'); if (!b) return;
+  b.disabled = true; try { await api('adminCashier', { tgId: b.dataset.k, status: b.dataset.s }); haptic('success'); } catch (err) { tg?.showAlert?.(err.message); }
+  loadAdmin();
+};
+$('famList').onclick = async (e) => {
+  const b = e.target.closest('button[data-f]'); if (!b) return;
+  if (!confirm('Убрать из семейных?')) return;
+  try { await api('adminFamilyRemove', { phone: b.dataset.f }); } catch (err) { tg?.showAlert?.(err.message); }
+  loadAdmin();
+};
+$('pushBtn').onclick = async () => {
+  const text = $('pushText').value.trim(); if (!text) return;
+  if (!confirm('Отправить всем гостям?')) return;
+  $('pushBtn').disabled = true; show($('pushMsg'), 'Отправляю… не закрывай карту', true);
+  try { const r = await api('adminPush', { text }); show($('pushMsg'), r.message, true); $('pushText').value = ''; } catch (e) { show($('pushMsg'), e.message); }
+  $('pushBtn').disabled = false;
+};
+$('couponBtn').onclick = async () => {
+  if (!confirm('Выпустить купон и разослать всем?')) return;
+  $('couponBtn').disabled = true;
+  try { const r = await api('adminCoupon', { title: $('cTitle').value, discount: $('cDisc').value, days: $('cDays').value }); show($('couponMsg'), r.message, true); } catch (e) { show($('couponMsg'), e.message); }
+  $('couponBtn').disabled = false;
+};
+$('famBtn').onclick = async () => {
+  try {
+    const r = await api('adminFamilyAdd', { phone: $('aPhone').value, name: $('aName').value, discount: $('aDisc').value, weekLimit: $('aLimit').value, max: $('aMax').value });
+    show($('famMsg'), r.message, true); $('aPhone').value = ''; $('aName').value = ''; loadAdmin();
+  } catch (e) { show($('famMsg'), e.message); }
+};
+async function find() {
+  try {
+    const r = await api('adminFind', { q: $('q').value });
+    $('found').innerHTML = r.cards.length ? r.cards.map((c) => `<div class="item"><span>${esc(c.name)} · <b>${c.id}</b><br><span class="muted">${c.phone ? '+' + esc(c.phone) : 'номер не подтверждён'} · ${c.type === 'family' ? 'семья' : `${c.stamps} шт, ${c.rewards} ☕`} · ${c.visits} виз.</span></span>
+      <button class="small ghost" data-b="${c.id}" data-v="${c.blocked ? 0 : 1}">${c.blocked ? 'Разблок.' : 'Блок'}</button></div>`).join('') : '<p class="muted">Ничего не найдено</p>';
+  } catch (e) { $('found').textContent = e.message; }
+}
+$('qBtn').onclick = find;
+$('found').onclick = async (e) => {
+  const b = e.target.closest('button[data-b]'); if (!b) return;
+  try { await api('adminBlock', { cardId: b.dataset.b, blocked: b.dataset.v === '1' }); } catch (err) { tg?.showAlert?.(err.message); }
+  find();
+};
+
 // ── Вкладки ──────────────────────────────────
 function tab(which) {
-  $('guest').classList.toggle('hidden', which !== 'card');
-  $('kassa').classList.toggle('hidden', which !== 'kassa');
-  $('tabCard').classList.toggle('ghost', which !== 'card');
-  $('tabKassa').classList.toggle('ghost', which !== 'kassa');
+  ['card', 'kassa', 'admin'].forEach((t) => {
+    $(t === 'card' ? 'guest' : t).classList.toggle('hidden', which !== t);
+    $('tab' + t[0].toUpperCase() + t.slice(1)).classList.toggle('ghost', which !== t);
+  });
+  if (which === 'admin') loadAdmin();
 }
 $('tabCard').onclick = () => tab('card');
 $('tabKassa').onclick = () => tab('kassa');
-$('closeApp').onclick = () => tg?.close();
+$('tabAdmin').onclick = () => tab('admin');
 
+const DEFAULT_BRANCHES = ['Самал 70/3', 'Скоробогатова 65/1', 'Абулхаир Хана 177'];
 async function load() {
   try {
-    const r = await api('me');
-    if (r.cashier) {
-      $('tabs').classList.remove('hidden');
-      $('hello').textContent = `${r.cashier.name} · ${r.cashier.branch}`;
-    }
-    if (r.card) { renderCard(r.card); if (!qrObj) refreshCode(); }
-    else if (r.cashier) tab('kassa');
-    else $('noCard').classList.remove('hidden');
-    if (r.cashier && !r.card) $('tabCard').classList.add('hidden');
+    me = await api('me');
+    $('hello').textContent = me.cashier ? `${me.cashier.name} · ${me.cashier.branch}` : `Привет, ${me.card.name}!`;
+    renderCard(me.card);
+    if (!qrObj) refreshCode();
+    const staff = me.cashier || me.admin;
+    $('tabs').classList.toggle('hidden', !staff);
+    $('tabKassa').classList.toggle('hidden', !me.cashier);
+    $('tabAdmin').classList.toggle('hidden', !me.admin);
+    $('iamCashier').classList.toggle('hidden', !!me.cashier);
+    if (me.cashierPending) { $('iamCashier').textContent = '⏳ Заявка кассира ждёт подтверждения'; }
+    if (!$('joinBranch').options.length) $('joinBranch').innerHTML = DEFAULT_BRANCHES.map((b) => `<option>${b}</option>`).join('');
   } catch (e) { $('hello').textContent = e.message; }
 }
+
 if (!tg?.initData) $('hello').textContent = 'Открой карту через бота Seven Times в Telegram';
-else load();
+else {
+  load();
+  api('poll').catch(() => {}); // заодно забираем сообщения, которые ждут у бота
+}
 </script>
 </body>
 </html>
