@@ -119,6 +119,8 @@
   .wallet.flip { animation: flip .7s var(--sheet); }
   @keyframes flip { 0% { transform: rotateY(0); } 50% { transform: rotateY(90deg) scale(.96); } 100% { transform: rotateY(0); } }
   .wallet { cursor: pointer; -webkit-user-select: none; user-select: none; }
+  .wallet .fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .stage { margin-bottom: 18px; }
   .themes { display: flex; justify-content: center; gap: 7px; margin: 2px 0 0; }
   .themes i { width: 6px; height: 6px; border-radius: 3px; background: var(--text-3); opacity: .5; transition: width .45s var(--spring), opacity .3s, background .3s; }
   .themes i.on { width: 18px; opacity: 1; background: var(--text); }
@@ -321,7 +323,7 @@
   <section id="guest" class="hidden">
     <div class="msg" id="inviteMsg"></div>
 
-    <div class="stage"><div class="wallet" id="wallet"><span class="glow"></span>
+    <div class="stage"><div class="wallet" id="wallet"><canvas class="fx" id="fx"></canvas><span class="glow"></span>
       <div class="w-top">
         <div>
           <div class="w-brand">SEVEN TIMES</div>
@@ -341,8 +343,6 @@
         </div>
       </div>
     </div></div>
-    <div class="themes" id="themes"></div>
-    <div class="tname" id="tname"></div>
 
     <div class="card hidden" id="phoneBox">
       <div class="title">Активируйте карту</div>
@@ -619,24 +619,89 @@ function applyTheme() {
 }
 applyTheme(); tg?.onEvent?.('themeChanged', applyTheme);
 
-// Тема карты — гость выбирает сам. Хранится в Telegram (CloudStorage), видно на всех его устройствах
-const CARD_THEMES = { graphite: ['Графит', '#1c1c1e', '#5c5c60'], espresso: ['Эспрессо', '#21160f', '#7a5540'], midnight: ['Полночь', '#0b1422', '#34557f'],
-  forest: ['Изумруд', '#0a1f19', '#336a56'], bordeaux: ['Бордо', '#230c10', '#7a2f39'], champagne: ['Шампань', '#1f1a12', '#9a8052'] };
-let cardTheme = 'graphite', themeTouched = false;
+// Живые темы карты: дождь, солнце, осень, зима, весна. Рисуем на canvas поверх фона карты.
+function cardFx(cv, kind, opts) {
+  opts = opts || {};
+  const ctx = cv.getContext('2d');
+  const dpr = opts.dpr || Math.min(window.devicePixelRatio || 1, 2);
+  let W = 0, H = 0, parts = [], raf = 0, t0 = performance.now(), dead = false;
+  const R = (a, b) => a + Math.random() * (b - a);
+  const size = () => { const r = cv.getBoundingClientRect(); W = r.width; H = r.height; cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); };
+  size();
+  const k = W / 360; // масштаб частиц к ширине карты
+  const spawn = (fresh) => {
+    const p = { x: R(-20, W + 20), y: fresh ? R(-H, H) : R(-40, -10) };
+    if (kind === 'rain') Object.assign(p, { len: R(10, 22) * k, v: R(420, 620) * k, a: R(.18, .45), w: R(.8, 1.4) });
+    if (kind === 'winter') Object.assign(p, { r: R(.8, 2.6) * k, v: R(18, 48) * k, a: R(.5, .95), ph: R(0, 6.28), sw: R(8, 22) * k });
+    if (kind === 'autumn') Object.assign(p, { s: R(6, 11) * k, v: R(28, 55) * k, rot: R(0, 6.28), vr: R(-1.6, 1.6), ph: R(0, 6.28), sw: R(18, 40) * k, c: ['#e0803a', '#c9542a', '#e9b44c', '#b8462a', '#d9983c'][Math.floor(R(0, 5))] });
+    if (kind === 'spring') Object.assign(p, { s: R(4, 7.5) * k, v: R(16, 34) * k, rot: R(0, 6.28), vr: R(-1.2, 1.2), ph: R(0, 6.28), sw: R(20, 46) * k, c: ['#f7c6d6', '#fbdbe6', '#ffffff', '#f2afc6'][Math.floor(R(0, 4))] });
+    if (kind === 'sun') Object.assign(p, { y: fresh ? R(0, H) : H + 10, r: R(.8, 2.2) * k, v: R(6, 16) * k, a: R(.2, .7), ph: R(0, 6.28) });
+    return p;
+  };
+  const N = { rain: 80, winter: 70, autumn: 16, spring: 24, sun: 26 }[kind] || 0;
+  for (let i = 0; i < N; i++) parts.push(spawn(true));
+  const leaf = (p) => { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillStyle = p.c; ctx.globalAlpha = .9;
+    ctx.beginPath(); ctx.moveTo(0, -p.s); ctx.quadraticCurveTo(p.s * .9, 0, 0, p.s); ctx.quadraticCurveTo(-p.s * .9, 0, 0, -p.s); ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = .8; ctx.beginPath(); ctx.moveTo(0, -p.s * .8); ctx.lineTo(0, p.s * .8); ctx.stroke(); ctx.restore(); };
+  const petal = (p) => { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillStyle = p.c; ctx.globalAlpha = .85;
+    ctx.beginPath(); ctx.ellipse(0, 0, p.s, p.s * .55, 0, 0, 6.283); ctx.fill(); ctx.restore(); };
+  let last = performance.now();
+  const frame = (now) => {
+    if (dead) return;
+    const dt = Math.min(.05, (now - last) / 1000); last = now; const t = (now - t0) / 1000;
+    ctx.clearRect(0, 0, W, H);
+    if (kind === 'sun') {
+      const cx = W * .86, cy = H * .08;
+      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, W * .75); g.addColorStop(0, 'rgba(255,214,140,.42)'); g.addColorStop(.35, 'rgba(255,170,70,.14)'); g.addColorStop(1, 'rgba(255,150,50,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      ctx.save(); ctx.translate(cx, cy); ctx.rotate(t * .06); ctx.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 14; i++) { ctx.rotate(6.283 / 14); ctx.fillStyle = `rgba(255,220,160,${.05 + .03 * Math.sin(t * .8 + i)})`; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(W * 1.1, -W * .05); ctx.lineTo(W * 1.1, W * .05); ctx.fill(); }
+      ctx.restore();
+      const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, 34 * k); core.addColorStop(0, 'rgba(255,240,200,.9)'); core.addColorStop(1, 'rgba(255,220,150,0)');
+      ctx.fillStyle = core; ctx.beginPath(); ctx.arc(cx, cy, 34 * k, 0, 6.283); ctx.fill();
+    }
+    for (let i = 0; i < parts.length; i++) {
+      const p = parts[i];
+      if (kind === 'rain') { p.y += p.v * dt; p.x -= p.v * .18 * dt; ctx.strokeStyle = `rgba(200,220,255,${p.a})`; ctx.lineWidth = p.w; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + p.len * .18, p.y - p.len); ctx.stroke(); }
+      if (kind === 'winter') { p.y += p.v * dt; const x = p.x + Math.sin(t * .9 + p.ph) * p.sw; ctx.fillStyle = `rgba(255,255,255,${p.a})`; ctx.beginPath(); ctx.arc(x, p.y, p.r, 0, 6.283); ctx.fill(); }
+      if (kind === 'autumn' || kind === 'spring') { p.y += p.v * dt; p.rot += p.vr * dt; const ox = p.x; p.x += Math.sin(t * 1.1 + p.ph) * p.sw * dt; (kind === 'autumn' ? leaf : petal)(p); if (Math.abs(p.x - ox) > 50) p.x = ox; }
+      if (kind === 'sun') { p.y -= p.v * dt; const x = p.x + Math.sin(t * .7 + p.ph) * 8 * k; ctx.fillStyle = `rgba(255,225,160,${p.a * (.6 + .4 * Math.sin(t * 2 + p.ph))})`; ctx.beginPath(); ctx.arc(x, p.y, p.r, 0, 6.283); ctx.fill(); }
+      const out = kind === 'sun' ? p.y < -10 : p.y > H + 30 || p.x < -40;
+      if (out) parts[i] = spawn(false);
+    }
+    if (!opts.still) raf = requestAnimationFrame(frame);
+  };
+  if (opts.warm) { for (let i = 0; i < opts.warm; i++) { last -= 33; frame(performance.now()); } }
+  raf = requestAnimationFrame(frame);
+  const onVis = () => { if (document.hidden) cancelAnimationFrame(raf); else { last = performance.now(); raf = requestAnimationFrame(frame); } };
+  document.addEventListener('visibilitychange', onVis);
+  return () => { dead = true; cancelAnimationFrame(raf); document.removeEventListener('visibilitychange', onVis); ctx.clearRect(0, 0, W, H); };
+}
+
+// Тема карты — секрет: нажал на карту, она переворачивается в следующую. Хранится в Telegram (CloudStorage)
+const CARD_THEMES = {
+  graphite: ['#1c1c1e', '#5c5c60'], espresso: ['#21160f', '#7a5540'], midnight: ['#0b1422', '#34557f'],
+  forest: ['#0a1f19', '#336a56'], bordeaux: ['#230c10', '#7a2f39'], champagne: ['#1f1a12', '#9a8052'],
+  rain: ['#121a26', '#44536a', 'rain'], sun: ['#2a1605', '#b8741f', 'sun'], autumn: ['#231006', '#8e4219', 'autumn'],
+  winter: ['#0d1824', '#6d8fae', 'winter'], spring: ['#1f1219', '#9b5d78', 'spring'],
+};
+const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let cardTheme = 'graphite', stopFx = null;
 function paintTheme(id, animate) {
   if (!CARD_THEMES[id]) id = 'graphite';
   cardTheme = id;
-  const w = $('wallet');
-  const apply = () => { w.dataset.t = id; };
+  const w = $('wallet'), [a, b, fxKind] = CARD_THEMES[id];
+  const apply = () => {
+    w.style.setProperty('--w1', a); w.style.setProperty('--w2', b);
+    if (stopFx) { stopFx(); stopFx = null; }
+    if (fxKind) stopFx = cardFx($('fx'), fxKind, calm ? { still: true, warm: 90 } : {});
+  };
   if (animate) { w.classList.remove('flip'); void w.offsetWidth; w.classList.add('flip'); setTimeout(apply, 330); } else apply();
-  document.querySelectorAll('.themes i').forEach((b) => b.classList.toggle('on', b.dataset.t === id));
-  $('tname').innerHTML = `<span>${themeTouched ? CARD_THEMES[id][0] + (walletKind ? ' · чтобы обновить Wallet, нажмите «Добавить в Wallet»' : '') : 'Нажмите на карту, чтобы сменить цвет'}</span>`;
 }
-$('themes').innerHTML = Object.keys(CARD_THEMES).map((id) => `<i data-t="${id}"></i>`).join('');
 // Нажал на карту — она переворачивается в следующий цвет
 $('wallet').addEventListener('click', () => {
   const ids = Object.keys(CARD_THEMES), next = ids[(ids.indexOf(cardTheme) + 1) % ids.length];
-  tick(); themeTouched = true; paintTheme(next, true);
+  tick(); paintTheme(next, true);
   try { tg?.CloudStorage?.setItem('card_theme', next); } catch {}
   try { localStorage.setItem('card_theme', next); } catch {}
 });
