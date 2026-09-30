@@ -1657,7 +1657,7 @@ function showNotice(n) {
   const key = 'notice_' + n.ts;
   if (seenNotice.has(key)) return; seenNotice.add(key);
   try { if (localStorage.getItem(key)) return; localStorage.setItem(key, '1'); } catch {}
-  if (n.kind === 'tier' && STATUSES[n.status] && !calm) {
+  if (n.kind === 'tier' && STATUSES[n.status]) { // при «уменьшении движения» ролик сразу покажет готовую карту
     const nm = STATUSES[n.status].name;
     if (me?.card) me.card.status = n.status; paintStatus(n.status);
     try { localStorage.setItem('card_status', n.status); } catch {}
