@@ -183,6 +183,10 @@
   details.more > summary::after { content: ""; width: 8px; height: 8px; border: solid var(--text-3); border-width: 0 2px 2px 0; transform: rotate(45deg); transition: transform .3s var(--ease); margin: -4px 4px 0 0; }
   details.more[open] > summary::after { transform: rotate(-135deg); margin-top: 4px; }
   details.more > div { padding: 0 20px 20px; animation: drop .35s var(--ease); }
+  details.more .sumval { margin-left: auto; margin-right: 12px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+  .vrow { display: flex; justify-content: space-between; gap: 12px; padding: 11px 0; font-size: 15px; border-top: 1px solid var(--sep); }
+  .vrow:first-child { border-top: 0; padding-top: 2px; }
+  .vrow span:last-child { color: var(--text-2); text-align: right; }
 
   /* ── списки как в Настройках iOS ── */
   .list { background: var(--surface); border-radius: var(--r); overflow: hidden; margin-bottom: 14px; box-shadow: var(--shadow); }
@@ -392,6 +396,11 @@
     <div class="caps hidden" id="couponsCap">Купоны</div>
     <div class="list hidden" id="couponsBox"><div id="coupons"></div></div>
 
+    <details class="more hidden" id="visitsBox">
+      <summary>Мои визиты<span class="sumval" id="visitsCnt"></span></summary>
+      <div id="visitsList"></div>
+    </details>
+
     <details class="more hidden" id="codeEnter">
       <summary>У меня есть код приглашения</summary>
       <div>
@@ -455,7 +464,7 @@
         <select id="logCashier"><option value="">Все кассиры</option></select>
         <select id="logType">
           <option value="">Все действия</option>
-          <option value="discount_use">Скидки</option><option value="coupon_use">Купоны</option><option value="lookup">Сканы карт</option>
+          <option value="visit">Визиты</option><option value="tier_up">Скидки за визиты</option><option value="discount_use">Скидки</option><option value="coupon_use">Купоны</option><option value="lookup">Сканы карт</option>
           <option value="rejected">Отказы</option><option value="person_added">Выданные скидки</option><option value="cashier_added">Новые кассиры</option><option value="admin_added">Новые админы</option>
         </select>
       </div>
@@ -897,6 +906,26 @@ function renderCard(c) {
   const coupons = ok && Array.isArray(c.coupons) ? c.coupons : [];
   $('couponsBox').classList.toggle('hidden', !coupons.length); $('couponsCap').classList.toggle('hidden', !coupons.length);
   $('coupons').innerHTML = coupons.map((x) => `<div class="li"><span class="grow"><b>${esc(x.title)}</b><span class="sub">до ${new Date(x.expires).toLocaleDateString('ru')} · покажите QR кассиру</span></span><span class="val">−${esc(x.discount)}%</span></div>`).join('');
+  // Мои визиты: только сколько и когда. Сколько осталось до скидки — знают только админы
+  const hist = Array.isArray(c.history) ? c.history : [];
+  $('visitsBox').classList.toggle('hidden', !ok || blocked);
+  $('visitsCnt').textContent = Number(c.visits) || hist.length || '';
+  $('visitsList').innerHTML = hist.length
+    ? hist.map((v) => `<div class="vrow"><span>${new Date(v.ts).toLocaleDateString('ru', { day: 'numeric', month: 'long', weekday: 'short' })}</span><span>${esc(v.branch)}</span></div>`).join('')
+    : '<div class="muted">Визитов пока нет. Покажите QR кассиру при покупке — визит засчитается.</div>';
+  showNotice(c.notice);
+}
+
+// Поздравление (приветственная скидка или новый уровень) — один раз, потом сервер его забывает
+const seenNotice = new Set(); // карта обновляется раз в 10 с — поздравление показываем один раз даже без localStorage
+function showNotice(n) {
+  if (!n || !n.ts) return;
+  const key = 'notice_' + n.ts;
+  if (seenNotice.has(key)) return; seenNotice.add(key);
+  try { if (localStorage.getItem(key)) return; localStorage.setItem(key, '1'); } catch {}
+  if (n.kind === 'welcome') congrats({ heart: true, title: 'Добро пожаловать!', pct: n.percent, text: 'Дарим вам скидку. Она действует со следующего дня 7 дней. Ваш Seven Times ❤️' });
+  else congrats({ heart: true, title: 'Поздравляем!', pct: n.percent, text: 'Вы получили скидку. Спасибо, что остаётесь с нами. Ваш Seven Times ❤️' });
+  api('ackNotice', { ts: n.ts }).catch(() => {});
 }
 
 // QR обновляется сам. Один запрос за раз (раньше два цикла могли крутиться параллельно),
@@ -996,10 +1025,11 @@ $('scanGuest').onclick = async () => {
   try {
     const r = await api('scan', { qr });
     haptic('success');
+    const visitOnly = r.kind === 'visit' || !r.percent;
     kassaResult(`<div class="card kres">${checkSvg('big')}<div class="who">${esc(r.name)}</div>
-      <div class="hero-num" id="kPct">−0%</div><div class="grp">${esc(r.group)}</div></div>
-      <div class="msg ok" style="display:block">${esc(r.note)}</div>`);
-    countTo($('kPct'), r.percent, '%', '−', 700);
+      <div class="hero-num" id="kPct">${visitOnly ? 'Визит' : '−0%'}</div><div class="grp">${esc(r.group)}</div></div>
+      <div class="msg ${visitOnly ? 'warn' : 'ok'}" style="display:block">${esc(r.note)}</div>`);
+    if (!visitOnly) countTo($('kPct'), r.percent, '%', '−', 700);
   } catch (e) {
     haptic('error');
     kassaResult(`<div class="card kres bad"><div class="cross"></div>${e.data?.guest ? `<div class="who">${esc(e.data.guest)}</div>` : ''}<div class="grp" style="color:var(--red)">${esc(e.message)}</div></div>`);
@@ -1060,6 +1090,8 @@ function renderStats(s) {
       <div class="li"><span class="grow">Карт всего</span><span class="val">${money(s.cards)}</span></div>
       <div class="li"><span class="grow">Новых за неделю</span><span class="val">${money(s.newCards)}</span></div>
       <div class="li"><span class="grow">Сканов на кассе</span><span class="val">${money(s.scans)}</span></div>
+      <div class="li"><span class="grow">Визитов</span><span class="val">${money(s.visits)}</span></div>
+      <div class="li"><span class="grow">Получили скидку за визиты</span><span class="val">${money(s.tierUps)}</span></div>
       <div class="li"><span class="grow">Купонов</span><span class="val">${money(s.coupons)}</span></div>
       <div class="li"><span class="grow">Отказов</span><span class="val">${money(s.rejected)}</span></div>
     </div>
@@ -1289,7 +1321,7 @@ function logLine(e) {
   const m = e.meta || {};
   const parts = [];
   if (e.guest) parts.push(`${esc(e.guest)} · ${esc(e.card)}`);
-  const catName = (c) => ({ regular: 'постоянный гость', staff: 'сотрудник', friend: 'знакомый' })[c] || c;
+  const catName = (c) => ({ regular: 'постоянный гость', staff: 'сотрудник', friend: 'знакомый', visits: 'за визиты', welcome: 'приветственная' })[c] || esc(c || '');
   if (e.type === 'discount_use') parts.push(`${catName(m.category)} −${m.percent}%${m.sum ? ` · чек ${money(m.sum)} ₸` : ''}`);
   if (e.type === 'rejected') parts.push(esc(m.reason === 'bad_code' ? 'старый или чужой QR' : m.reason || ''));
   if (e.type === 'person_added') parts.push(`${esc(m.name)} · ${catName(m.category)} −${m.percent}% · через ${m.via === 'qr' ? 'QR' : 'код'}, выдал ${esc(m.by)}`);
@@ -1297,6 +1329,8 @@ function logLine(e) {
   if (e.type === 'admin_person') parts.push(`${esc(m.who)} · ${m.removed ? 'удалён' : 'blocked' in m ? (m.blocked ? 'на паузе' : 'возвращён') : 'скидка ' + m.percent + '%'}`);
   if (e.type === 'admin_cashier') parts.push(m.status === 'active' ? 'возвращён' : 'заблокирован');
   if (e.type === 'push') parts.push(esc((m.text || '').slice(0, 60)));
+  if (e.type === 'visit' && m.n) parts.push(`${esc(m.n)}-й визит за 90 дней`);
+  if (e.type === 'tier_up') parts.push(`−${esc(m.percent)}% · ${esc(m.visits)} визитов`);
   if (e.type === 'admin_added') parts.push(`${esc(m.name)} · ${(m.perms || []).length ? (m.perms || []).length + ' прав' : 'только просмотр'}`);
   if (e.type === 'admin_admin') parts.push(m.action === 'qr' ? 'создан QR админа' : `${esc(m.who || '')} · ${m.status ? (m.status === 'active' ? 'возвращён' : 'заблокирован') : m.notify ? 'уведомления ' + (m.notify === 'on' ? 'включены' : 'выключены') : 'права изменены'}`);
   const who = [e.cashier && `${e.type.startsWith('admin') ? '' : 'кассир '}${esc(e.cashier)}`, e.branch && esc(e.branch)].filter(Boolean).join(' · ');
@@ -1349,7 +1383,7 @@ async function find() {
   try {
     const r = await api('adminFind', { q: $('q').value });
     $('found').classList.remove('hidden');
-    $('found').innerHTML = r.cards.length ? r.cards.map((c) => `<div class="li ${c.blocked ? 'dis' : ''}"><span class="grow">${esc(c.name)} · <b>${esc(c.id)}</b>${c.blocked ? '<span class="tag off">заблокирована</span>' : ''}<span class="sub">${c.phone ? '+' + esc(c.phone) : 'номер не подтверждён'} · ${c.group ? esc(c.group) : 'без скидки'} · визитов ${esc(c.visits)}</span></span>
+    $('found').innerHTML = r.cards.length ? r.cards.map((c) => `<div class="li ${c.blocked ? 'dis' : ''}"><span class="grow">${esc(c.name)} · <b>${esc(c.id)}</b>${c.blocked ? '<span class="tag off">заблокирована</span>' : ''}<span class="sub">${c.phone ? '+' + esc(c.phone) : 'номер не подтверждён'} · ${c.group ? esc(c.group) : 'без скидки'} · визитов ${esc(c.visits)}</span><span class="sub">за 90 дней: ${esc(c.v90 ?? 0)}${c.left ? ` · до ${esc(c.next)}%: ещё ${esc(c.left)}` : ''}</span></span>
       <button class="pill ${c.blocked ? '' : 'red'}" data-b="${esc(c.id)}" data-v="${c.blocked ? 0 : 1}">${c.blocked ? 'Вернуть' : 'Заблокировать'}</button></div>`).join('') : '<div class="empty">Ничего не найдено</div>';
     enter($('found'));
   } catch (e) { $('found').classList.remove('hidden'); $('found').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
@@ -1399,7 +1433,8 @@ function saveMe(m) {
   if (!CACHE || !m?.card) return;
   const c = m.card;
   const slim = { cashier: m.cashier ? { name: m.cashier.name, branch: m.cashier.branch } : null, admin: !!m.admin, wallet: !!m.wallet, walletApple: !!m.walletApple, adminNeedsPhone: !!m.adminNeedsPhone,
-    card: { name: c.name, id: c.id, phoneVerified: !!c.phoneVerified, blocked: !!c.blocked, invited: !!c.invited, wallet: c.wallet || null, coupons: Array.isArray(c.coupons) ? c.coupons : [] } };
+    card: { name: c.name, id: c.id, phoneVerified: !!c.phoneVerified, blocked: !!c.blocked, invited: !!c.invited, wallet: c.wallet || null, coupons: Array.isArray(c.coupons) ? c.coupons : [],
+      visits: Number(c.visits) || 0, history: Array.isArray(c.history) ? c.history : [] } };
   try { localStorage.setItem(CACHE, JSON.stringify(slim)); } catch {}
 }
 function readMe() {
