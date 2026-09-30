@@ -950,7 +950,7 @@ function welcomeCountdown(w, show) {
   };
   paint(); welTimer = setInterval(paint, 30000);
 }
-const seenNotice = new Set(); // карта обновляется раз в 10 с — поздравление показываем один раз даже без localStorage
+const seenNotice = new Set(); // карта обновляется раз в 30 с — поздравление показываем один раз даже без localStorage
 function showNotice(n) {
   if (!n || !n.ts) return;
   const key = 'notice_' + n.ts;
@@ -974,9 +974,12 @@ async function refreshCode() {
   try {
     const r = await api('code');
     if (r.card && me) {
+      // карта менялась на сервере (скан на кассе, блокировка) — подтягиваем полный профиль: «Мои визиты» обновятся сразу
+      const changed = !!(r.card.rev && me.card.rev && r.card.rev !== me.card.rev);
       // обновление QR приходит облегчённым (без купонов, Wallet, визитов) — недостающее берём из последнего полного профиля
       const merged = Object.assign({}, me.card); Object.keys(r.card).forEach((key) => { if (r.card[key] !== undefined) merged[key] = r.card[key]; });
       r.card = merged; me.card = merged; saveMe(me); renderCard(r.card);
+      if (changed) api('me').then((m) => load(m)).catch(() => {});
     }
     setCode(r.code);
     if (!qrObj) qrObj = await makeQr($('qr'), r.qr);
