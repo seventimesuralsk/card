@@ -398,36 +398,103 @@
   @keyframes fly { 0% { opacity: 0; transform: translate(-50%, 0) scale(.4); } 15% { opacity: .9; } 100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), -150px) scale(1) rotate(var(--rot)); } }
   @keyframes slide-in { from { opacity: 0; transform: translateX(var(--from)); } to { opacity: 1; transform: none; } }
   @keyframes pop-back { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
-  /* ── «выпуск карты»: 3D-переворот после подтверждения номера ── */
-  .reveal { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
-    background: radial-gradient(120% 80% at 50% 35%, rgba(40,40,44,.92), rgba(0,0,0,.96)); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); opacity: 0; pointer-events: none; transition: opacity .4s var(--ease); }
+  /* ── кино: выпуск карты и новый статус — у каждого статуса свой ролик ── */
+  .reveal { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden;
+    padding: 24px 20px calc(24px + env(safe-area-inset-bottom)); background: radial-gradient(120% 80% at 50% 38%, #1a1a1f, #000 75%); opacity: 0; pointer-events: none; transition: opacity .4s var(--ease); }
   .reveal.open { opacity: 1; pointer-events: auto; }
-  .rv-stage { perspective: 1100px; width: min(100%, 400px); position: relative; }
-  .rv-card { position: relative; aspect-ratio: 1.586; transform-style: preserve-3d; }
-  .reveal.open .rv-card { animation: rv-in 1.7s cubic-bezier(.2,.85,.25,1) both; }
-  @keyframes rv-in {
-    0% { opacity: 0; transform: translateY(80px) translateZ(-600px) rotateX(40deg) rotateY(-200deg) scale(.45); }
-    30% { opacity: 1; }
-    62% { transform: translateY(-6px) translateZ(60px) rotateX(-8deg) rotateY(14deg) scale(1.05); }
-    80% { transform: rotateX(3deg) rotateY(-5deg) scale(.99); }
-    100% { transform: none; } }
-  .rv-card > * { position: absolute; inset: 0; -webkit-backface-visibility: hidden; backface-visibility: hidden; }
-  .rv-card .wallet { transform: none !important; min-height: 0; cursor: default; box-shadow: 0 40px 70px -30px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.06) inset; }
-  .rv-card .wallet.rv-old { transform: rotateY(180deg) !important; }
-  .rv-back { transform: rotateY(180deg); border-radius: 22px; overflow: hidden; background: linear-gradient(135deg, #3a3a3c, #121214 70%); box-shadow: 0 30px 60px -30px rgba(0,0,0,.8); }
-  .rv-back i { position: absolute; left: 0; right: 0; top: 16%; height: 19%; background: #050506; }
-  .rv-back b { position: absolute; left: 22px; right: 90px; top: 46%; height: 14%; border-radius: 4px; background: repeating-linear-gradient(90deg, #e9e6dc 0 6px, #d9d5c8 6px 12px); }
-  .rv-back span { position: absolute; right: 22px; bottom: 18px; color: #fff; opacity: .55; font-size: 12px; font-weight: 700; letter-spacing: .3em; }
-  .rv-spark { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; border-radius: 50%; background: #f3d98f; box-shadow: 0 0 10px #f3d98f; opacity: 0; pointer-events: none; }
-  .reveal.open .rv-spark { animation: rv-spark 1.3s var(--ease) both; }
-  @keyframes rv-spark { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.3); } 20% { opacity: 1; } 100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1); } }
-  .rv-check { width: 58px; height: 58px; margin: 30px auto 12px; }
+  .reveal[data-k="classic"] { background: radial-gradient(120% 80% at 50% 38%, #0d1f40, #000 75%); }
+  .reveal[data-k="gold"] { background: radial-gradient(120% 80% at 50% 38%, #2a1d07, #000 75%); }
+  .reveal[data-k="platinum"] { background: radial-gradient(120% 80% at 50% 38%, #08222a, #000 75%); }
+  .reveal[data-k="black"] { background: radial-gradient(120% 80% at 50% 38%, #141417, #000 65%); }
+  .reveal[data-k="team"] { background: radial-gradient(120% 80% at 50% 38%, #2a160a, #000 75%); }
+  .reveal[data-k="owner"] { background: radial-gradient(120% 80% at 50% 38%, #1f1036, #030106 75%); }
+  .cn-fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .cn-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 4; }
+  .cn-scene { position: relative; z-index: 2; width: min(100%, 400px); display: flex; flex-direction: column; align-items: center; }
+  .rv-stage { perspective: 1100px; width: 100%; position: relative; }
+  .rv-card { position: relative; aspect-ratio: 1.586; transform-style: preserve-3d; opacity: 0; }
+  .reveal.done .rv-card { opacity: 1; }
+  .rv-card .wallet { position: absolute; inset: 0; transform: none !important; min-height: 0; cursor: default; box-shadow: 0 40px 70px -30px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.06) inset; }
+  .wallet.bare .w-num, .wallet.bare .w-name, .wallet.bare .w-status, .wallet.bare .w-brand, .wallet.bare .w-sub, .wallet.bare .chip, .wallet.bare .w-logo, .wallet.bare .w-label { opacity: 0; }
+  .cn-ch { display: inline-block; white-space: pre; }
+  .cn-prop { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+  .reveal.done .cn-prop { display: none; }
+  .cn-hint { color: #fff; font-size: 16px; font-weight: 600; margin-top: 34px; letter-spacing: .01em; animation: hint 1.6s ease-in-out infinite; }
+  @keyframes hint { 0%, 100% { opacity: .9; transform: none; } 50% { opacity: .4; transform: scale(.97); } }
+  .reveal.go .cn-hint, .reveal.done .cn-hint { display: none; }
+  .cn-skip { position: absolute; z-index: 5; top: calc(12px + env(safe-area-inset-top)); right: 14px; border: 0; border-radius: 999px; padding: 8px 14px; font-size: 14px; background: rgba(255,255,255,.14); color: #fff; display: none; }
+  .reveal.go:not(.done) .cn-skip { display: block; }
+  .rv-after { display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 30px; opacity: 0; pointer-events: none; }
+  .reveal.done .rv-after { opacity: 1; pointer-events: auto; }
+  .reveal.done .rv-after > * { animation: rise .6s var(--ease) both; }
+  .reveal.done .rv-after > *:nth-child(2) { animation-delay: .1s; } .reveal.done .rv-after > *:nth-child(3) { animation-delay: .22s; } .reveal.done .rv-after > *:nth-child(4) { animation-delay: .32s; }
   .rv-title { color: #fff; font-size: 30px; font-weight: 700; letter-spacing: -.03em; margin: 0; text-align: center; }
+  .reveal.done[data-k="gold"] .rv-title, .reveal.done[data-k="owner"] .rv-title { background: linear-gradient(90deg, #d9a93f, #fff1c2 50%, #d9a93f); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shimmer 3s linear infinite, rise .6s var(--ease) both; }
+  .reveal.done[data-k="platinum"] .rv-title { background: linear-gradient(90deg, #ff9ce0, #9ce4ff, #d9ff9c, #ffe79c, #ff9ce0); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shimmer 3s linear infinite, rise .6s var(--ease) both; }
   .rv-text { color: rgba(255,255,255,.72); font-size: 16px; line-height: 1.4; margin: 8px 12px 0; text-align: center; max-width: 340px; }
   .reveal .btn { max-width: 360px; margin-top: 24px; background: #fff; color: #000; }
-  .reveal.open .rv-after > * { animation: rise .6s var(--ease) both; animation-delay: 1.35s; }
-  .reveal.open .rv-after > *:nth-child(2) { animation-delay: 1.45s; } .reveal.open .rv-after > *:nth-child(3) { animation-delay: 1.55s; } .reveal.open .rv-after > *:nth-child(4) { animation-delay: 1.7s; }
-  .rv-after { display: flex; flex-direction: column; align-items: center; width: 100%; }
+  .cn-again { border: 0; background: none; color: rgba(255,255,255,.7); font-size: 15px; margin-top: 12px; padding: 8px 14px; }
+  .cn-replay { display: block; margin: -4px auto 16px; border: 0; background: none; color: var(--text-2); font-size: 14px; padding: 6px 12px; }
+  .cn-crack { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; }
+  .cn-crack path { fill: none; stroke: rgba(255,255,255,.8); stroke-width: 1.3; stroke-dasharray: 1; stroke-linecap: round; filter: drop-shadow(0 0 2px rgba(255,255,255,.6)); }
+
+  /* Classic — подарок */
+  .cn-box { position: relative; width: 44%; aspect-ratio: 1 / .92; }
+  .cn-box.idle { animation: wob 2.4s ease-in-out infinite; }
+  @keyframes wob { 0%, 60%, 100% { transform: none; } 66% { transform: rotate(-5deg) translateY(-3px); } 74% { transform: rotate(5deg); } 82% { transform: rotate(-3deg); } 90% { transform: rotate(1deg); } }
+  .cn-glow { position: absolute; inset: -55%; background: radial-gradient(closest-side, rgba(170,210,255,.95), rgba(90,150,255,.35) 45%, transparent); opacity: 0; }
+  .cn-body { position: absolute; left: 7%; right: 7%; bottom: 0; height: 66%; display: flex; }
+  .cn-body b { position: relative; flex: 1; background: linear-gradient(160deg, #3677d8, #0e2c63 75%); box-shadow: inset 0 -14px 22px rgba(0,0,0,.35); }
+  .cn-body b.l { border-radius: 6px 0 0 12px; } .cn-body b.r { border-radius: 0 6px 12px 0; background: linear-gradient(200deg, #2c66c2, #0b2552 75%); }
+  .cn-body b::after { content: ""; position: absolute; top: 0; bottom: 0; width: 17%; background: linear-gradient(90deg, #b8862e, #fff0c0 50%, #b8862e); }
+  .cn-body b.l::after { right: 0; } .cn-body b.r::after { left: 0; }
+  .cn-lid { position: absolute; left: 0; right: 0; top: 16%; height: 20%; border-radius: 7px; z-index: 2; background: linear-gradient(90deg, transparent 41.5%, #f3d58a 41.5%, #fff3cf 50%, #f3d58a 58.5%, transparent 58.5%), linear-gradient(160deg, #4a8ae8, #133c84); box-shadow: 0 8px 14px rgba(0,0,0,.4); }
+  .cn-lid::before, .cn-lid::after { content: ""; position: absolute; bottom: 88%; width: 30%; height: 95%; border: 6px solid #f0cf7a; border-radius: 50% 50% 12% 50%; }
+  .cn-lid::before { left: 20%; transform: rotate(-24deg); } .cn-lid::after { right: 20%; transform: scaleX(-1) rotate(-24deg); }
+
+  /* Gold — монета */
+  .cn-coin { width: 36%; aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font: 800 clamp(40px, 13vw, 64px)/1 Georgia, "Times New Roman", serif; color: #8a6420; text-shadow: 0 1px 0 #fff3c4, 0 -1px 0 rgba(0,0,0,.25);
+    background: radial-gradient(circle at 35% 30%, #fff3c4, #f2c75a 32%, #b8862e 72%, #7a5516); box-shadow: 0 0 0 6px #d9a93f inset, 0 0 0 9px #8a6420 inset, 0 0 50px rgba(255,200,90,.55); }
+  .cn-coin.idle { animation: coin-spin 2.6s linear infinite; }
+  @keyframes coin-spin { to { transform: rotateY(360deg); } }
+
+  /* Platinum — голограмма */
+  .cn-proj { position: absolute; inset: 0; }
+  .cn-proj .base { position: absolute; left: 28%; right: 28%; bottom: -20%; height: 11%; border-radius: 50%; background: radial-gradient(closest-side, #e6fdff, #2bd4ff 45%, rgba(43,212,255,0)); box-shadow: 0 0 30px #2bd4ff; }
+  .cn-proj.idle .base { animation: glowp 1.3s ease-in-out infinite; }
+  @keyframes glowp { 50% { opacity: .45; transform: scale(.92); } }
+  .cn-proj .beam { position: absolute; left: -4%; right: -4%; top: -4%; bottom: -16%; opacity: 0; transform-origin: bottom; background: linear-gradient(to top, rgba(43,212,255,.4), rgba(43,212,255,.05) 85%, transparent); clip-path: polygon(40% 100%, 60% 100%, 100% 0, 0 0); }
+  .cn-wire { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .cn-wire rect { fill: rgba(43,212,255,.06); stroke: #7dfcff; stroke-width: 1.6; stroke-dasharray: 1; stroke-dashoffset: 1; filter: drop-shadow(0 0 6px #2bd4ff); vector-effect: non-scaling-stroke; }
+  .cn-scan { position: absolute; left: -5%; right: -5%; top: 0; height: 3px; background: #e9fdff; box-shadow: 0 0 20px 7px rgba(43,212,255,.85); opacity: 0; z-index: 3; }
+
+  /* Black — прицел */
+  .cn-ret { width: 44%; overflow: visible; }
+  .cn-ret circle, .cn-ret path { fill: none; stroke: #ff3b3b; stroke-width: 1.6; filter: drop-shadow(0 0 5px #ff3b3b); }
+  .cn-ret .o { stroke-dasharray: 6 8; opacity: .6; } .cn-ret .d { fill: #ff3b3b; }
+  .cn-ret.idle { animation: ret 2.4s ease-in-out infinite; }
+  @keyframes ret { 0%, 100% { transform: scale(1) rotate(0); } 50% { transform: scale(.9) rotate(45deg); } }
+
+  /* Team — чашка кофе */
+  .cn-cup { position: relative; width: 38%; aspect-ratio: 1; }
+  .cn-cup.idle { animation: wob 3s ease-in-out infinite; }
+  .cn-cup .sau { position: absolute; left: -4%; right: 4%; bottom: 8%; height: 14%; border-radius: 50%; background: linear-gradient(#fbf8f4, #cfc8bf); box-shadow: 0 10px 18px rgba(0,0,0,.45); }
+  .cn-cup .body { position: absolute; left: 12%; right: 24%; bottom: 16%; height: 54%; border-radius: 0 0 46% 46% / 0 0 64% 64%; background: linear-gradient(90deg, #d9d2c9, #fffdf9 40%, #e3ddd5); }
+  .cn-cup .body i { position: absolute; left: 0; right: 0; top: -9%; height: 18%; border-radius: 50%; background: radial-gradient(#7a4526, #2a1408 75%); border: 3px solid #f6f2ec; box-sizing: border-box; }
+  .cn-cup .hdl { position: absolute; right: 7%; top: 40%; width: 24%; height: 28%; border: 7px solid #ebe5dd; border-radius: 50%; }
+  .cn-cup .st { position: absolute; bottom: 66%; width: 12%; height: 42%; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,255,255,.55), transparent); filter: blur(5px); animation: steam 2.4s ease-in infinite; opacity: 0; }
+  .cn-cup .st:nth-of-type(1) { left: 26%; } .cn-cup .st:nth-of-type(2) { left: 40%; animation-delay: .8s; } .cn-cup .st:nth-of-type(3) { left: 54%; animation-delay: 1.6s; }
+  @keyframes steam { 0% { opacity: 0; transform: translateY(20%) scaleX(.6); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(-80%) scaleX(1.4) rotate(12deg); } }
+
+  /* Owner — портал */
+  .cn-portal { position: relative; width: 54%; aspect-ratio: 1; }
+  .cn-portal .ring { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from var(--a), #ffd978, #b06bff, #3be3d0, #ff7ab8, #ffd978);
+    -webkit-mask: radial-gradient(closest-side, transparent 70%, #000 72%, #000 90%, transparent 92%); mask: radial-gradient(closest-side, transparent 70%, #000 72%, #000 90%, transparent 92%); filter: drop-shadow(0 0 8px #ffd978); animation: spin-a 2.4s linear infinite; }
+  .cn-portal .core { position: absolute; inset: 15%; border-radius: 50%; background: radial-gradient(closest-side, #000 35%, #2a0f4a 70%, rgba(80,30,140,0)); }
+  .cn-portal .crown, .cn-crown { position: absolute; left: 50%; top: -34%; transform: translateX(-50%); font-size: clamp(40px, 12vw, 58px); line-height: 1; color: #ffd978; text-shadow: 0 0 18px rgba(255,200,90,.9), 0 2px 0 #8a6420; }
+  .cn-portal.idle .crown { animation: crownf 2.2s ease-in-out infinite; }
+  @keyframes crownf { 50% { transform: translateX(-50%) translateY(-8px); } }
+  .cn-crown { top: 50%; z-index: 4; pointer-events: none; }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 </head>
@@ -467,6 +534,7 @@
         <div class="w-label" style="text-align:right">Seven<br>Times</div>
       </div>
     </div></div>
+    <button class="cn-replay hidden" id="cnReplay">▶ Анимация карты</button>
 
     <div class="card hidden" id="phoneBox">
       <div class="title">Активируйте карту</div>
@@ -716,12 +784,18 @@
 
 <!-- нижние листы -->
 <div class="reveal" id="reveal" role="dialog" aria-modal="true" aria-label="Карта создана">
-  <div class="rv-stage"><div class="rv-card" id="rvCard"></div></div>
-  <div class="rv-after">
-    <svg class="chk rv-check" viewBox="0 0 52 52"><circle class="c" cx="26" cy="26" r="24"/><path class="p" d="M16 27l7 7 14-15"/></svg>
-    <p class="rv-title" id="rvTitle">Поздравляем!</p>
-    <p class="rv-text" id="rvText">Ваш номер подтверждён, карта успешно создана</p>
-    <button class="btn big" id="rvOk">Открыть карту</button>
+  <canvas class="cn-fx" id="cnFx"></canvas>
+  <div class="cn-flash" id="cnFlash"></div>
+  <button class="cn-skip" id="cnSkip">Пропустить</button>
+  <div class="cn-scene" id="cnScene">
+    <div class="rv-stage" id="cnStage"><div class="cn-prop" id="cnProp"></div><div class="rv-card" id="rvCard"></div></div>
+    <div class="cn-hint" id="cnHint"></div>
+    <div class="rv-after">
+      <p class="rv-title" id="rvTitle">Поздравляем!</p>
+      <p class="rv-text" id="rvText">Ваш номер подтверждён, карта успешно создана</p>
+      <button class="btn big" id="rvOk">Открыть карту</button>
+      <button class="cn-again" id="rvAgain">↻ Ещё раз</button>
+    </div>
   </div>
 </div>
 <div class="scrim" id="scrim"></div>
@@ -1095,6 +1169,7 @@ function renderCard(c) {
   if (curTab === 'card') $('guest').classList.remove('hidden');
   const ok = !!c.phoneVerified, blocked = !!c.blocked; // !!: toggle(x, undefined) не ставит, а ПЕРЕКЛЮЧАЕТ класс — QR мигал бы
   document.querySelector('.stage').classList.toggle('hidden', !ok); // пока номер не подтверждён — карты не видно
+  $('cnReplay').classList.toggle('hidden', !ok || blocked);
   if (c.status) { paintStatus(c.status); try { localStorage.setItem('card_status', c.status); } catch {} }
   $('cardName').textContent = latin(c.name || 'Guest');
   $('cardNo').textContent = ok ? fmtCardNo(c.number || c.id) : '';
@@ -1148,7 +1223,7 @@ function welcomeCountdown(w, show) {
   paint(); welTimer = setInterval(paint, 30000);
 }
 // «Выпуск карты»: один раз — сразу после подтверждения номера (или при первом открытии, если номер подтвердили в боте)
-let lastOk, revealing = false, pendingNotice = null, revealTimer = 0;
+let lastOk;
 function maybeReveal(c, ok) {
   const key = 'revealed_' + (c.id || ''), was = lastOk;
   lastOk = ok;
@@ -1158,52 +1233,427 @@ function maybeReveal(c, ok) {
   const firstTime = was === false || (c.notice && c.notice.kind === 'welcome');
   if (!firstTime) return;
   try { localStorage.setItem(key, '1'); } catch {}
-  revealCard();
+  playCine();
 }
-// Статусы по старшинству — чтобы на обороте в 3D-перевороте показать прошлый статус
-const STATUS_PREV = { gold: 'classic', platinum: 'gold' };
-let rvStop = null;
-function revealCard(o) {
+// ══════════ Кино: выпуск карты и новый статус ══════════
+// У каждого статуса свой ролик 6–9 с со звуком — чтобы хотелось снять в сторис:
+// Classic — подарок трясётся и взрывается, Gold — монета и золотой дождь, Platinum — голограмма сканирует карту,
+// Black — выстрел и карта-пуля в дыму, Team — карта вылетает из чашки кофе, Owner — портал, молнии и золотой взрыв.
+// Ролик стартует от нажатия: без касания телефон не даёт включить звук.
+
+// Звук синтезируем на лету (Web Audio) — ни одного файла, ничего не грузится
+const Snd = (() => {
+  let ac = null, master = null, noiseBuf = null;
+  const init = () => {
+    try {
+      if (!ac) {
+        const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+        ac = new C(); master = ac.createGain(); master.gain.value = .6;
+        const comp = ac.createDynamicsCompressor(); master.connect(comp); comp.connect(ac.destination);
+        const len = ac.sampleRate * 2; noiseBuf = ac.createBuffer(1, len, ac.sampleRate);
+        const d = noiseBuf.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      }
+      if (ac.state === 'suspended') ac.resume();
+    } catch { ac = null; }
+  };
+  const env = (g, t, a, peak, d) => { g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(.0001, t + a + d); };
+  const noise = (t, dur, type, f0, f1, peak, a) => {
+    a = a || .005; const s = ac.createBufferSource(); s.buffer = noiseBuf; s.loop = true;
+    const f = ac.createBiquadFilter(); f.type = type; f.frequency.setValueAtTime(f0, t); if (f1) f.frequency.exponentialRampToValueAtTime(f1, t + a + dur);
+    const g = ac.createGain(); env(g, t, a, peak, dur); s.connect(f); f.connect(g); g.connect(master); s.start(t); s.stop(t + a + dur + .05);
+  };
+  const tone = (t, type, f0, f1, dur, peak, a) => {
+    a = a || .005; const o = ac.createOscillator(); o.type = type; o.frequency.setValueAtTime(f0, t); if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + a + dur);
+    const g = ac.createGain(); env(g, t, a, peak, dur); o.connect(g); g.connect(master); o.start(t); o.stop(t + a + dur + .05);
+  };
+  const fx = {
+    boom(t) { noise(t, 1.5, 'lowpass', 3200, 50, .9); tone(t, 'sine', 120, 30, 1.3, .95); },
+    pop(t) { noise(t, .22, 'bandpass', 2000, 400, .5); tone(t, 'triangle', 700, 140, .18, .35); },
+    shot(t) { noise(t, .06, 'highpass', 1500, 0, 1, .001); noise(t + .01, .7, 'lowpass', 1800, 70, .8); tone(t, 'sine', 170, 38, .4, .95, .002); },
+    whoosh(t, d) { d = d || .8; noise(t, d * .55, 'bandpass', 250, 2800, .4, d * .45); },
+    rumble(t, d) { d = d || 2; noise(t, d * .25, 'lowpass', 110, 420, .55, d * .75); tone(t, 'sine', 42, 75, d * .25, .5, d * .75); },
+    riser(t, d) { d = d || 2.5; tone(t, 'sawtooth', 90, 1100, d * .1, .1, d * .9); noise(t, d * .1, 'bandpass', 400, 6000, .16, d * .9); },
+    thunder(t) { noise(t, .8, 'lowpass', 1600, 110, .5, .01); },
+    chime(t, b) { b = b || 880; [0, 4, 7, 12].forEach((s, i) => tone(t + i * .09, 'sine', b * 2 ** (s / 12), 0, 1.3, .2)); },
+    chord(t, b) { b = b || 110; [0, 7, 12, 16, 19, 24, 28].forEach((s, i) => tone(t + i * .025, i % 2 ? 'sine' : 'triangle', b * 2 ** (s / 12), 0, 2.8, .1, .3)); },
+    coin(t) { tone(t, 'sine', 2093, 0, .22, .16); tone(t + .05, 'sine', 3136, 0, .3, .1); },
+    beep(t, f) { tone(t, 'square', f || 1200, 0, .06, .05); },
+    thump(t) { tone(t, 'sine', 95, 38, .3, .85); noise(t, .12, 'lowpass', 900, 100, .35); },
+    tick(t) { tone(t, 'square', 2600, 0, .02, .035); },
+    sparkle(t) { for (let i = 0; i < 6; i++) tone(t + i * .05, 'sine', 2400 + Math.random() * 2600, 0, .2, .05); },
+  };
+  // пока контекст «просыпается», звук встаёт в очередь
+  return { init, play(n, v) { if (!ac || ac.state === 'closed') return; try { fx[n](ac.currentTime + .01, v); } catch {} } };
+})();
+
+// Частицы на весь экран: конфетти, искры, монеты, зёрна, дым, кольца, лучи, молнии, «матрица», вихрь, звёзды
+const GLYPHS = 'アイウエオカキクケコサシスセソタチツテト0123456789';
+const Scene = (() => {
+  let cv = null, ctx = null, W = 0, H = 0, raf = 0, last = 0, on = false;
+  let P = [], rays = null, cols = null, vort = null, starsOn = false, stars = [], smokeAt = null;
+  const R = (a, b) => a + Math.random() * (b - a);
+  // частицы мягкие — 1.5x хватает, телефону легче
+  const size = () => { const d = Math.min(window.devicePixelRatio || 1, 1.5); W = innerWidth; H = innerHeight; cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0); };
+  const add = (p) => { if (P.length < 900) P.push(p); };
+  function start() { cv = $('cnFx'); ctx = cv.getContext('2d'); size(); P = []; rays = cols = vort = smokeAt = null; starsOn = false; on = true; last = performance.now(); window.addEventListener('resize', size); if (!raf) raf = requestAnimationFrame(loop); }
+  function stop() { on = false; if (raf) cancelAnimationFrame(raf); raf = 0; P = []; window.removeEventListener('resize', size); if (ctx) ctx.clearRect(0, 0, W, H); }
+  function loop(now) { raf = 0; if (!on) return; const dt = Math.min(.05, (now - last) / 1000); last = now; if (!document.hidden) draw(dt, now / 1000); raf = requestAnimationFrame(loop); }
+  function burst(x, y, o) {
+    o = o || {}; const n = o.n || 60, cs = o.colors || ['#fff'], sp = o.speed || 420;
+    for (let i = 0; i < n; i++) {
+      const a = o.up ? R(-2.6, -.54) : R(0, 6.283), v = R(.25, 1) * sp;
+      add({ t: o.kind || 'spark', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, g: o.g ?? 380, life: 0, max: R(.8, 1.8) * (o.dur || 1), c: cs[i % cs.length], r: R(1.2, 3.2) * (o.size || 1), rot: R(0, 6.28), vr: R(-9, 9), w: R(5, 10), h: R(3, 6), ph: R(0, 6.28) });
+    }
+  }
+  function rain(kind, dur, rate) {
+    const until = performance.now() + dur;
+    const drop = () => { if (!on || performance.now() > until) return; for (let i = 0; i < (rate || 2); i++) add({ t: kind, x: R(0, W), y: -20, vx: R(-30, 30), vy: R(120, 320), g: 300, life: 0, max: 4, r: R(7, 13), rot: R(0, 6.28), vr: R(-6, 6), ph: R(0, 6.28), c: '#f5c451', w: 8, h: 5 }); setTimeout(drop, 45); };
+    drop();
+  }
+  function smoke(x, y, n, o) { o = o || {}; for (let i = 0; i < (n || 1); i++) add({ t: 'smoke', x: x + R(-10, 10), y: y + R(-10, 10), vx: R(-40, 40) * (o.spread || 1), vy: R(-50, 10) * (o.spread || 1), g: -10, life: 0, max: R(1.6, 2.8), r: R(18, 34) * (o.size || 1), c: o.c || '200,200,210', a: o.a || .22 }); }
+  function bolt(x0, y0, x1, y1, c) { const pts = [[x0, y0]]; for (let i = 1; i < 10; i++) { const q = i / 10; pts.push([x0 + (x1 - x0) * q + R(-30, 30), y0 + (y1 - y0) * q + R(-14, 14)]); } pts.push([x1, y1]); add({ t: 'bolt', pts, life: 0, max: .25, c: c || '#e8d9ff' }); }
+  function draw(dt, t) {
+    ctx.clearRect(0, 0, W, H);
+    if (starsOn) for (const s of stars) { ctx.globalAlpha = .3 + .7 * (.5 + .5 * Math.sin(t * 2 + s.ph)); ctx.fillStyle = '#fff6e0'; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.283); ctx.fill(); }
+    ctx.globalAlpha = 1;
+    if (cols) {
+      ctx.font = '600 14px ui-monospace, Menlo, monospace';
+      cols.forEach((c, i) => { c.y += c.v * dt; if (c.y > H + 240) c.y = R(-300, 0);
+        for (let j = 0; j < 14; j++) { const y = c.y - j * 16; if (y < -16 || y > H) continue; ctx.fillStyle = j ? `rgba(60,230,255,${(1 - j / 14) * .5 * c.a})` : `rgba(225,255,255,${.95 * c.a})`; ctx.fillText(GLYPHS[(i * 7 + j + (t * 10 | 0)) % GLYPHS.length], i * 16 + 2, y); } });
+    }
+    if (rays) {
+      rays.a = Math.min(1, rays.a + dt * 1.2); ctx.save(); ctx.translate(rays.x, rays.y); ctx.rotate(t * .22); ctx.globalCompositeOperation = 'lighter';
+      const L = Math.max(W, H); for (let i = 0; i < 16; i++) { ctx.rotate(6.283 / 16); ctx.fillStyle = rays.c.replace('A', ((.06 + .05 * Math.sin(t * 2 + i)) * rays.a).toFixed(3)); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(L, -L * .06); ctx.lineTo(L, L * .06); ctx.fill(); }
+      ctx.restore();
+    }
+    if (vort) for (let i = 0; i < 7; i++) { add({ t: 'vort', cx: vort.x, cy: vort.y, a: R(0, 6.283), d: Math.max(W, H) * R(.4, .7), life: 0, max: 9, c: vort.c[i % vort.c.length], r: R(1, 2.8) }); }
+    if (smokeAt) { const p = smokeAt(); if (p) smoke(p.x, p.y, 2, { spread: .5, size: p.s || 1 }); }
+    P = P.filter((p) => (p.life += dt) < p.max);
+    for (const p of P) {
+      const q = p.life / p.max;
+      if (p.t === 'ring') { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = (1 - q) * .9; ctx.strokeStyle = p.c; ctx.lineWidth = 10 * (1 - q) + 1; ctx.beginPath(); ctx.arc(p.x, p.y, q ** .6 * p.R, 0, 6.283); ctx.stroke(); continue; }
+      if (p.t === 'bolt') { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 1 - q; ctx.strokeStyle = p.c; ctx.lineWidth = 3; ctx.shadowColor = p.c; ctx.shadowBlur = 16; ctx.beginPath(); p.pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.stroke(); ctx.shadowBlur = 0; continue; }
+      if (p.t === 'vort') { p.a += dt * (1.2 + 160 / Math.max(30, p.d)); p.d -= dt * (110 + 9000 / Math.max(30, p.d)); if (p.d < 6) { p.life = p.max; continue; }
+        ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(1, p.life * 4) * .9; ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.cx + Math.cos(p.a) * p.d, p.cy + Math.sin(p.a) * p.d * .55, p.r, 0, 6.283); ctx.fill(); continue; }
+      if (p.t === 'smoke') { p.vx *= .98; p.vy *= .98; p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; const r = p.r * (1 + q * 2.2);
+        ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = p.a * Math.sin(q * 3.14); const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r); g.addColorStop(0, `rgba(${p.c},1)`); g.addColorStop(1, `rgba(${p.c},0)`); ctx.fillStyle = g; ctx.fillRect(p.x - r, p.y - r, r * 2, r * 2); continue; }
+      p.vy += p.g * dt; p.vx *= .99; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+      ctx.globalAlpha = q < .7 ? 1 : (1 - q) / .3;
+      if (p.t === 'spark') { ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283); ctx.fill(); ctx.globalAlpha *= .22; ctx.beginPath(); ctx.arc(p.x, p.y, p.r * 3.6, 0, 6.283); ctx.fill(); }
+      else if (p.t === 'confetti') { ctx.globalCompositeOperation = 'source-over'; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.scale(1, Math.cos(p.rot * 1.7 + p.ph)); ctx.fillStyle = p.c; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore(); }
+      else if (p.t === 'coin') { ctx.globalCompositeOperation = 'source-over'; const sx = Math.cos(p.rot * .8 + p.ph); ctx.save(); ctx.translate(p.x, p.y); ctx.scale(Math.max(.08, Math.abs(sx)), 1);
+        const g = ctx.createRadialGradient(-p.r * .3, -p.r * .3, 0, 0, 0, p.r); g.addColorStop(0, '#fff3c4'); g.addColorStop(.45, sx > 0 ? '#f2c75a' : '#d9a93f'); g.addColorStop(1, '#8a6420');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, p.r, 0, 6.283); ctx.fill(); ctx.strokeStyle = 'rgba(120,80,20,.6)'; ctx.lineWidth = 1.2; ctx.stroke(); ctx.restore(); }
+      else if (p.t === 'bean') { ctx.globalCompositeOperation = 'source-over'; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillStyle = '#5a3218'; ctx.beginPath(); ctx.ellipse(0, 0, p.r * .75, p.r * .5, 0, 0, 6.283); ctx.fill();
+        ctx.strokeStyle = '#2a1408'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(-p.r * .6, 0); ctx.quadraticCurveTo(0, p.r * .22, p.r * .6, 0); ctx.stroke(); ctx.restore(); }
+    }
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+  }
+  return { start, stop, burst, rain, smoke, bolt,
+    ring(x, y, c, max) { add({ t: 'ring', x, y, life: 0, max: .9, c: c || '#fff', R: max || Math.max(W, H) * .7 }); },
+    rays(x, y, c) { rays = x == null ? null : { x, y, c, a: 0 }; },
+    matrix(v) { cols = v ? Array.from({ length: Math.ceil(W / 16) }, () => ({ y: R(-H, 0), v: R(90, 260), a: R(.4, 1) })) : null; },
+    vortex(x, y, c) { vort = x == null ? null : { x, y, c }; },
+    stars(v) { starsOn = v; stars = v ? Array.from({ length: 130 }, () => ({ x: R(0, W), y: R(0, H), r: R(.3, 1.6), ph: R(0, 6.28) })) : []; },
+    smokeFrom(fn) { smokeAt = fn; },
+    get W() { return W; }, get H() { return H; } };
+})();
+
+const CINE_PROPS = {
+  classic: '<div class="cn-box idle"><div class="cn-glow"></div><div class="cn-body"><b class="l"></b><b class="r"></b></div><div class="cn-lid"></div></div>',
+  gold: '<div class="cn-coin idle">7</div>',
+  platinum: '<div class="cn-proj idle"><div class="beam"></div><div class="base"></div><svg class="cn-wire" viewBox="0 0 317 200" preserveAspectRatio="none"><rect x="1" y="1" width="315" height="198" rx="14" pathLength="1"/></svg><div class="cn-scan"></div></div>',
+  black: '<svg class="cn-ret idle" viewBox="0 0 100 100"><circle cx="50" cy="50" r="30"/><circle class="o" cx="50" cy="50" r="44"/><circle class="d" cx="50" cy="50" r="2.4"/><path d="M50 2v24M50 74v24M2 50h24M74 50h24"/></svg>',
+  team: '<div class="cn-cup idle"><div class="sau"></div><div class="hdl"></div><div class="body"><i></i></div><span class="st"></span><span class="st"></span><span class="st"></span></div>',
+  owner: '<div class="cn-portal idle"><div class="ring"></div><div class="core"></div><div class="crown">♛</div></div>',
+};
+const CINE_HINT = { classic: 'Нажмите на подарок', gold: 'Нажмите на монету', platinum: 'Нажмите, чтобы сканировать', black: 'Нажмите — и держитесь', team: 'Нажмите на чашку', owner: 'Нажмите, чтобы открыть портал' };
+
+let cineTok = 0, cineOpts = null, cineTimers = [], cineTexts = [], revealing = false, pendingNotice = null, rvStop = null;
+const STOP = {};
+const hap = (k) => { try { tg?.HapticFeedback?.impactOccurred(k); } catch {} };
+const ctr = (el) => { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height }; };
+const A = (el, kf, o) => (el ? el.animate(kf, Object.assign({ fill: 'backwards', easing: 'cubic-bezier(.2,.8,.2,1)' }, o)) : null);
+function flash(color, dur, peak) { $('cnFlash').animate([{ opacity: peak ?? 1, background: color || '#fff' }, { opacity: 0, background: color || '#fff' }], { duration: dur || 500, easing: 'ease-out' }); }
+function shake(el, amp, dur, grow) {
+  const n = Math.max(6, Math.round(dur / 45)), k = [];
+  for (let i = 0; i <= n; i++) { const q = i / n, a = amp * (grow ? q : 1 - q); k.push({ transform: `translate(${((Math.random() * 2 - 1) * a).toFixed(1)}px, ${((Math.random() * 2 - 1) * a).toFixed(1)}px) rotate(${((Math.random() * 2 - 1) * a * .15).toFixed(2)}deg)` }); }
+  k[n] = { transform: 'none' };
+  return el.animate(k, { duration: dur, easing: 'linear' });
+}
+function crack(c) { // «треснувшее стекло» в точке удара
+  const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('class', 'cn-crack'); svg.setAttribute('viewBox', `0 0 ${innerWidth} ${innerHeight}`);
+  let d = '';
+  for (let i = 0; i < 12; i++) { let a = i / 12 * 6.283 + Math.random() * .4, x = c.x, y = c.y; const L = 70 + Math.random() * 200; d += `M${x.toFixed(1)} ${y.toFixed(1)}`;
+    for (let s = 0; s < 6; s++) { a += (Math.random() - .5) * .55; x += Math.cos(a) * L / 6; y += Math.sin(a) * L / 6; d += `L${x.toFixed(1)} ${y.toFixed(1)}`; } }
+  for (const r of [22, 48]) { d += `M${(c.x + r).toFixed(1)} ${c.y.toFixed(1)}`; for (let i = 1; i <= 12; i++) { const a = i / 12 * 6.283, rr = r * (.85 + Math.random() * .3); d += `L${(c.x + Math.cos(a) * rr).toFixed(1)} ${(c.y + Math.sin(a) * rr).toFixed(1)}`; } }
+  const p = document.createElementNS(ns, 'path'); p.setAttribute('d', d); p.setAttribute('pathLength', '1'); svg.appendChild(p);
+  $('reveal').appendChild(svg);
+  p.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: 180, fill: 'forwards', easing: 'ease-out' });
+  svg.animate([{ opacity: 1 }, { opacity: 1, offset: .65 }, { opacity: 0 }], { duration: 1900, fill: 'forwards' }).onfinish = () => svg.remove();
+}
+function chars(el) {
+  if (!el) return [];
+  const s = el.textContent; cineTexts.push([el, s]); el.textContent = '';
+  return [...s].map((ch) => { const sp = document.createElement('span'); sp.className = 'cn-ch'; sp.textContent = ch === ' ' ? ' ' : ch; el.appendChild(sp); return sp; });
+}
+const NUM_SHADOW = '0 1px 0 rgba(0,0,0,.55), 0 -1px 0 rgba(255,255,255,.18)';
+const SCRAMBLE = '0123456789#$%&@*+=<>ABCDEF';
+
+// Номер, имя и статус: у каждого статуса свой 3D-эффект. Возвращает длительность
+function cineText(kind, front, tok, later) {
+  const q = (s) => front.querySelector(s), num = q('.w-num'), name = q('.w-name'), st = q('.w-status'), brand = q('.w-brand'), sub = q('.w-sub'), chip = q('.chip'), logo = q('.w-logo');
+  const op = (el) => (el ? getComputedStyle(el).opacity : 1);
+  const subOp = op(sub), labOp = op(front.querySelector('.w-label'));
+  front.classList.remove('bare');
+  A(logo, [{ opacity: 0, transform: 'scale(0) rotate(-200deg)' }, { opacity: 1, transform: 'scale(1.25) rotate(12deg)', offset: .7 }, { opacity: 1, transform: 'none' }], { duration: 850 });
+  A(chip, [{ opacity: 0, transform: 'perspective(300px) translateX(-40px) rotateY(90deg)' }, { opacity: 1, transform: 'none' }], { duration: 650, delay: 120 });
+  A(brand, [{ opacity: 0, letterSpacing: '1.1em', filter: 'blur(6px)' }, { opacity: 1, letterSpacing: '.3em', filter: 'blur(0px)' }], { duration: 950, delay: 80 });
+  A(sub, [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: subOp, transform: 'none' }], { duration: 600, delay: 300 });
+  front.querySelectorAll('.w-label').forEach((l, i) => A(l, [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: labOp, transform: 'none' }], { duration: 500, delay: 500 + i * 120 }));
+  const cs = chars(num);
+  let nd = 1500;
+  if (kind === 'gold') { // игровой автомат: цифры крутятся и встают по одной со звоном
+    const ds = cs.filter((c) => /\d/.test(c.textContent)), fin = ds.map((c) => c.textContent), t0 = performance.now();
+    A(num, [{ opacity: 0 }, { opacity: 1 }], { duration: 200 });
+    ds.forEach((c) => { c.style.color = '#ffe08a'; });
+    const iv = setInterval(() => {
+      if (tok !== cineTok) return clearInterval(iv);
+      let alive = 0; const now = performance.now();
+      ds.forEach((c, i) => {
+        if (c.dataset.done) return;
+        if (now - t0 >= 300 + i * 95) { c.dataset.done = 1; c.textContent = fin[i]; c.style.color = ''; c.animate([{ transform: 'translateY(-50%)', filter: 'brightness(2.2)' }, { transform: 'translateY(10%)', offset: .6 }, { transform: 'none', filter: 'none' }], { duration: 320, easing: 'ease-out' }); if (i % 4 === 3) Snd.play('coin'); else Snd.play('tick'); }
+        else { alive++; c.textContent = String((Math.random() * 10) | 0); }
+      });
+      if (!alive) clearInterval(iv);
+    }, 45);
+    cineTimers.push(iv); nd = 300 + ds.length * 95 + 320;
+  } else if (kind === 'platinum') { // расшифровка: символы перебираются и встают на место
+    const t0 = performance.now();
+    cs.forEach((c) => { if (c.textContent.trim()) { c.dataset.f = c.textContent; c.style.color = '#7dfcff'; c.style.textShadow = '0 0 10px #2bd4ff'; } });
+    A(num, [{ opacity: 0 }, { opacity: 1 }], { duration: 150 });
+    const iv = setInterval(() => {
+      if (tok !== cineTok) return clearInterval(iv);
+      let alive = 0; const now = performance.now();
+      cs.forEach((c, i) => {
+        if (!c.dataset.f) return;
+        if (now - t0 >= 250 + i * 70) { c.textContent = c.dataset.f; delete c.dataset.f; c.style.color = ''; c.style.textShadow = ''; c.animate([{ filter: 'brightness(3)', transform: 'scale(1.3)' }, { filter: 'none', transform: 'none' }], { duration: 260 }); if (i % 3 === 0) Snd.play('beep', 1500 + i * 40); }
+        else { alive++; c.textContent = SCRAMBLE[(Math.random() * SCRAMBLE.length) | 0]; }
+      });
+      if (!alive) clearInterval(iv);
+    }, 40);
+    cineTimers.push(iv); nd = 250 + cs.length * 70 + 260;
+  } else if (kind === 'black') { // печать: группы цифр вбиваются с ударом
+    const groups = [[]]; cs.forEach((c) => (c.textContent.trim() ? groups[groups.length - 1].push(c) : groups.push([c])));
+    groups.forEach((g, i) => {
+      g.forEach((c) => A(c, [{ opacity: 0, transform: 'scale(3.4)', filter: 'blur(8px)' }, { opacity: 1, transform: 'scale(.9)', filter: 'blur(0px)', offset: .75 }, { opacity: 1, transform: 'none', filter: 'blur(0px)' }], { duration: 280, delay: i * 340, easing: 'cubic-bezier(.6,0,.9,.4)' }));
+      later(() => { Snd.play('thump'); hap('medium'); shake($('rvCard'), 5, 200); }, i * 340 + 220);
+    });
+    nd = groups.length * 340 + 200;
+  } else if (kind === 'team') {
+    cs.forEach((c, i) => A(c, [{ opacity: 0, transform: 'perspective(300px) translateY(110%) rotateX(-90deg)' }, { opacity: 1, transform: 'perspective(300px) translateY(0) rotateX(0deg)' }], { duration: 560, delay: i * 42 }));
+    nd = cs.length * 42 + 560;
+  } else if (kind === 'owner') { // гравировка золотом: цифры вылетают из глубины
+    cs.forEach((c, i) => {
+      A(c, [{ opacity: 0, transform: 'perspective(500px) translateZ(440px) rotateY(-100deg)', color: '#ffe08a', textShadow: '0 0 24px #ffcf5a, 0 0 0 rgba(0,0,0,0)' },
+        { opacity: 1, transform: 'perspective(500px) translateZ(0px) rotateY(0deg)', color: '#ffe08a', textShadow: '0 0 12px #ffcf5a, 0 0 0 rgba(0,0,0,0)', offset: .7 },
+        { opacity: 1, transform: 'perspective(500px) translateZ(0px) rotateY(0deg)', color: '#f4f1ea', textShadow: NUM_SHADOW }], { duration: 950, delay: i * 75, easing: 'cubic-bezier(.2,.9,.2,1)' });
+      if (i % 4 === 3) later(() => Snd.play('sparkle'), i * 75 + 450);
+    });
+    nd = cs.length * 75 + 950;
+  } else { // Classic: цифры печатаются со вспышкой
+    cs.forEach((c, i) => { A(c, [{ opacity: 0, transform: 'translateY(-14px) scale(2.2)', filter: 'blur(5px)', textShadow: '0 0 18px #9cc8ff, 0 0 0 rgba(0,0,0,0)' }, { opacity: 1, transform: 'none', filter: 'blur(0px)', textShadow: NUM_SHADOW }], { duration: 440, delay: i * 58 }); if (i % 5 === 4) later(() => Snd.play('tick'), i * 58); });
+    nd = cs.length * 58 + 440;
+  }
+  const nameAt = Math.round(nd * .75), ns = chars(name);
+  ns.forEach((c, i) => A(c, [{ opacity: 0, transform: 'perspective(400px) rotateX(-100deg) translateY(-6px)' }, { opacity: 1, transform: 'perspective(400px) rotateX(0deg) translateY(0)' }], { duration: 600, delay: nameAt + i * 38, easing: 'cubic-bezier(.3,1.45,.5,1)' }));
+  const stAt = nameAt + ns.length * 38 + 250;
+  A(st, [{ opacity: 0, transform: 'scale(3)', filter: 'blur(10px)' }, { opacity: 1, transform: 'scale(.9)', filter: 'blur(0px)', offset: .7 }, { opacity: 1, transform: 'none', filter: 'blur(0px)' }], { duration: 750, delay: stAt });
+  later(() => {
+    const c = ctr(st || front); Scene.burst(c.x, c.y, { n: 40, colors: kind === 'gold' || kind === 'owner' ? ['#fff1c2', '#ffd978'] : kind === 'platinum' ? ['#ff9ce0', '#9ce4ff', '#d9ff9c'] : ['#fff', '#cfe0ff'], speed: 260, g: 80 });
+    Snd.play('chime', { classic: 880, gold: 1046, platinum: 1318, black: 659, team: 784, owner: 523 }[kind]); if (kind === 'owner' || kind === 'black') Snd.play('chord', kind === 'owner' ? 131 : 98);
+  }, stAt + 450);
+  return stAt + 1100;
+}
+
+async function cineFly(holder, kf, dur, w, easing) { holder.animate(kf, { duration: dur, fill: 'forwards', easing: easing || 'cubic-bezier(.2,.8,.2,1)' }); await w(dur); }
+const CINE = {
+  async classic({ w, prop, holder, later, scene }) { // подарок трясётся, светится изнутри и взрывается
+    const box = prop.querySelector('.cn-box'), lid = box.querySelector('.cn-lid'), l = box.querySelector('.l'), r = box.querySelector('.r'), glow = box.querySelector('.cn-glow');
+    box.classList.remove('idle'); Snd.play('rumble', 2.3); Snd.play('riser', 2.3);
+    shake(box, 16, 2300, true);
+    A(glow, [{ opacity: 0, transform: 'scale(.5)' }, { opacity: 1, transform: 'scale(1.35)' }], { duration: 2300, easing: 'ease-in', fill: 'forwards' });
+    for (let i = 0; i < 8; i++) later(() => { const c = ctr(box); Scene.burst(c.x + (Math.random() - .5) * c.w * .7, c.y - c.h * .12, { n: 7, colors: ['#bfe0ff', '#fff'], speed: 170, g: 220, dur: .6 }); hap('light'); }, 250 + i * 260);
+    await w(2300);
+    const c = ctr(box); Snd.play('boom'); Snd.play('pop'); hap('heavy'); flash('#dbeaff', 700); shake(scene, 16, 520);
+    A(lid, [{ transform: 'none', opacity: 1 }, { transform: 'translate(-30%, -280%) rotate(-55deg)', opacity: 0 }], { duration: 950, fill: 'forwards', easing: 'cubic-bezier(.2,.7,.4,1)' });
+    A(l, [{ transform: 'none', opacity: 1 }, { transform: 'translate(-190%, 150%) rotate(-75deg)', opacity: 0 }], { duration: 1050, fill: 'forwards', easing: 'cubic-bezier(.3,.6,.6,1)' });
+    A(r, [{ transform: 'none', opacity: 1 }, { transform: 'translate(190%, 150%) rotate(75deg)', opacity: 0 }], { duration: 1050, fill: 'forwards', easing: 'cubic-bezier(.3,.6,.6,1)' });
+    A(glow, [{ opacity: 1 }, { opacity: 0 }], { duration: 500, fill: 'forwards' });
+    Scene.ring(c.x, c.y, '#9cc8ff'); Scene.rays(c.x, c.y, 'rgba(150,200,255,A)');
+    Scene.burst(c.x, c.y, { kind: 'confetti', n: 150, colors: ['#4f8cff', '#ffffff', '#f2c75a', '#9cc8ff', '#ff7ab8'], speed: 750, g: 520, dur: 2.3 });
+    Scene.burst(c.x, c.y, { n: 70, colors: ['#fff', '#bfe0ff'], speed: 540, g: 120 });
+    await w(110); Snd.play('whoosh', 1);
+    await cineFly(holder, [{ opacity: 0, transform: 'translateY(30%) scale(.12) rotateY(-900deg) rotateX(50deg)' }, { opacity: 1, transform: 'translateY(-14%) scale(1.08) rotateY(-24deg) rotateX(-10deg)', offset: .72 },
+      { opacity: 1, transform: 'translateY(2%) scale(.99) rotateY(6deg) rotateX(3deg)', offset: .88 }, { opacity: 1, transform: 'none' }], 1650, w);
+  },
+  async gold({ w, prop, holder, later }) { // монета раскручивается, лопается — и золотой дождь
+    const coin = prop.querySelector('.cn-coin'); coin.classList.remove('idle');
+    const c0 = ctr(coin); Snd.play('riser', 1.7); Scene.rays(c0.x, c0.y, 'rgba(255,205,100,A)');
+    A(coin, [{ transform: 'translateY(0) rotateY(0deg) scale(1)' }, { transform: 'translateY(-30%) rotateY(2160deg) scale(1.3)' }], { duration: 1700, easing: 'cubic-bezier(.5,0,.8,.6)', fill: 'forwards' });
+    [0, 380, 700, 960, 1170, 1330, 1450, 1540, 1610, 1660].forEach((t) => later(() => Snd.play('coin'), t));
+    await w(1700);
+    const c = ctr(coin); flash('#ffe7a8', 650); Snd.play('boom'); hap('heavy');
+    A(coin, [{ opacity: 1, transform: 'translateY(-30%) scale(1.3)' }, { opacity: 0, transform: 'translateY(-30%) scale(0)' }], { duration: 220, fill: 'forwards' });
+    Scene.ring(c.x, c.y, '#ffd978'); Scene.burst(c.x, c.y, { kind: 'coin', n: 42, size: 3.6, speed: 700, g: 760, dur: 2 });
+    Scene.burst(c.x, c.y, { n: 90, colors: ['#fff3c4', '#f5c451', '#ffe39a'], speed: 540, g: 150 }); Scene.rain('coin', 2800, 2);
+    for (let i = 0; i < 14; i++) later(() => Snd.play('coin'), 250 + i * 170);
+    Snd.play('whoosh', 1.3);
+    await cineFly(holder, [{ opacity: 0, transform: 'translateY(-170%) rotateY(0deg) scale(.7)' }, { opacity: 1, transform: 'translateY(-60%) rotateY(900deg) scale(.85)', offset: .35 },
+      { opacity: 1, transform: 'translateY(4%) rotateY(1780deg) scale(1.02)', offset: .85 }, { opacity: 1, transform: 'translateY(-2%) rotateY(1800deg) scale(1)', offset: .93 }, { opacity: 1, transform: 'rotateY(1800deg)' }], 2300, w, 'cubic-bezier(.15,.6,.25,1)');
+  },
+  async platinum({ w, prop, holder, later }) { // голограмма: луч, контур карты, скан сверху вниз, сбои
+    const pj = prop.querySelector('.cn-proj'), beam = pj.querySelector('.beam'), wire = pj.querySelector('.cn-wire'), rect = wire.querySelector('rect'), scan = pj.querySelector('.cn-scan');
+    pj.classList.remove('idle'); Scene.matrix(true); Snd.play('riser', 1.4);
+    for (let i = 0; i < 8; i++) later(() => Snd.play('beep', 900 + i * 130), i * 85);
+    A(beam, [{ opacity: 0, transform: 'scaleY(0)' }, { opacity: 1, transform: 'scaleY(1)' }], { duration: 650, fill: 'forwards' });
+    await w(650);
+    A(rect, [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: 950, fill: 'forwards', easing: 'ease-in-out' }); Snd.play('whoosh', .9);
+    await w(950);
+    holder.animate([{ opacity: 1, clipPath: 'inset(0% 0% 100% 0% round 22px)', filter: 'brightness(1.8) saturate(0)' }, { opacity: 1, clipPath: 'inset(0% 0% 0% 0% round 22px)', filter: 'brightness(1.25) saturate(.5)', offset: .9 },
+      { opacity: 1, clipPath: 'inset(0% 0% 0% 0% round 22px)', filter: 'brightness(1) saturate(1)' }], { duration: 1700, fill: 'forwards', easing: 'linear' });
+    A(scan, [{ opacity: 1, top: '0%' }, { opacity: 1, top: '100%', offset: .9 }, { opacity: 0, top: '100%' }], { duration: 1700, fill: 'forwards', easing: 'linear' });
+    for (let i = 0; i < 11; i++) later(() => Snd.play('beep', 1300 + Math.random() * 900), i * 150);
+    for (const t of [450, 950, 1350]) later(() => { $('cnStage').animate([{ transform: 'translateX(-8px) skewX(-8deg)', filter: 'hue-rotate(90deg) brightness(1.6)' }, { transform: 'translateX(6px)', filter: 'none' }, { transform: 'none', filter: 'none' }], { duration: 150 }); Snd.play('tick'); hap('light'); }, t);
+    await w(1700);
+    const c = ctr(holder); flash('#d9fbff', 480, .85); Snd.play('pop'); hap('heavy');
+    Scene.ring(c.x, c.y, '#7dfcff'); Scene.burst(c.x, c.y, { n: 100, colors: ['#ff9ce0', '#9ce4ff', '#d9ff9c', '#ffe79c', '#fff'], speed: 580, g: 90 });
+    A(wire, [{ opacity: 1 }, { opacity: 0 }], { duration: 600, fill: 'forwards' }); A(beam, [{ opacity: 1 }, { opacity: 0 }], { duration: 800, fill: 'forwards' });
+    later(() => Scene.matrix(false), 1400);
+  },
+  async black({ w, prop, holder, later, scene }) { // прицел, выстрел — карта летит пулей, крутится, в дыму; в конце замедление и трещины
+    const ret = prop.querySelector('.cn-ret'); ret.classList.remove('idle'); Scene.stars(true);
+    Snd.play('beep', 1800); later(() => Snd.play('beep', 2400), 260);
+    A(ret, [{ transform: 'scale(1.4) rotate(0deg)', opacity: .6 }, { transform: 'scale(.55) rotate(90deg)', opacity: 1 }], { duration: 400, fill: 'forwards', easing: 'cubic-bezier(.7,0,.3,1)' });
+    await w(480);
+    const c = ctr(ret); Snd.play('shot'); hap('heavy'); flash('#ffd9a0', 280); shake(scene, 22, 460);
+    A(ret, [{ opacity: 1, transform: 'scale(.55)' }, { opacity: 0, transform: 'scale(2.2)' }], { duration: 220, fill: 'forwards' });
+    Scene.burst(c.x, c.y, { n: 70, colors: ['#fff2c0', '#ffb347', '#ff7a1a'], speed: 760, g: 60, dur: .5 }); Scene.smoke(c.x, c.y, 16, { spread: 2.4, size: 1.3 }); Scene.ring(c.x, c.y, '#ffcf8a', 280);
+    Snd.play('whoosh', 2.6);
+    let flying = true; Scene.smokeFrom(() => (flying ? { x: c.x + (Math.random() - .5) * 24, y: c.y + (Math.random() - .5) * 14, s: .8 } : null));
+    holder.animate([{ opacity: 0, transform: 'translateZ(-3200px) rotateZ(0deg)' }, { opacity: 1, transform: 'translateZ(-1600px) rotateZ(1440deg)', offset: .18 }, { opacity: 1, transform: 'translateZ(-260px) rotateZ(2520deg)', offset: .4 },
+      { opacity: 1, transform: 'translateZ(-60px) rotateZ(2790deg)', offset: .86 }, { opacity: 1, transform: 'translateZ(0px) rotateZ(2880deg)' }], { duration: 2900, fill: 'forwards', easing: 'linear' });
+    for (const t of [1250, 1750, 2250]) later(() => { const q = ctr(holder); Scene.ring(q.x, q.y, 'rgba(255,255,255,.55)', q.w * .95); Snd.play('whoosh', .5); }, t);
+    await w(2900); flying = false; Scene.smokeFrom(null);
+    Snd.play('thump'); Snd.play('boom'); hap('heavy'); shake(scene, 12, 320); crack(ctr(holder));
+  },
+  async team({ w, prop, holder, later, scene }) { // чашка дрожит, пар, взрыв зёрен — карта вылетает из кофе
+    const cup = prop.querySelector('.cn-cup'); cup.classList.remove('idle');
+    Snd.play('rumble', 1.4); Snd.play('riser', 1.4); shake(cup, 8, 1400, true);
+    const src = () => { const c = ctr(cup); return { x: c.x - c.w * .08, y: c.y - c.h * .12 }; };
+    for (let i = 0; i < 13; i++) later(() => { const s = src(); Scene.smoke(s.x, s.y, 2, { c: '255,245,235', a: .32, size: .8 }); if (i % 3 === 0) Snd.play('pop'); }, i * 105);
+    await w(1400);
+    const s = src(); flash('#ffe2c4', 480, .85); Snd.play('boom'); hap('heavy'); shake(scene, 10, 400);
+    Scene.burst(s.x, s.y, { kind: 'bean', n: 50, size: 3.2, speed: 680, g: 820, up: true, dur: 2 }); Scene.smoke(s.x, s.y, 18, { c: '255,245,235', a: .35, spread: 2.6, size: 1.3 }); Scene.ring(s.x, s.y, '#ffc58a');
+    Scene.rays(s.x, s.y, 'rgba(255,190,130,A)');
+    A(cup, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(45%) scale(.8)' }], { duration: 700, fill: 'forwards', easing: 'ease-in' });
+    Snd.play('whoosh', 1);
+    await cineFly(holder, [{ opacity: 0, transform: 'translateY(34%) scale(.08) rotateX(70deg)', filter: 'blur(14px)' }, { opacity: 1, transform: 'translateY(-16%) scale(1.06) rotateX(-12deg)', filter: 'blur(0px)', offset: .7 },
+      { opacity: 1, transform: 'none', filter: 'blur(0px)' }], 1550, w);
+  },
+  async owner({ w, prop, holder, later, scene, front }) { // портал затягивает звёзды, молнии, тишина — взрыв, и карта с короной
+    const pt = prop.querySelector('.cn-portal'), ring = pt.querySelector('.ring'); pt.classList.remove('idle');
+    const c0 = ctr(pt); Scene.stars(true); Scene.vortex(c0.x, c0.y, ['#ffd978', '#c49bff', '#7ff0dc', '#ffffff']);
+    Snd.play('rumble', 3.1); Snd.play('riser', 3.1);
+    A(pt, [{ transform: 'scale(1)' }, { transform: 'scale(1.35)' }], { duration: 3100, fill: 'forwards', easing: 'ease-in' });
+    A(ring, [{ filter: 'drop-shadow(0 0 8px #ffd978) brightness(1)' }, { filter: 'drop-shadow(0 0 30px #ffd978) brightness(1.7)' }], { duration: 3100, fill: 'forwards' });
+    shake(scene, 9, 3100, true);
+    [350, 800, 1150, 1500, 1800, 2100, 2350, 2560, 2760, 2920].forEach((t, i) => later(() => {
+      const top = i % 2 === 0; Scene.bolt(top ? Scene.W * (.1 + Math.random() * .8) : c0.x + (Math.random() - .5) * 90, top ? 0 : Scene.H, c0.x + (Math.random() - .5) * 40, c0.y + (Math.random() - .5) * 30, i % 3 ? '#e8d9ff' : '#fff1c2');
+      flash('#cbb6ff', 140, .28); Snd.play('thunder'); hap('light');
+    }, t));
+    await w(3100);
+    Scene.vortex(null); A(pt, [{ transform: 'scale(1.35)', opacity: 1 }, { transform: 'scale(0)', opacity: 0 }], { duration: 280, fill: 'forwards', easing: 'cubic-bezier(.7,0,1,.5)' });
+    await w(520); // тишина перед взрывом
+    Snd.play('boom'); later(() => Snd.play('boom'), 90); Snd.play('chord', 110); hap('heavy'); later(() => hap('heavy'), 170); flash('#ffffff', 950); shake(scene, 24, 720);
+    ['#ffd978', '#c49bff', '#7ff0dc'].forEach((col, i) => later(() => Scene.ring(c0.x, c0.y, col), i * 140));
+    Scene.burst(c0.x, c0.y, { n: 170, colors: ['#fff1c2', '#ffd978', '#f5c451', '#c49bff', '#7ff0dc'], speed: 950, g: 140, dur: 1.6 });
+    Scene.burst(c0.x, c0.y, { kind: 'confetti', n: 130, colors: ['#ffd978', '#f5c451', '#fff1c2', '#b8862e', '#c49bff'], speed: 820, g: 420, dur: 2.4 });
+    Scene.rays(c0.x, c0.y, 'rgba(255,215,120,A)');
+    Snd.play('whoosh', 1.6);
+    await cineFly(holder, [{ opacity: 0, transform: 'translateZ(-1800px) rotateY(-1080deg) rotateX(35deg) scale(.5)' }, { opacity: 1, transform: 'translateZ(140px) rotateY(-12deg) rotateX(-8deg) scale(1.1)', offset: .65 },
+      { opacity: 1, transform: 'translateZ(-20px) rotateY(4deg) rotateX(2deg) scale(1)', offset: .85 }, { opacity: 1, transform: 'none' }], 2250, w);
+    // корона падает сверху и садится на логотип
+    const logo = front.querySelector('.w-logo'), cr = document.createElement('div'); cr.className = 'cn-crown'; cr.textContent = '♛'; $('cnStage').appendChild(cr);
+    const sc = ctr($('cnStage')), lc = ctr(logo), dx = lc.x - sc.x, dy = lc.y - sc.y - lc.h * .75;
+    cr.animate([{ transform: 'translate(-50%, -50%) translateY(-320%) scale(3) rotate(-25deg)', opacity: 0 }, { transform: 'translate(-50%, -50%) scale(1.6) rotate(8deg)', opacity: 1, offset: .45 },
+      { transform: `translate(-50%, -50%) translate(${dx}px, ${dy}px) scale(.55) rotate(0deg)`, opacity: 1, offset: .85 }, { transform: `translate(-50%, -50%) translate(${dx}px, ${dy}px) scale(.3)`, opacity: 0 }], { duration: 1700, fill: 'forwards', easing: 'cubic-bezier(.3,.8,.3,1)' }).onfinish = () => cr.remove();
+    later(() => { Snd.play('sparkle'); Scene.burst(lc.x, lc.y, { n: 50, colors: ['#fff1c2', '#ffd978'], speed: 300, g: 60 }); }, 1450);
+    for (let i = 0; i < 7; i++) later(() => { const x = Scene.W * (.12 + Math.random() * .76), y = Scene.H * (.08 + Math.random() * .25); Scene.burst(x, y, { n: 55, colors: [['#ffd978', '#fff1c2'], ['#c49bff', '#fff'], ['#7ff0dc', '#fff']][i % 3], speed: 320, g: 90, dur: 1.2 }); Snd.play('pop'); }, 700 + i * 420);
+  },
+};
+
+// Показать ролик. o: { kind, title, text, btn }
+function playCine(o) {
   o = o || {};
-  revealing = true;
+  const kind = STATUSES[o.kind] ? o.kind : cardStatus || 'classic', tok = ++cineTok;
+  cineOpts = Object.assign({}, o, { kind }); revealing = true;
+  cineTimers.forEach(clearInterval); cineTimers = []; cineTexts = [];
+  const ov = $('reveal'); ov.dataset.k = kind; ov.classList.remove('done', 'go');
+  ov.getAnimations?.({ subtree: true }).forEach((a) => { try { a.cancel(); } catch {} });
+  ov.querySelectorAll('.cn-crack, .cn-crown').forEach((x) => x.remove());
   $('rvTitle').textContent = o.title || 'Поздравляем!';
   $('rvText').textContent = o.text || 'Ваш номер подтверждён, карта успешно создана';
   $('rvOk').textContent = o.btn || 'Открыть карту';
-  $('reveal').setAttribute('aria-label', o.title || 'Карта создана');
-  const holder = $('rvCard');
-  const front = $('wallet').cloneNode(true); // лицевая сторона — точная копия карты гостя (цвет, номер, имя)
-  front.removeAttribute('id'); front.classList.remove('flip', 'live');
-  front.querySelectorAll('[id]').forEach((x) => x.removeAttribute('id'));
-  let back;
-  if (o.from) { // новый статус: на обороте — прошлая карта, переворот показывает новую
-    back = front.cloneNode(true); back.dataset.s = o.from; back.classList.add('rv-old'); back.querySelector('canvas')?.remove();
-    const st = back.querySelector('.w-status'); if (st) st.textContent = STATUSES[o.from].name;
-  } else { back = document.createElement('div'); back.className = 'rv-back'; back.innerHTML = '<i></i><b></b><span>SEVEN TIMES</span>'; }
-  holder.replaceChildren(back, front);
-  if (rvStop) rvStop();
-  const cv = front.querySelector('canvas'); rvStop = cv && !calm ? cardFx(cv, STATUSES[front.dataset.s]?.fx || 'waves') : null;
-  if (rvStop) setTimeout(() => rvStop && rvStop.burst(.5, .5, 2), 1250);
-  if (cv && !rvStop) cv.remove();
-  holder.parentElement.querySelectorAll('.rv-spark').forEach((x) => x.remove());
-  for (let i = 0; i < 18; i++) { // золотые искры после переворота
-    const sp = document.createElement('span'); sp.className = 'rv-spark';
-    const a = (i / 18) * 6.283, r = 140 + Math.random() * 90;
-    sp.style.setProperty('--dx', Math.cos(a) * r + 'px'); sp.style.setProperty('--dy', Math.sin(a) * r * 0.7 + 'px');
-    sp.style.animationDelay = (1 + Math.random() * 0.25) + 's';
-    holder.parentElement.appendChild(sp);
-  }
-  // номер «печатается» цифра за цифрой, пока карта разворачивается
-  const num = front.querySelector('.w-num'), full = num ? num.textContent : '';
-  if (num && !o.from) { num.textContent = ''; let i = 0; clearInterval(revealTimer); setTimeout(() => { revealTimer = setInterval(() => { num.textContent = full.slice(0, ++i); if (i % 4 === 0) tick(); if (i >= full.length) clearInterval(revealTimer); }, 42); }, 900); }
-  const ov = $('reveal'); ov.classList.remove('open'); void ov.offsetWidth; ov.classList.add('open');
-  setTimeout(() => haptic('success'), 1100);
+  ov.setAttribute('aria-label', o.title || 'Карта создана');
+  const holder = $('rvCard'), front = $('wallet').cloneNode(true);
+  front.removeAttribute('id'); front.classList.remove('flip', 'live', 'tap'); front.querySelectorAll('[id]').forEach((x) => x.removeAttribute('id'));
+  front.dataset.s = kind; const stl = front.querySelector('.w-status'); if (stl) stl.textContent = STATUSES[kind].name;
+  front.classList.add('bare'); holder.replaceChildren(front);
+  if (rvStop) { rvStop(); rvStop = null; }
+  $('cnProp').innerHTML = CINE_PROPS[kind]; $('cnHint').textContent = CINE_HINT[kind];
+  Scene.start(); ov.classList.add('open');
+  if (calm) return cineDone(tok); // «уменьшение движения» — сразу готовая карта
+  const later = (fn, ms) => { const id = setTimeout(() => { if (tok === cineTok) fn(); }, ms); cineTimers.push(id); };
+  const w = (ms) => new Promise((res, rej) => { later(res, ms); setTimeout(() => { if (tok !== cineTok) rej(STOP); }, ms + 5); });
+  ov.onclick = async (e) => {
+    if (tok !== cineTok || ov.classList.contains('go') || e.target.closest('button')) return;
+    ov.classList.add('go'); Snd.init(); tick();
+    const x = { w, later, holder, front, prop: $('cnProp'), scene: $('cnScene') };
+    try {
+      await CINE[kind](x);
+      Snd.play('thump'); hap('medium');
+      const cv = front.querySelector('canvas'); if (cv && !rvStop) { rvStop = cardFx(cv, STATUSES[kind].fx); rvStop.burst(.5, .5, 1.6); }
+      await w(cineText(kind, front, tok, later));
+      cineDone(tok);
+    } catch (err) { if (err !== STOP) { console.error(err); cineDone(tok); } }
+  };
 }
-$('rvOk').onclick = () => {
-  $('reveal').classList.remove('open'); revealing = false; clearInterval(revealTimer);
-  if (rvStop) { const s = rvStop; rvStop = null; setTimeout(s, 400); }
+// Итог ролика (или «Пропустить»): карта на месте, номер и имя целиком, подпись и кнопки
+function cineDone(tok) {
+  if (tok !== cineTok) return;
+  cineTok++; const ov = $('reveal'), front = $('rvCard').firstElementChild;
+  cineTimers.forEach((id) => { clearTimeout(id); clearInterval(id); }); cineTimers = [];
+  ov.getAnimations?.({ subtree: true }).forEach((a) => { if (!(window.CSSAnimation && a instanceof CSSAnimation)) try { a.cancel(); } catch {} });
+  cineTexts.forEach(([el, s]) => { el.textContent = s; }); cineTexts = [];
+  if (front) { front.classList.remove('bare'); const cv = front.querySelector('canvas'); if (cv && !rvStop && !calm) rvStop = cardFx(cv, STATUSES[front.dataset.s]?.fx || 'waves'); if (calm) cv?.remove(); }
+  Scene.matrix(false); Scene.vortex(null); Scene.smokeFrom(null);
+  ov.classList.add('go', 'done');
+  haptic('success');
+}
+document.addEventListener('pointerdown', () => Snd.init(), { once: true, passive: true }); // звук готов заранее — с первого касания
+$('cnSkip').onclick = (e) => { e.stopPropagation(); cineDone(cineTok); };
+$('rvAgain').onclick = (e) => { e.stopPropagation(); playCine(cineOpts); };
+$('rvOk').onclick = (e) => {
+  e.stopPropagation(); cineTok++;
+  $('reveal').classList.remove('open', 'done', 'go'); revealing = false;
+  setTimeout(() => { if (!revealing) { Scene.stop(); if (rvStop) { rvStop(); rvStop = null; } } }, 450);
   enter($('guest'));
   if (pendingNotice) { const n = pendingNotice; pendingNotice = null; setTimeout(() => showNotice(n), 350); }
 };
+// «▶ Анимация карты» под картой — повторить свой ролик в любой момент (для сторис)
+$('cnReplay').onclick = () => playCine({ kind: cardStatus, title: 'Seven Times ' + (STATUSES[cardStatus]?.name || ''), text: 'Снимите это в сторис и отметьте Seven Times 🔥', btn: 'Готово' });
 const seenNotice = new Set(); // карта обновляется раз в 30 с — поздравление показываем один раз даже без localStorage
 function showNotice(n) {
   if (!n || !n.ts) return;
@@ -1215,7 +1665,7 @@ function showNotice(n) {
     const nm = STATUSES[n.status].name;
     if (me?.card) me.card.status = n.status; paintStatus(n.status);
     try { localStorage.setItem('card_status', n.status); } catch {}
-    revealCard({ from: STATUS_PREV[n.status], title: 'Ваша карта теперь ' + nm, text: `Скидка ${n.percent}% — со следующего визита. Статус ${nm} остаётся с вами навсегда ✨`, btn: 'Отлично' });
+    playCine({ kind: n.status, title: 'Ваша карта теперь ' + nm, text: `Скидка ${n.percent}% — со следующего визита. Статус ${nm} остаётся с вами навсегда ✨`, btn: 'Отлично' });
   } else if (n.kind === 'welcome') congrats({ heart: true, title: 'Добро пожаловать!', pct: n.percent, text: 'Дарим вам скидку. Она действует со следующего дня 7 дней. Ваш Seven Times ❤️' });
   else congrats({ heart: true, title: 'Поздравляем!', pct: n.percent, text: 'Вы получили скидку. Спасибо, что остаётесь с нами. Ваш Seven Times ❤️' });
   api('ackNotice', { ts: n.ts }).catch(() => {});
