@@ -159,6 +159,10 @@
   html[data-theme="dark"] .wbtn { box-shadow: 0 0 0 1px rgba(255,255,255,.18) inset; }
   .wbtn:active { transform: scale(.97); transition-duration: .12s; }
   .wbtn:disabled { opacity: .6; }
+  .wbtn .wok { display: none; width: 20px; height: 20px; fill: none; stroke: var(--green); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+  .wbtn.done { background: transparent; color: var(--text-2); box-shadow: inset 0 0 0 1px var(--sep) !important; font-weight: 500; }
+  .wbtn.done .wmark { display: none; } .wbtn.done .wok { display: block; }
+  .wbtn.done .wok path { stroke-dasharray: 24; stroke-dashoffset: 24; animation: draw .5s .15s var(--ease) forwards; }
   .wmark { position: relative; width: 22px; height: 18px; }
   .wmark i { position: absolute; left: 0; right: 0; height: 8px; border-radius: 3px; }
   .wmark i:nth-child(1) { top: 0; background: #4285f4; } .wmark i:nth-child(2) { top: 5px; background: #34a853; } .wmark i:nth-child(3) { top: 10px; background: #fbbc04; }
@@ -359,7 +363,7 @@
       <div class="fine" style="margin-top:4px">Код обновляется каждые 30 секунд, скриншот не сработает</div>
     </div>
 
-    <button class="wbtn hidden" id="walletBtn"><span class="wmark"><i></i><i></i><i></i></span><span id="walletTxt">Добавить в Google Wallet</span></button>
+    <button class="wbtn hidden" id="walletBtn"><span class="wmark"><i></i><i></i><i></i></span><svg class="wok" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span id="walletTxt">Добавить в Google Wallet</span></button>
 
     <div class="card hidden" id="discBox">
       <div class="applied">
@@ -596,7 +600,7 @@
 const API_URL = 'https://script.google.com/macros/s/AKfycby64w9S9JOUSrusM_L-5tcwb-sN2ffXF53-MFCOs-TtoOhxl0XStYB-oCPDJ46W1jH2lA/exec';
 
 const tg = window.Telegram?.WebApp;
-let curTab = 'card', walletKind = '';
+let curTab = 'card', walletKind = '', me = null;
 tg?.ready(); tg?.expand();
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -695,6 +699,7 @@ function paintTheme(id, animate) {
     w.style.setProperty('--w1', a); w.style.setProperty('--w2', b);
     if (stopFx) { stopFx(); stopFx = null; }
     if (fxKind) stopFx = cardFx($('fx'), fxKind, calm ? { still: true, warm: 90 } : {});
+    if (typeof refreshWalletBtn === 'function' && me) refreshWalletBtn();
   };
   if (animate) { w.classList.remove('flip'); void w.offsetWidth; w.classList.add('flip'); setTimeout(apply, 330); } else apply();
 }
@@ -798,7 +803,7 @@ $('dlgYes').onclick = () => { const v = $('dlgIn').value; closeSheets(); if (dlg
 $('dlgNo').onclick = () => { closeSheets(); if (dlgRes) dlgRes(null); dlgRes = null; };
 
 // ══════════ Карта гостя ══════════
-let qrObj = null, codeTimer = null, me = null, lastQr = '';
+let qrObj = null, codeTimer = null, lastQr = '';
 function renderCard(c) {
   if (curTab === 'card') $('guest').classList.remove('hidden');
   const ok = !!c.phoneVerified;
@@ -813,9 +818,8 @@ function renderCard(c) {
   $('discBox').classList.toggle('hidden', !t);
   const q = new URLSearchParams(location.search), plat = q.get('platform') || tg?.platform || '';
   walletKind = /ios|macos/.test(plat) ? (me?.walletApple ? 'apple' : '') : /android/.test(plat) ? (me?.wallet ? 'google' : '') : '';
-  $('walletBtn').classList.toggle('apple', walletKind === 'apple');
-  $('walletTxt').textContent = walletKind === 'apple' ? 'Добавить в Apple Wallet' : 'Добавить в Google Wallet';
   $('walletBtn').classList.toggle('hidden', !(ok && !c.blocked && walletKind));
+  refreshWalletBtn();
   $('codeEnter').classList.toggle('hidden', !ok || !!c.invited || !!(me && (me.cashier || me.admin))); // уже со скидкой, кассир или админ — код не нужен
   if (t) {
     $('discPercent').textContent = `−${t.percent}%`;
@@ -858,11 +862,24 @@ $('phoneBtn').onclick = () => {
 };
 
 // Google Wallet: карта-ярлык, внутри кнопка «Открыть карту» → сюда, к живому QR
+// Уже в Wallet → тихая плашка «Добавлено». Сменил цвет → «Обновить цвет». Лимит WalletWallet зря не тратится
+function refreshWalletBtn() {
+  const w = me?.card?.wallet || {}, apple = walletKind === 'apple', name = apple ? 'Apple Wallet' : 'Google Wallet';
+  const added = apple ? w.apple : w.google, same = (w.theme || 'graphite') === cardTheme;
+  const b = $('walletBtn');
+  b.classList.toggle('apple', apple);
+  b.classList.toggle('done', !!(added && same));
+  $('walletTxt').textContent = !added ? 'Добавить в ' + name : same ? 'Добавлено в ' + name : 'Обновить цвет в ' + name;
+}
 $('walletBtn').onclick = async () => {
   const b = $('walletBtn'), label = $('walletTxt').textContent; b.disabled = true; $('walletTxt').textContent = 'Готовим карту';
-  try { const r = await api(walletKind === 'apple' ? 'walletApple' : 'wallet', { theme: cardTheme }); haptic('success'); tg?.openLink ? tg.openLink(r.url) : (location.href = r.url); }
+  try {
+    const r = await api(walletKind === 'apple' ? 'walletApple' : 'wallet', { theme: cardTheme }); haptic('success');
+    const w = (me.card.wallet = me.card.wallet || {}); w[walletKind === 'apple' ? 'apple' : 'google'] = true; w.theme = cardTheme;
+    tg?.openLink ? tg.openLink(r.url) : (location.href = r.url);
+  }
   catch (e) { haptic('error'); alertMsg(e.message); }
-  b.disabled = false; $('walletTxt').textContent = label;
+  b.disabled = false; $('walletTxt').textContent = label; refreshWalletBtn();
 };
 
 // Код приглашения (если ссылка не открылась)
