@@ -2,128 +2,354 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Seven Times · Карта</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Seven Times</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: var(--tg-theme-bg-color, #181412);
-    --card: var(--tg-theme-secondary-bg-color, #231d1a);
-    --text: var(--tg-theme-text-color, #f5efe8);
-    --muted: var(--tg-theme-hint-color, #a8998b);
-    --gold: #c8a06e; --ok: #4caf50; --bad: #e0574c;
-    --line: color-mix(in srgb, var(--muted) 35%, transparent);
+    --bg: #f5f5f7; --surface: #ffffff; --fill: #ececf0; --fill-2: #e3e3e8;
+    --text: #1d1d1f; --text-2: #6e6e73; --text-3: #a1a1a6;
+    --sep: rgba(60, 60, 67, .13);
+    --accent: #1d1d1f; --on-accent: #ffffff;
+    --green: #34c759; --red: #ff3b30; --orange: #ff9500; --heart: #ff3b30;
+    --shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.06);
+    --wallet-1: #1d1d1f; --wallet-2: #3a3a3c;
+    --r: 20px; --r-sm: 14px;
+    --ease: cubic-bezier(.2, .8, .2, 1);
+    --spring: cubic-bezier(.34, 1.56, .64, 1);
+    --sheet: cubic-bezier(.32, .72, 0, 1);
   }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.45 -apple-system, Roboto, sans-serif; }
-  main { max-width: 460px; margin: 0 auto; padding: 16px 16px 40px; }
-  h1 { font-size: 18px; letter-spacing: .14em; text-transform: uppercase; margin: 4px 0 2px; }
-  .sub { color: var(--muted); font-size: 14px; margin: 0 0 16px; }
-  .box { background: var(--card); border-radius: 18px; padding: 16px; margin-bottom: 12px; }
-  h2 { font-size: 16px; margin: 0 0 10px; }
-  .stamps { display: flex; gap: 8px; margin: 8px 0; }
-  .stamp { flex: 1; aspect-ratio: 1; border-radius: 50%; border: 2px dashed var(--line); display: grid; place-items: center; font-size: 20px; }
-  .stamp.on { border: 0; background: var(--gold); }
-  .muted { color: var(--muted); font-size: 13px; }
-  .pill { display: inline-block; padding: 4px 12px; border-radius: 999px; background: color-mix(in srgb, var(--gold) 25%, transparent); color: var(--gold); font-weight: 600; font-size: 14px; }
-  button { display: block; width: 100%; padding: 14px; margin-top: 10px; border: 0; border-radius: 12px; background: var(--gold); color: #1b1410; font-weight: 700; font-size: 16px; cursor: pointer; }
-  button.ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }
-  button.small { width: auto; display: inline-block; padding: 6px 12px; margin: 0 0 0 6px; font-size: 13px; }
-  button:disabled { opacity: .5; }
-  input, select, textarea { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit; margin-top: 6px; }
-  label { display: block; font-size: 13px; color: var(--muted); margin-top: 10px; }
-  .qrwrap { background: #fff; border-radius: 14px; padding: 14px; width: 230px; margin: 6px auto 8px; }
-  #qr img, #qr canvas { width: 100% !important; height: auto !important; display: block; }
-  .code { text-align: center; font-size: 26px; font-weight: 800; letter-spacing: .2em; font-variant-numeric: tabular-nums; }
-  .bar { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; margin-top: 6px; }
-  .bar i { display: block; height: 100%; background: var(--gold); }
-  .msg { margin-top: 10px; padding: 12px; border-radius: 12px; font-size: 14px; display: none; white-space: pre-line; }
-  .msg.ok { display: block; background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok); }
-  .msg.err { display: block; background: color-mix(in srgb, var(--bad) 15%, transparent); color: var(--bad); }
-  .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
-  .tabs button { margin: 0; padding: 10px 6px; font-size: 14px; }
+  html[data-theme="dark"] {
+    --bg: #000000; --surface: #1c1c1e; --fill: #2c2c2e; --fill-2: #3a3a3c;
+    --text: #f5f5f7; --text-2: #98989d; --text-3: #636366;
+    --sep: rgba(84, 84, 88, .5);
+    --accent: #f5f5f7; --on-accent: #000000;
+    --green: #30d158; --red: #ff453a; --orange: #ff9f0a; --heart: #ff453a;
+    --shadow: none;
+    --wallet-1: #2c2c2e; --wallet-2: #48484a;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body { background-image: radial-gradient(900px 380px at 50% -160px, color-mix(in srgb, var(--text) 6%, transparent), transparent 70%); background-repeat: no-repeat; min-height: 100vh; }
+  body { font: 400 16px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, Roboto, sans-serif; -webkit-font-smoothing: antialiased; letter-spacing: -.01em; }
+  main { max-width: 480px; margin: 0 auto; padding: 20px 16px calc(40px + env(safe-area-inset-bottom)); }
   .hidden { display: none !important; }
-  .row { display: flex; gap: 8px; } .row > * { flex: 1; min-width: 0; }
-  .big { font-size: 34px; font-weight: 800; margin: 6px 0; }
-  .item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
-  .item:last-child { border-bottom: 0; }
-  .report { font-size: 14px; white-space: pre-line; }
-  .link { background: none; border: 0; color: var(--muted); text-decoration: underline; font-weight: 400; font-size: 13px; padding: 8px; margin-top: 16px; }
-  .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; margin-left: 4px; border: 1px solid var(--line); color: var(--muted); }
-  .tag.on { border-color: var(--ok); color: var(--ok); }
-  .tag.off { border-color: var(--bad); color: var(--bad); }
-  details.box > summary { cursor: pointer; list-style: none; font-weight: 700; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
-  details.box > summary::-webkit-details-marker { display: none; }
-  details.box > summary::after { content: '▾'; color: var(--muted); }
-  details.box[open] > summary::after { content: '▴'; }
-  details.box > summary + * { margin-top: 12px; }
-  .switch { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
-  .switch:last-child { border-bottom: 0; }
-  .switch input { width: auto; margin: 0; transform: scale(1.3); }
-  .grp { border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin-bottom: 10px; }
-  .grp.dis { opacity: .55; }
-  .btns { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
-  .btns button.small { margin: 0; }
-  .seg { display: flex; gap: 6px; margin-top: 6px; } .seg button { margin: 0; padding: 10px; font-size: 14px; }
-  .log { font-size: 13px; } .log .item { align-items: flex-start; } .log time { color: var(--muted); white-space: nowrap; font-size: 12px; }
-  .codebox { font: 600 15px/1.4 ui-monospace, Menlo, monospace; background: var(--bg); border: 1px dashed var(--gold); border-radius: 12px; padding: 12px; word-break: break-all; margin-top: 10px; text-align: center; letter-spacing: .1em; }
+
+  /* ── шапка ── */
+  .top { margin: 4px 4px 18px; }
+  .eyebrow { font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--text-2); min-height: 18px; }
+  .brand { font-size: 13px; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; color: var(--text-2); }
+  .hello { font-size: 28px; font-weight: 700; letter-spacing: -.025em; margin-top: 2px; line-height: 1.15; }
+
+  /* ── сегменты (вкладки, категории) ── */
+  .seg { position: relative; display: flex; background: var(--fill); border-radius: 12px; padding: 3px; margin-bottom: 18px; }
+  .seg button { position: relative; z-index: 1; flex: 1; border: 0; background: none; color: var(--text); font-family: inherit; font-size: 14px; font-weight: 500; line-height: 1; padding: 9px 4px; border-radius: 9px; cursor: pointer; transition: color .25s var(--ease); }
+  .seg .ind { position: absolute; z-index: 0; top: 3px; bottom: 3px; left: 3px; border-radius: 9px; background: var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.12), 0 1px 1px rgba(0,0,0,.04); transition: transform .5s var(--spring), width .4s var(--ease); }
+  html[data-theme="dark"] .seg .ind { background: var(--fill-2); }
+  .seg button.active { font-weight: 600; }
+  #tabs { position: sticky; top: 8px; z-index: 10; background: color-mix(in srgb, var(--fill) 78%, transparent); -webkit-backdrop-filter: blur(20px) saturate(180%); backdrop-filter: blur(20px) saturate(180%); }
+  .seg.small { margin: 8px 0 0; }
+  .seg.small button { font-size: 13px; padding: 8px 2px; }
+
+  /* ── карточки и тексты ── */
+  .card { background: var(--surface); border-radius: var(--r); padding: 20px; margin-bottom: 14px; box-shadow: var(--shadow); }
+  .title { font-size: 20px; font-weight: 700; letter-spacing: -.02em; margin: 0 0 6px; }
+  .h { font-size: 17px; font-weight: 600; margin: 0 0 4px; }
+  .muted { color: var(--text-2); font-size: 14px; }
+  .fine { color: var(--text-3); font-size: 12.5px; }
+  .caps { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-2); margin: 22px 16px 8px; }
+  .caps:first-child { margin-top: 4px; }
+  b { font-weight: 600; }
+
+  /* ── кнопки ── */
+  button { font-family: inherit; }
+  .btn { display: block; width: 100%; border: 0; border-radius: var(--r-sm); padding: 15px 18px; margin-top: 14px; background: var(--accent); color: var(--on-accent); font-size: 16px; font-weight: 600; letter-spacing: -.01em; cursor: pointer; transition: transform .45s var(--spring), opacity .2s, background .2s; }
+  .btn:active { transform: scale(.965); opacity: .85; transition-duration: .12s; }
+  .btn:disabled { opacity: .35; transform: none; }
+  .btn.sec { background: var(--fill); color: var(--text); }
+  .btn.danger { background: var(--fill); color: var(--red); }
+  .btn.big { padding: 18px; font-size: 17px; border-radius: 16px; }
+  .pill { border: 0; border-radius: 999px; padding: 7px 14px; background: var(--fill); color: var(--text); font-size: 13.5px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: transform .15s var(--ease), background .2s; }
+  .pill:active { transform: scale(.94); }
+  .pill.red { color: var(--red); }
+  .pill.dark { background: var(--accent); color: var(--on-accent); }
+  .textbtn { background: none; border: 0; padding: 0; color: var(--text-2); font-size: 15px; cursor: pointer; }
+  .row2 { display: flex; gap: 10px; } .row2 > * { flex: 1; min-width: 0; }
+
+  /* ── поля ── */
+  input, select, textarea { width: 100%; border: 0; border-radius: 12px; padding: 14px 16px; background: var(--fill); color: var(--text); font: inherit; font-size: 16px; outline: none; transition: box-shadow .2s var(--ease), background .2s; -webkit-appearance: none; appearance: none; }
+  input:focus, select:focus, textarea:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--text) 16%, transparent); }
+  select { background-image: linear-gradient(45deg, transparent 50%, var(--text-2) 50%), linear-gradient(135deg, var(--text-2) 50%, transparent 50%); background-position: calc(100% - 20px) 52%, calc(100% - 15px) 52%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 36px; }
+  textarea { resize: none; }
+  input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type=number] { -moz-appearance: textfield; }
+  .field { margin-top: 14px; }
+  .field > span { display: block; font-size: 13px; color: var(--text-2); margin: 0 4px 6px; }
+  .input-xl { font-size: 28px; font-weight: 600; text-align: center; padding: 16px; font-variant-numeric: tabular-nums; }
+
+  /* ── сообщения ── */
+  .msg { display: none; margin-top: 14px; padding: 13px 16px; border-radius: 12px; font-size: 14.5px; white-space: pre-line; }
+  .msg.ok, .msg.err, .msg.warn { display: block; animation: drop .4s var(--ease); }
+  .msg.ok { background: color-mix(in srgb, var(--green) 13%, transparent); color: color-mix(in srgb, var(--green) 70%, var(--text)); }
+  .msg.err { background: color-mix(in srgb, var(--red) 11%, transparent); color: var(--red); }
+  .msg.warn { background: color-mix(in srgb, var(--orange) 14%, transparent); color: color-mix(in srgb, var(--orange) 75%, var(--text)); }
+
+  /* ── карта гостя (Wallet) ── */
+  .stage { perspective: 900px; margin-bottom: 16px; animation: float 6s ease-in-out infinite; }
+  .wallet { --rx: 0deg; --ry: 0deg; --mx: 70%; --my: 0%; position: relative; overflow: hidden; border-radius: 22px; padding: 22px; aspect-ratio: 1.586; min-height: 200px; color: #fff; display: flex; flex-direction: column; justify-content: space-between;
+    background:
+      repeating-radial-gradient(circle at 115% -25%, rgba(255,255,255,.035) 0 1px, transparent 1px 6px),
+      radial-gradient(120% 140% at 100% 0%, var(--wallet-2) 0%, var(--wallet-1) 58%);
+    box-shadow: 0 1px 0 rgba(255,255,255,.08) inset, 0 30px 50px -24px rgba(0,0,0,.55), 0 10px 20px -12px rgba(0,0,0,.3);
+    transform: rotateX(var(--rx)) rotateY(var(--ry)); transform-style: preserve-3d; transition: transform .6s var(--ease); will-change: transform; }
+  .wallet.live { transition: transform .08s linear; }
+  .wallet .glow { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(360px circle at var(--mx) var(--my), rgba(255,255,255,.16), transparent 45%); mix-blend-mode: soft-light; transition: background-position .3s; }
+  .wallet::after { content: ""; position: absolute; inset: -20%; pointer-events: none; background: linear-gradient(105deg, transparent 38%, rgba(255,255,255,.13) 48%, rgba(255,255,255,.02) 55%, transparent 62%); transform: translateX(-120%); animation: sheen 7s 1s var(--ease) infinite; }
+  .wallet > * { position: relative; }
+  .w-brand { font-size: 15px; font-weight: 700; letter-spacing: .3em; }
+  .w-sub { font-size: 12px; opacity: .6; letter-spacing: .08em; margin-top: 3px; }
+  .w-foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+  .w-label { font-size: 11px; opacity: .55; letter-spacing: .08em; text-transform: uppercase; }
+  .w-val { font-size: 17px; font-weight: 600; margin-top: 2px; letter-spacing: .04em; }
+  .w-state { font-size: 12px; padding: 5px 10px; border-radius: 999px; background: rgba(255,255,255,.14); backdrop-filter: blur(8px); }
+  .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--green); margin-right: 6px; vertical-align: 1px; animation: pulse 2.4s infinite; }
+  .dot.off { background: var(--orange); animation: none; }
+
+  /* ── QR ── */
+  .qrcard { text-align: center; padding: 24px 20px 20px; }
+  .qrwrap { background: #fff; border-radius: 18px; padding: 14px; width: 232px; max-width: 100%; margin: 0 auto; transition: opacity .25s, transform .25s var(--ease); }
+  .qrwrap.swap { opacity: .2; transform: scale(.96); filter: blur(2px); }
+  .qrcard .qrwrap { box-shadow: 0 0 0 1px var(--sep), 0 12px 30px -16px rgba(0,0,0,.25); }
+  .qrwrap img, .qrwrap canvas { width: 100% !important; height: auto !important; display: block; }
+  .code { font-size: 32px; font-weight: 700; margin: 18px 0 2px; font-variant-numeric: tabular-nums; display: flex; justify-content: center; gap: 4px; height: 40px; overflow: hidden; }
+  .code .dg { display: inline-block; width: .66em; text-align: center; }
+  .code .dg.roll { animation: roll .5s var(--spring) both; }
+  .code .gap { width: 14px; }
+  .bar { height: 3px; background: var(--fill); border-radius: 2px; overflow: hidden; margin: 12px auto 12px; max-width: 232px; }
+  .bar i { display: block; height: 100%; width: 100%; background: var(--text); border-radius: 2px; }
+
+  .applied { display: flex; align-items: center; gap: 16px; }
+  .applied .num { font-size: 34px; font-weight: 700; letter-spacing: -.03em; }
+  .chk { flex: 0 0 52px; width: 52px; height: 52px; display: block; }
+  .chk .c { fill: color-mix(in srgb, var(--green) 14%, transparent); stroke: var(--green); stroke-width: 2.5; stroke-dasharray: 151; stroke-dashoffset: 151; transform: rotate(-90deg); transform-origin: center; animation: draw .7s var(--ease) forwards; }
+  .chk .p { fill: none; stroke: var(--green); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 36; stroke-dashoffset: 36; animation: draw .45s .5s var(--spring) forwards; }
+  .chk.big { width: 76px; height: 76px; margin: 0 auto 16px; }
+
+  details.more { background: var(--surface); border-radius: var(--r); margin-bottom: 14px; box-shadow: var(--shadow); overflow: hidden; }
+  details.more > summary { list-style: none; cursor: pointer; padding: 17px 20px; font-size: 15.5px; display: flex; justify-content: space-between; align-items: center; }
+  details.more > summary::-webkit-details-marker { display: none; }
+  details.more > summary::after { content: ""; width: 8px; height: 8px; border: solid var(--text-3); border-width: 0 2px 2px 0; transform: rotate(45deg); transition: transform .3s var(--ease); margin: -4px 4px 0 0; }
+  details.more[open] > summary::after { transform: rotate(-135deg); margin-top: 4px; }
+  details.more > div { padding: 0 20px 20px; animation: drop .35s var(--ease); }
+
+  /* ── списки как в Настройках iOS ── */
+  .list { background: var(--surface); border-radius: var(--r); overflow: hidden; margin-bottom: 14px; box-shadow: var(--shadow); }
+  .li { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 16px 14px 18px; border: 0; background: none; color: var(--text); text-align: left; font: inherit; font-size: 16px; position: relative; }
+  .li + .li::before { content: ""; position: absolute; top: 0; left: 18px; right: 0; height: 1px; background: var(--sep); transform: scaleY(.6); }
+  button.li { cursor: pointer; transition: background .15s; }
+  button.li:active { background: var(--fill); }
+  .li .grow { flex: 1; min-width: 0; }
+  .li .sub { display: block; color: var(--text-2); font-size: 13.5px; margin-top: 2px; }
+  .li .val { color: var(--text-2); font-size: 15px; font-variant-numeric: tabular-nums; }
+  .chev { flex: 0 0 auto; width: 8px; height: 8px; border: solid var(--text-3); border-width: 2px 2px 0 0; transform: rotate(45deg); margin-right: 4px; }
+  .li .acts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .li.dis .grow { opacity: .45; }
+  .li.stack { flex-wrap: wrap; }
+  .li.stack .acts { flex-basis: 100%; justify-content: flex-start; margin-top: 2px; }
+  .empty { padding: 22px 18px; color: var(--text-2); font-size: 14.5px; text-align: center; }
+
+  .tag { display: inline-block; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; margin-left: 6px; vertical-align: 1px; background: var(--fill); color: var(--text-2); }
+  .tag.on { background: color-mix(in srgb, var(--green) 15%, transparent); color: var(--green); }
+  .tag.off { background: color-mix(in srgb, var(--red) 12%, transparent); color: var(--red); }
+  .tag.warn { background: color-mix(in srgb, var(--orange) 15%, transparent); color: var(--orange); }
+
+  /* ── переключатели iOS ── */
+  .sw { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 16px 12px 18px; font-size: 15px; position: relative; cursor: pointer; }
+  .sw + .sw::before { content: ""; position: absolute; top: 0; left: 18px; right: 0; height: 1px; background: var(--sep); transform: scaleY(.6); }
+  .sw input { flex: 0 0 51px; width: 51px; height: 31px; padding: 0; margin: 0; border-radius: 999px; background: var(--fill-2); position: relative; cursor: pointer; transition: background .25s var(--ease); box-shadow: none !important; }
+  .sw input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.2); transition: transform .3s var(--ease); }
+  .sw input:checked { background: var(--green); }
+  .sw input:checked::after { transform: translateX(20px); }
+  .inset { background: var(--fill); border-radius: 14px; margin-top: 12px; overflow: hidden; }
+  .inset .sw + .sw::before { background: color-mix(in srgb, var(--text) 10%, transparent); }
+
+  /* ── плитки статистики ── */
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .tile { background: var(--surface); border-radius: 18px; padding: 16px; box-shadow: var(--shadow); border: 0; text-align: left; color: var(--text); font: inherit; cursor: pointer; transition: transform .18s var(--ease); }
+  .tile:active { transform: scale(.97); }
+  .tile .n { font-size: 26px; font-weight: 700; letter-spacing: -.03em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .tile .l { font-size: 13px; color: var(--text-2); margin-top: 4px; }
+  .tile.warn .n { color: var(--orange); }
+
+  /* ── страницы админки ── */
+  .pagehead { display: flex; align-items: center; justify-content: space-between; margin: 0 0 14px; }
+  .back { display: inline-flex; align-items: center; gap: 6px; background: none; border: 0; color: var(--text); font-size: 16px; padding: 6px 4px; cursor: pointer; }
+  .back::before { content: ""; width: 9px; height: 9px; border: solid currentColor; border-width: 0 0 2px 2px; transform: rotate(45deg); }
+  .ptitle { font-size: 28px; font-weight: 700; letter-spacing: -.025em; margin: 0 4px 16px; }
+  .note { font-size: 13.5px; color: var(--text-2); margin: 8px 16px 16px; }
+  .codebox { font: 600 22px/1 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: .14em; text-align: center; padding: 18px; border-radius: 14px; background: var(--fill); margin-top: 14px; }
+
+  .log time { flex: 0 0 auto; color: var(--text-3); font-size: 12.5px; font-variant-numeric: tabular-nums; align-self: flex-start; margin-top: 2px; }
+  .log .li { align-items: flex-start; font-size: 14.5px; }
+
+  /* ── касса ── */
+  .hero-num { font-size: 56px; font-weight: 700; letter-spacing: -.04em; line-height: 1; margin: 10px 0 6px; }
+  .result { text-align: center; padding: 8px 0 4px; animation: rise .5s var(--ease); }
+  .result .pay { font-size: 44px; font-weight: 700; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
+
+  .scanbtn { position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px; width: 100%; min-height: 330px; border: 0; border-radius: 28px; color: #fff; font: inherit; font-size: 19px; font-weight: 600; letter-spacing: -.01em; cursor: pointer;
+    background: radial-gradient(120% 90% at 50% 0%, #3a3a3c 0%, #1c1c1e 60%, #111 100%); box-shadow: 0 1px 0 rgba(255,255,255,.08) inset, 0 30px 50px -26px rgba(0,0,0,.6);
+    transition: transform .5s var(--spring), opacity .2s; }
+  html[data-theme="dark"] .scanbtn { box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset; }
+  .scanbtn:active { transform: scale(.97); transition-duration: .12s; }
+  .scanbtn:disabled { opacity: .6; }
+  .scanbtn .hint { font-size: 13.5px; font-weight: 400; opacity: .55; margin-top: -16px; }
+  .vf { position: relative; width: 120px; height: 120px; animation: breathe 2.8s ease-in-out infinite; }
+  .vf i { position: absolute; width: 30px; height: 30px; border: 3.5px solid #fff; }
+  .vf i:nth-child(1) { top: 0; left: 0; border-width: 3.5px 0 0 3.5px; border-radius: 14px 0 0 0; }
+  .vf i:nth-child(2) { top: 0; right: 0; border-width: 3.5px 3.5px 0 0; border-radius: 0 14px 0 0; }
+  .vf i:nth-child(3) { bottom: 0; left: 0; border-width: 0 0 3.5px 3.5px; border-radius: 0 0 0 14px; }
+  .vf i:nth-child(4) { bottom: 0; right: 0; border-width: 0 3.5px 3.5px 0; border-radius: 0 0 14px 0; }
+  .vf b { position: absolute; left: 14px; right: 14px; top: 50%; height: 2px; border-radius: 1px; background: linear-gradient(90deg, transparent, #fff, transparent); box-shadow: 0 0 12px rgba(255,255,255,.7); animation: scanline 2.4s var(--ease) infinite; }
+  .scanbtn:disabled .vf b { animation-duration: .7s; }
+  @keyframes scanline { 0%, 100% { transform: translateY(-44px); opacity: .25; } 50% { transform: translateY(44px); opacity: 1; } }
+  @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(.94); } }
+  .kres { margin-top: 14px; text-align: center; padding: 28px 20px 24px; animation: pop-in .6s var(--spring) both; }
+  .kres.bad { animation: pop-in .5s var(--spring) both, shake .5s .1s both; }
+  .kres .who { font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
+  .kres .grp { color: var(--text-2); font-size: 15px; margin-top: 4px; }
+  .cross { width: 44px; height: 44px; border-radius: 50%; background: color-mix(in srgb, var(--red) 13%, transparent); position: relative; margin: 0 auto 14px; }
+  .cross::before, .cross::after { content: ""; position: absolute; left: 13px; right: 13px; top: 21px; height: 3px; border-radius: 2px; background: var(--red); transform: rotate(45deg); animation: pop .45s var(--ease); }
+  .cross::after { transform: rotate(-45deg); }
+
+  /* ── нижние листы ── */
+  .scrim { position: fixed; inset: 0; background: rgba(0,0,0,.4); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); opacity: 0; pointer-events: none; transition: opacity .35s var(--ease); z-index: 20; }
+  .scrim.open { opacity: 1; pointer-events: auto; }
+  .sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 21; max-width: 480px; margin: 0 auto; background: var(--surface); border-radius: 26px 26px 0 0; padding: 12px 22px calc(26px + env(safe-area-inset-bottom)); transform: translateY(105%); visibility: hidden; transition: transform .55s var(--sheet), visibility 0s .55s; }
+  .sheet.open { transform: none; visibility: visible; transition: transform .6s var(--sheet), visibility 0s; }
+  .grab { width: 38px; height: 5px; border-radius: 3px; background: var(--fill-2); margin: 0 auto 18px; }
+  .heartbox { position: relative; width: 120px; height: 120px; margin: 4px auto 10px; display: grid; place-items: center; }
+  .heartbox::before { content: ""; position: absolute; inset: 10px; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--heart) 30%, transparent), transparent 70%); filter: blur(8px); }
+  .heart { position: relative; width: 78px; height: 78px; display: block; color: var(--heart); transform: scale(0); filter: drop-shadow(0 8px 18px color-mix(in srgb, var(--heart) 45%, transparent)); }
+  .sheet.open .heart { animation: heart-in .7s .25s var(--spring) forwards, beat 1.8s 1.1s ease-in-out infinite; }
+  .ripple { position: absolute; inset: 20px; border-radius: 50%; border: 2px solid var(--heart); opacity: 0; }
+  .sheet.open .ripple { animation: ripple 2.4s .5s var(--ease) infinite; }
+  .sheet.open .ripple.r2 { animation-delay: 1.3s; }
+  .mini { position: absolute; left: 50%; bottom: 40%; width: 14px; height: 14px; color: var(--heart); opacity: 0; pointer-events: none; }
+  .sheet.open .mini { animation: fly 2.2s var(--ease) forwards; }
+  .mini svg { width: 100%; height: 100%; display: block; }
+  .sheet .headline { font-size: 30px; font-weight: 700; letter-spacing: -.03em; text-align: center; margin: 0; }
+  .sheet .lead { text-align: center; color: var(--text-2); font-size: 16px; margin: 8px 8px 0; }
+  .sheet .pct { text-align: center; font-variant-numeric: tabular-nums; font-size: 64px; font-weight: 700; letter-spacing: -.045em; margin: 14px 0 0; line-height: 1; }
+
+  /* ── скелет загрузки ── */
+  .skel { border-radius: 22px; height: 200px; margin-bottom: 14px; background: linear-gradient(90deg, var(--fill) 25%, var(--fill-2) 50%, var(--fill) 75%); background-size: 200% 100%; animation: shimmer 1.3s infinite linear; }
+  .skel.s2 { height: 300px; border-radius: var(--r); }
+
+  /* ── анимации ── */
+  .enter > * { animation: rise .55s var(--ease) both; }
+  .enter > *:nth-child(2) { animation-delay: .05s; } .enter > *:nth-child(3) { animation-delay: .1s; }
+  .enter > *:nth-child(4) { animation-delay: .15s; } .enter > *:nth-child(5) { animation-delay: .2s; }
+  .enter > *:nth-child(6) { animation-delay: .25s; } .enter > *:nth-child(n+7) { animation-delay: .3s; }
+  .push { animation: push .5s var(--sheet) both; }
+  .popback { animation: pop-back .45s var(--sheet) both; }
+  .slide { animation: slide-in .5s var(--sheet) both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  @keyframes push { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
+  @keyframes drop { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  @keyframes sheen { to { transform: translateX(100%); } }
+  @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--green) 60%, transparent); } 60% { box-shadow: 0 0 0 7px transparent; } }
+  @keyframes pop { from { opacity: 0; transform: rotate(45deg) scale(.4); } to { opacity: 1; transform: rotate(45deg) scale(1); } }
+  @keyframes beat { 0%, 100% { transform: scale(1); } 14% { transform: scale(1.14); } 28% { transform: scale(1); } 42% { transform: scale(1.1); } 60% { transform: scale(1); } }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+  @keyframes roll { from { transform: translateY(60%); opacity: 0; filter: blur(3px); } to { transform: none; opacity: 1; filter: none; } }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  @keyframes pop-in { from { opacity: 0; transform: scale(.92) translateY(10px); } to { opacity: 1; transform: none; } }
+  @keyframes shake { 0%, 100% { transform: none; } 20% { transform: translateX(-10px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(3px); } }
+  @keyframes heart-in { from { transform: scale(0) rotate(-12deg); } to { transform: scale(1); } }
+  @keyframes ripple { from { transform: scale(.7); opacity: .6; } to { transform: scale(1.7); opacity: 0; } }
+  @keyframes fly { 0% { opacity: 0; transform: translate(-50%, 0) scale(.4); } 15% { opacity: .9; } 100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), -150px) scale(1) rotate(var(--rot)); } }
+  @keyframes slide-in { from { opacity: 0; transform: translateX(var(--from)); } to { opacity: 1; transform: none; } }
+  @keyframes pop-back { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
 <main>
-  <h1>Seven Times</h1>
-  <p class="sub" id="hello">Загрузка…</p>
+  <header class="top">
+    <div class="eyebrow" id="today"></div>
+    <div class="hello" id="hello">&nbsp;</div>
+  </header>
 
-  <div class="tabs hidden" id="tabs">
-    <button id="tabCard">Карта</button>
-    <button id="tabKassa" class="ghost hidden">Касса</button>
-    <button id="tabAdmin" class="ghost hidden">Админ</button>
-  </div>
+  <nav class="seg hidden" id="tabs">
+    <span class="ind"></span>
+    <button id="tabCard" class="active">Карта</button>
+    <button id="tabKassa" class="hidden">Касса</button>
+    <button id="tabAdmin" class="hidden">Админ</button>
+  </nav>
+
+  <div id="loader"><div class="skel"></div><div class="skel s2"></div></div>
 
   <!-- ═════ КАРТА ГОСТЯ ═════ -->
   <section id="guest" class="hidden">
     <div class="msg" id="inviteMsg"></div>
-    <div class="box hidden" id="phoneBox">
-      <h2>Подтверди номер телефона</h2>
-      <div class="muted">Одно нажатие — и мы сможем восстановить карту, если сменишь телефон.</div>
-      <button id="phoneBtn">📱 Подтвердить номер</button>
+
+    <div class="stage"><div class="wallet" id="wallet"><span class="glow"></span>
+      <div>
+        <div class="w-brand">SEVEN TIMES</div>
+        <div class="w-sub">Coffee &amp; Kitchen</div>
+      </div>
+      <div class="w-foot">
+        <div>
+          <div class="w-label">Гость</div>
+          <div class="w-val" id="cardName"></div>
+        </div>
+        <div style="text-align:right">
+          <div class="w-label" id="cardNoLabel">Карта</div>
+          <div class="w-val" id="cardNo"></div>
+          <span class="w-state hidden" id="cardState"><span class="dot off"></span>Не активна</span>
+        </div>
+      </div>
+    </div></div>
+
+    <div class="card hidden" id="phoneBox">
+      <div class="title">Активируйте карту</div>
+      <div class="muted" id="phoneText">Подтвердите номер телефона — и карта с QR-кодом откроется сразу. Telegram подставит номер сам, нужно одно нажатие.</div>
+      <button class="btn big" id="phoneBtn">Подтвердить номер</button>
       <div class="msg" id="phoneMsg"></div>
     </div>
 
-    <div class="box" style="text-align:center">
-      <div class="qrwrap"><div id="qr"></div></div>
-      <div class="code" id="code">······</div>
-      <div class="muted">Карта <b id="cardNo"></b> · код меняется каждые 30 сек</div>
+    <div class="card qrcard hidden" id="qrBox">
+      <div class="qrwrap" id="qrWrap"><div id="qr"></div></div>
+      <div class="code" id="code">&nbsp;</div>
       <div class="bar"><i id="timer"></i></div>
+      <div class="muted">Покажите QR кассиру при оплате</div>
+      <div class="fine" style="margin-top:4px">Код обновляется каждые 30 секунд, скриншот не сработает</div>
     </div>
 
-    <div class="box" id="stampsBox">
-      <h2>Штампы</h2>
-      <div class="stamps" id="stamps"></div>
-      <div class="muted" id="stampsText"></div>
-      <div id="rewards" style="margin-top:8px"></div>
-      <button id="scanReceipt" class="hidden">📷 Сканировать чек</button>
-      <div class="muted" id="rules" style="margin-top:8px"></div>
-      <div class="msg" id="scanMsg"></div>
+    <div class="card hidden" id="discBox">
+      <div class="applied">
+        <svg class="chk" viewBox="0 0 52 52"><circle class="c" cx="26" cy="26" r="24"/><path class="p" d="M16 27l7 7 14-15"/></svg>
+        <div>
+          <div class="muted" id="discGroup">Сегодня применена скидка</div>
+          <div class="num" id="discPercent"></div>
+          <div class="fine" id="discInfo"></div>
+        </div>
+      </div>
     </div>
 
-    <div class="box hidden" id="discBox">
-      <span class="pill" id="discGroup"></span>
-      <div class="big" id="discPercent"></div>
-      <div class="muted" id="discInfo"></div>
-    </div>
+    <div class="caps hidden" id="couponsCap">Купоны</div>
+    <div class="list hidden" id="couponsBox"><div id="coupons"></div></div>
 
-    <div class="box hidden" id="couponsBox">
-      <h2>Купоны</h2>
-      <div id="coupons"></div>
-    </div>
-
-    <details class="box" id="codeEnter">
+    <details class="more hidden" id="codeEnter">
       <summary>У меня есть код приглашения</summary>
       <div>
-        <input id="invCodeIn" placeholder="Код от администратора" autocapitalize="characters">
-        <button id="invCodeBtn">Активировать</button>
+        <input id="invCodeIn" placeholder="Код от администратора" autocapitalize="characters" autocomplete="off">
+        <button class="btn" id="invCodeBtn">Активировать</button>
         <div class="msg" id="invCodeMsg"></div>
       </div>
     </details>
@@ -131,209 +357,356 @@
 
   <!-- ═════ КАССА ═════ -->
   <section id="kassa" class="hidden">
-    <div class="box">
-      <button id="scanGuest">📷 Сканировать QR гостя</button>
-      <p class="muted" style="margin:10px 0 0">Только скан. Нет QR на телефоне гостя — нет штампа, скидки и купона.</p>
-      <div class="msg" id="kMsg"></div>
-    </div>
-    <div class="box hidden" id="gBox">
-      <h2 id="gName"></h2>
-      <div class="muted" id="gInfo"></div>
-      <div class="msg" id="gToday"></div>
-      <div id="gRegular">
-        <div id="gRewards" style="margin-top:8px"></div>
-        <button id="bStamp">+1 штамп за покупку</button>
-        <button id="bRedeem" class="hidden">Выдать бесплатный кофе</button>
-      </div>
-      <div id="gDisc" class="hidden">
-        <input id="dSum" type="number" inputmode="numeric" placeholder="Сумма чека, ₸">
-        <button id="bDisc">Применить скидку</button>
-      </div>
-      <div id="gCoupons" class="hidden">
-        <select id="couponSel"></select>
-        <button id="bCoupon" class="ghost">Применить купон</button>
-      </div>
-      <div class="msg" id="gMsg"></div>
-    </div>
+    <button class="scanbtn" id="scanGuest"><span class="vf"><i></i><i></i><i></i><i></i><b></b></span><span>Сканировать QR гостя</span><span class="hint">Один скан — скидка применяется сразу</span></button>
+    <div id="kRes"></div>
   </section>
 
   <!-- ═════ АДМИН ═════ -->
   <section id="admin" class="hidden">
-    <details class="box" open>
-      <summary>📊 Отчёт за 7 дней</summary>
-      <div class="report" id="report">…</div>
-    </details>
+    <div id="aHome">
+      <div class="stats" id="stats"></div>
+      <div class="msg warn" id="susMsg" style="display:none"></div>
 
-    <details class="box" id="logBox">
-      <summary>📜 Журнал: все действия</summary>
-      <div>
-        <div class="row">
-          <select id="logCashier"><option value="">Все кассиры</option></select>
-          <select id="logType">
-            <option value="">Все действия</option><option value="stamp">Штампы</option><option value="redeem">Бесплатный кофе</option>
-            <option value="discount_use">Скидки</option><option value="coupon_use">Купоны</option><option value="lookup">Сканы карт</option>
-            <option value="rejected">Отказы</option><option value="person_added">Выданные скидки</option><option value="cashier_added">Новые кассиры</option>
-          </select>
-        </div>
-        <button class="ghost" id="logBtn">Обновить</button>
-        <div class="log" id="logList"></div>
+      <div class="caps">Контроль</div>
+      <div class="list">
+        <button class="li" data-go="pReport"><span class="grow">Отчёт за 7 дней</span><span class="chev"></span></button>
+        <button class="li" data-go="pLog"><span class="grow">Журнал действий<span class="sub">Каждый скан, скидка и отказ</span></span><span class="chev"></span></button>
       </div>
-    </details>
 
-    <details class="box">
-      <summary>🧾 Кассиры</summary>
-      <div>
-        <div id="cashiers" class="muted">…</div>
-        <h2 style="margin-top:16px">Добавить кассира</h2>
-        <div class="muted">Кассир сканирует QR камерой телефона <b>при тебе</b>. Один QR — один кассир, после скана сгорает.</div>
-        <label>Точка</label><select id="invBranch"></select>
-        <button id="invBtn">Создать QR</button>
-        <div id="invBox" class="hidden" style="text-align:center">
-          <div class="qrwrap"><div id="invQr"></div></div>
-          <div class="muted" id="invInfo">Ждёт сканирования…</div>
-          <button class="ghost" id="invCancel">Отменить QR</button>
-        </div>
-        <div class="msg" id="invMsg"></div>
+      <div class="caps">Люди</div>
+      <div class="list">
+        <button class="li" data-go="pPeople"><span class="grow">Скидки гостям<span class="sub">Постоянные, знакомые, сотрудники</span></span><span class="val" id="cntPeople"></span><span class="chev"></span></button>
+        <button class="li" data-go="pCashiers"><span class="grow">Кассиры</span><span class="val" id="cntCashiers"></span><span class="chev"></span></button>
+        <button class="li" data-go="pAdmins"><span class="grow">Админы и права</span><span class="val" id="cntAdmins"></span><span class="chev"></span></button>
       </div>
-    </details>
 
-    <details class="box">
-      <summary>👤 Знакомые и сотрудники</summary>
-      <div>
-        <div class="muted">Скидку получают только по твоему приглашению. Скидка привязана к Telegram человека — передать её нельзя. На кассе: один QR — одна операция в день.</div>
-
-        <h2 style="margin-top:14px">Пригласить</h2>
-        <label>Кто это?</label>
-        <div class="seg"><button id="catFriend">Знакомый</button><button id="catStaff" class="ghost">Сотрудник</button></div>
-        <div id="pctWrap"><label>Скидка знакомому, %</label><input id="pPercent" type="number" inputmode="numeric" placeholder="Сколько скажет хозяин"></div>
-        <div id="staffNote" class="muted hidden" style="margin-top:8px"></div>
-        <label>Пометка (кто это)</label><input id="pNote" placeholder="напр. друг хозяина, бариста Самал">
-        <div class="row">
-          <button id="pQrBtn">Показать QR</button>
-          <button id="pCodeBtn" class="ghost">Код на 24 ч</button>
-        </div>
-        <div id="pQrBox" class="hidden" style="text-align:center">
-          <div class="qrwrap"><div id="pQr"></div></div>
-          <div class="muted" id="pQrInfo"></div>
-          <button class="ghost" id="pQrCancel">Отменить QR</button>
-        </div>
-        <div id="pCodeBox" class="hidden">
-          <div class="muted" id="pCodeInfo"></div>
-          <div class="codebox" id="pCodeText"></div>
-          <button id="pCodeCopy">Скопировать приглашение</button>
-        </div>
-        <div class="msg" id="pMsg"></div>
-
-        <div id="pInvites"></div>
-        <h2 style="margin-top:16px">Список</h2>
-        <div id="people" class="muted">…</div>
+      <div class="caps">Гостям</div>
+      <div class="list">
+        <button class="li" data-go="pCoupons"><span class="grow">Купоны</span><span class="val" id="cntCoupons"></span><span class="chev"></span></button>
+        <button class="li" data-go="pPush" data-perm="push"><span class="grow">Рассылка</span><span class="chev"></span></button>
+        <button class="li" data-go="pCards" data-perm="cards"><span class="grow">Найти карту</span><span class="chev"></span></button>
       </div>
-    </details>
 
-    <details class="box">
-      <summary>🎁 Купоны</summary>
-      <div>
-        <div id="couponList" class="muted"></div>
-        <div class="row">
-          <div><label>Название</label><input id="cTitle" placeholder="Десерт"></div>
-          <div><label>Скидка %</label><input id="cDisc" type="number" value="20"></div>
-          <div><label>Дней</label><input id="cDays" type="number" value="7"></div>
-        </div>
-        <button id="couponBtn">Выпустить и разослать всем</button>
-        <div class="msg" id="couponMsg"></div>
+      <div class="caps" data-perm="admins">Настройки</div>
+      <div class="list" data-perm="admins">
+        <button class="li" data-go="pNotify"><span class="grow">Уведомления</span><span class="chev"></span></button>
       </div>
-    </details>
+    </div>
 
-    <details class="box">
-      <summary>📣 Рассылка всем гостям</summary>
-      <div>
-        <textarea id="pushText" rows="3" maxlength="500" placeholder="Сегодня до 17:00 два капучино по цене одного ☕"></textarea>
-        <button id="pushBtn">Отправить</button>
+    <!-- отчёт -->
+    <div class="page hidden" id="pReport">
+      <div class="pagehead"><button class="back" data-back>Админ</button></div>
+      <div class="ptitle">Отчёт за 7 дней</div>
+      <div id="reportBody"></div>
+    </div>
+
+    <!-- журнал -->
+    <div class="page hidden" id="pLog">
+      <div class="pagehead"><button class="back" data-back>Админ</button><button class="pill" id="logBtn">Обновить</button></div>
+      <div class="ptitle">Журнал</div>
+      <div class="row2" style="margin-bottom:14px">
+        <select id="logCashier"><option value="">Все кассиры</option></select>
+        <select id="logType">
+          <option value="">Все действия</option>
+          <option value="discount_use">Скидки</option><option value="coupon_use">Купоны</option><option value="lookup">Сканы карт</option>
+          <option value="rejected">Отказы</option><option value="person_added">Выданные скидки</option><option value="cashier_added">Новые кассиры</option><option value="admin_added">Новые админы</option>
+        </select>
+      </div>
+      <div class="list log" id="logList"><div class="empty">Загрузка</div></div>
+    </div>
+
+    <!-- кассиры -->
+    <div class="page hidden" id="pCashiers">
+      <div class="pagehead"><button class="back" data-back>Админ</button></div>
+      <div class="ptitle">Кассиры</div>
+      <div class="list" id="cashiers"></div>
+      <div data-perm="cashiers">
+        <div class="caps">Добавить кассира</div>
+        <div class="card">
+          <div class="muted">Кассир сканирует QR камерой своего телефона при вас. Один QR — один кассир, после скана сгорает.</div>
+          <div class="field"><span>Точка</span><select id="invBranch"></select></div>
+          <button class="btn" id="invBtn">Создать QR</button>
+          <div id="invBox" class="hidden" style="text-align:center;margin-top:18px">
+            <div class="qrwrap"><div id="invQr"></div></div>
+            <div class="muted" id="invInfo" style="margin-top:12px">Ждёт сканирования</div>
+            <button class="btn danger" id="invCancel">Отменить QR</button>
+          </div>
+          <div class="msg" id="invMsg"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- скидки людям -->
+    <div class="page hidden" id="pPeople">
+      <div class="pagehead"><button class="back" data-back>Админ</button></div>
+      <div class="ptitle">Скидки гостям</div>
+      <div data-perm="people">
+        <div class="card">
+          <div class="h">Выдать скидку</div>
+          <div class="muted">Человек сканирует QR — скидка привязывается к его Telegram. В своей карте он её не видит: процент видит только кассир при скане.</div>
+          <div class="field"><span>Кто это</span></div>
+          <div class="seg small" id="catSeg" style="margin-top:0">
+            <span class="ind"></span>
+            <button id="catRegular" class="active">Постоянный</button><button id="catFriend">Знакомый</button><button id="catStaff">Сотрудник</button>
+          </div>
+          <div class="field" id="pctWrap"><span>Скидка, %</span><input id="pPercent" type="number" inputmode="numeric" placeholder="Например, 10"></div>
+          <div id="staffNote" class="msg ok hidden" style="display:none"></div>
+          <div class="field"><span>Пометка</span><input id="pNote" placeholder="Например: визитка, друг хозяина"></div>
+          <div class="row2">
+            <button class="btn" id="pQrBtn">Показать QR</button>
+            <button class="btn sec" id="pCodeBtn">Код на 24 часа</button>
+          </div>
+          <div id="pQrBox" class="hidden" style="text-align:center;margin-top:18px">
+            <div class="qrwrap"><div id="pQr"></div></div>
+            <div class="muted" id="pQrInfo" style="margin-top:12px"></div>
+            <button class="btn danger" id="pQrCancel">Отменить QR</button>
+          </div>
+          <div id="pCodeBox" class="hidden">
+            <div class="codebox" id="pCodeText"></div>
+            <div class="fine" id="pCodeInfo" style="text-align:center;margin-top:8px"></div>
+            <button class="btn" id="pCodeCopy">Скопировать приглашение</button>
+          </div>
+          <div class="msg" id="pMsg"></div>
+        </div>
+      </div>
+      <div id="pInvites"></div>
+      <div id="people"></div>
+    </div>
+
+    <!-- купоны -->
+    <div class="page hidden" id="pCoupons">
+      <div class="pagehead"><button class="back" data-back>Админ</button></div>
+      <div class="ptitle">Купоны</div>
+      <div class="list" id="couponList"></div>
+      <div data-perm="coupons">
+        <div class="caps">Новый купон</div>
+        <div class="card">
+          <div class="field" style="margin-top:0"><span>Название</span><input id="cTitle" placeholder="Десерт"></div>
+          <div class="row2">
+            <div class="field"><span>Скидка, %</span><input id="cDisc" type="number" inputmode="numeric" value="20"></div>
+            <div class="field"><span>Дней</span><input id="cDays" type="number" inputmode="numeric" value="7"></div>
+          </div>
+          <button class="btn" id="couponBtn">Выпустить и разослать</button>
+          <div class="msg" id="couponMsg"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- рассылка -->
+    <div class="page hidden" id="pPush">
+      <div class="pagehead"><button class="back" data-back>Админ</button></div>
+      <div class="ptitle">Рассылка</div>
+      <div class="card">
+        <div class="muted" style="margin-bottom:12px">Сообщение придёт всем гостям с картой в Telegram.</div>
+        <textarea id="pushText" rows="4" maxlength="500" placeholder="Сегодня до 17:00 два капучино по цене одного"></textarea>
+        <button class="btn" id="pushBtn">Отправить всем</button>
         <div class="msg" id="pushMsg"></div>
       </div>
-    </details>
+    </div>
 
-    <details class="box">
-      <summary>🔎 Найти / заблокировать карту</summary>
-      <div>
-        <div class="row"><input id="q" placeholder="телефон, имя или номер карты"><button id="qBtn" style="margin-top:6px;flex:0 0 90px">Найти</button></div>
-        <div id="found"></div>
+    <!-- поиск карт -->
+    <div class="page hidden" id="pCards">
+      <div class="pagehead"><button class="back" data-back>Админ</button></div>
+      <div class="ptitle">Найти карту</div>
+      <div class="row2" style="margin-bottom:14px"><input id="q" placeholder="Телефон, имя или номер карты" enterkeyhint="search"><button class="pill dark" id="qBtn" style="flex:0 0 auto;padding:0 20px;border-radius:12px">Найти</button></div>
+      <div class="list hidden" id="found"></div>
+    </div>
+
+    <!-- уведомления -->
+    <div class="page hidden" id="pNotify">
+      <div class="pagehead"><button class="back" data-back>Админ</button></div>
+      <div class="ptitle">Уведомления</div>
+      <div class="list" id="notify"></div>
+      <div class="note">Подозрительные действия приходят всегда. Уведомления конкретному админу включаются в разделе «Админы и права».</div>
+    </div>
+
+    <!-- админы -->
+    <div class="page hidden" id="pAdmins">
+      <div class="pagehead"><button class="back" data-back>Админ</button></div>
+      <div class="ptitle">Админы и права</div>
+      <div class="note" style="margin-top:0">Отчёт и журнал видит любой админ. Всё остальное — по переключателям. Админка открывается только после подтверждения номера.</div>
+      <div id="admins"></div>
+      <div data-perm="admins">
+        <div class="caps">Добавить админа</div>
+        <div class="list">
+          <div id="newPerms"></div>
+        </div>
+        <div class="note">Всё выключено — админ только смотрит отчёт и журнал. Подходит хозяину.</div>
+        <button class="btn" id="admQrBtn">Создать QR админа</button>
+        <div id="admQrBox" class="card hidden" style="text-align:center;margin-top:14px">
+          <div class="qrwrap"><div id="admQr"></div></div>
+          <div class="muted" style="margin-top:12px">Пусть отсканирует камерой телефона при вас. QR сгорит после скана.</div>
+          <button class="btn danger" id="admQrCancel">Отменить QR</button>
+        </div>
+        <div class="msg" id="admMsg"></div>
       </div>
-    </details>
-
-    <details class="box">
-      <summary>🔔 Уведомления мне</summary>
-      <div id="notify"></div>
-    </details>
+    </div>
   </section>
 </main>
 
+<!-- нижние листы -->
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="congrats">
+  <div class="grab"></div>
+  <div class="heartbox" id="cgHeart"><span class="ripple"></span><span class="ripple r2"></span><svg class="heart" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21.2c-.3 0-.6-.1-.8-.3C6.3 16.6 2.5 13.2 2.5 8.9 2.5 5.9 4.8 3.6 7.7 3.6c1.7 0 3.3.8 4.3 2.1 1-1.3 2.6-2.1 4.3-2.1 2.9 0 5.2 2.3 5.2 5.3 0 4.3-3.8 7.7-8.7 12-.2.2-.5.3-.8.3z"/></svg></div>
+  <p class="headline" id="cgTitle">Поздравляем!</p>
+  <p class="pct hidden" id="cgPct"></p>
+  <p class="lead" id="cgText"></p>
+  <button class="btn big" id="cgOk" style="margin-top:22px">Отлично</button>
+</div>
+<div class="sheet" id="dlg">
+  <div class="grab"></div>
+  <p class="h" id="dlgTitle" style="text-align:center;margin-bottom:14px"></p>
+  <input id="dlgIn" class="input-xl" type="number" inputmode="numeric">
+  <div class="row2"><button class="btn sec" id="dlgNo">Отмена</button><button class="btn" id="dlgYes">Сохранить</button></div>
+</div>
+
 <script>
-// ⚙️ URL своего Apps Script (…/exec)
-const API_URL = 'https://script.google.com/macros/s/AKfycbzhU-5TgoeI1gLTFHHcLpIKERE1UZR7C_SN-skP2aAeb66JlyimlLtYVLYAiG5CeNmyIg/exec';
+// URL своего Apps Script (…/exec)
+const API_URL = 'https://script.google.com/macros/s/AKfycbyyBpYlVittzvRdTx1y2hTn6YZq9tjMcBm2zZiUS7TxFMYtctID-ejgU2rFrZl7fs0fgw/exec';
 
 const tg = window.Telegram?.WebApp;
+let curTab = 'card';
 tg?.ready(); tg?.expand();
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const show = (el, text, ok) => { el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'err'); };
+const show = (el, text, ok) => { el.textContent = text; el.className = 'msg'; void el.offsetWidth; el.className = 'msg ' + (ok === 'warn' ? 'warn' : ok ? 'ok' : 'err'); };
+const hide = (el) => { el.className = 'msg'; };
 const haptic = (t) => { try { tg?.HapticFeedback?.notificationOccurred(t); } catch {} };
+const tick = () => { try { tg?.HapticFeedback?.selectionChanged(); } catch {} };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const ask = (text) => new Promise((res) => (tg?.showConfirm ? tg.showConfirm(text, res) : res(confirm(text))));
 const alertMsg = (text) => (tg?.showAlert ? tg.showAlert(text) : alert(text));
+const money = (n) => Number(n || 0).toLocaleString('ru-RU');
+const enter = (el) => { el.classList.remove('enter'); void el.offsetWidth; el.classList.add('enter'); };
+
+// тема как в Telegram
+function applyTheme() {
+  const dark = tg?.colorScheme ? tg.colorScheme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  const bg = dark ? '#000000' : '#f5f5f7';
+  try { tg?.setHeaderColor?.(bg); tg?.setBackgroundColor?.(bg); } catch {}
+}
+applyTheme(); tg?.onEvent?.('themeChanged', applyTheme);
+{ const d = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' }); $('today').textContent = d; }
+
+// живая карта: наклон и блик за пальцем
+(() => {
+  const w = $('wallet'); if (!w) return;
+  const set = (px, py) => { w.style.setProperty('--ry', ((px - .5) * 14) + 'deg'); w.style.setProperty('--rx', ((.5 - py) * 10) + 'deg'); w.style.setProperty('--mx', (px * 100) + '%'); w.style.setProperty('--my', (py * 100) + '%'); };
+  w.addEventListener('pointermove', (e) => { const r = w.getBoundingClientRect(); w.classList.add('live'); set((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height); });
+  const reset = () => { w.classList.remove('live'); w.style.setProperty('--rx', '0deg'); w.style.setProperty('--ry', '0deg'); w.style.setProperty('--mx', '70%'); w.style.setProperty('--my', '0%'); };
+  w.addEventListener('pointerleave', reset); w.addEventListener('pointerup', reset); w.addEventListener('pointercancel', reset);
+  let last = 0;
+  window.addEventListener('deviceorientation', (e) => {
+    if (e.gamma == null || Date.now() - last < 40) return; last = Date.now();
+    const px = Math.max(0, Math.min(1, .5 + e.gamma / 60)), py = Math.max(0, Math.min(1, .5 + (e.beta - 45) / 80));
+    set(px, py);
+  });
+})();
+
+// цифры кода «перекатываются» при смене
+function setCode(str) {
+  const el = $('code'), old = el.dataset.v || '';
+  el.dataset.v = str;
+  el.innerHTML = str.split('').map((ch, i) => (i === 3 ? '<span class="gap"></span>' : '') + `<span class="dg ${old[i] !== ch ? 'roll' : ''}" style="animation-delay:${i * 45}ms">${ch}</span>`).join('');
+}
+const checkSvg = (cls = '') => `<svg class="chk ${cls}" viewBox="0 0 52 52"><circle class="c" cx="26" cy="26" r="24"/><path class="p" d="M16 27l7 7 14-15"/></svg>`;
+function countTo(el, to, suffix = '', prefix = '', dur = 800) {
+  const start = performance.now();
+  const step = (t) => { const k = Math.min(1, (t - start) / dur), v = Math.round(to * (1 - Math.pow(1 - k, 3))); el.textContent = prefix + v + suffix; if (k < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
 
 async function api(action, data = {}) {
   // text/plain — без CORS-предзапроса, Apps Script такое принимает
   const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify({ action, initData: tg?.initData || '', ...data }) });
   const j = await r.json();
-  if (!j.ok) throw new Error(j.error || 'Ошибка');
+  if (!j.ok) { const err = new Error(j.error || 'Ошибка'); err.data = j; throw err; }
   return j;
 }
 
 function scan(text) {
   return new Promise((resolve, reject) => {
-    if (!tg?.showScanQrPopup || !tg.isVersionAtLeast?.('6.4')) return reject(new Error('Обнови Telegram — нужен встроенный сканер QR'));
+    if (!tg?.showScanQrPopup || !tg.isVersionAtLeast?.('6.4')) return reject(new Error('Обновите Telegram — нужен встроенный сканер QR'));
     let done = false;
     tg.showScanQrPopup({ text }, (value) => { done = true; resolve(value); return true; });
     tg.onEvent('scanQrPopupClosed', function h() { tg.offEvent('scanQrPopupClosed', h); if (!done) reject(new Error('')); });
   });
 }
 
+// сегментный переключатель с «ползунком»
+function segMove(seg) {
+  const b = seg.querySelector('button.active'), ind = seg.querySelector('.ind');
+  if (!b || !ind || !b.offsetWidth) return;
+  ind.style.width = b.offsetWidth + 'px';
+  ind.style.transform = `translateX(${b.offsetLeft - 3}px)`;
+}
+window.addEventListener('resize', () => document.querySelectorAll('.seg').forEach(segMove));
+
+// нижние листы
+function openSheet(id) { $('scrim').classList.add('open'); $(id).classList.add('open'); }
+function closeSheets() { $('scrim').classList.remove('open'); document.querySelectorAll('.sheet').forEach((s) => s.classList.remove('open')); }
+$('scrim').onclick = () => { closeSheets(); if (dlgRes) { dlgRes(null); dlgRes = null; } };
+$('cgOk').onclick = closeSheets;
+function congrats({ heart, title, pct, text }) {
+  $('cgHeart').classList.toggle('hidden', !heart);
+  $('cgTitle').textContent = title;
+  $('cgPct').classList.toggle('hidden', !pct); $('cgPct').textContent = '0%';
+  $('cgText').textContent = text;
+  const box = $('cgHeart'); box.querySelectorAll('.mini').forEach((m) => m.remove());
+  if (heart) for (let i = 0; i < 9; i++) {
+    const m = document.createElement('span'); m.className = 'mini';
+    m.innerHTML = box.querySelector('svg').outerHTML.replace('class="heart"', '');
+    m.style.setProperty('--dx', (Math.random() * 180 - 90) + 'px'); m.style.setProperty('--rot', (Math.random() * 60 - 30) + 'deg');
+    m.style.animationDelay = (0.6 + Math.random() * 1.2) + 's'; const sz = 10 + Math.random() * 10; m.style.width = m.style.height = sz + 'px';
+    box.appendChild(m);
+  }
+  setTimeout(() => { openSheet('congrats'); haptic('success'); if (pct) setTimeout(() => countTo($('cgPct'), Number(pct), '%', '', 900), 450); }, 350);
+}
+let dlgRes = null;
+function askNumber(title, value) {
+  return new Promise((res) => {
+    dlgRes = res; $('dlgTitle').textContent = title; $('dlgIn').value = value || '';
+    openSheet('dlg'); setTimeout(() => $('dlgIn').focus(), 400);
+  });
+}
+$('dlgYes').onclick = () => { const v = $('dlgIn').value; closeSheets(); if (dlgRes) dlgRes(v); dlgRes = null; };
+$('dlgNo').onclick = () => { closeSheets(); if (dlgRes) dlgRes(null); dlgRes = null; };
+
 // ══════════ Карта гостя ══════════
 let qrObj = null, codeTimer = null, me = null, lastQr = '';
 function renderCard(c) {
-  $('guest').classList.remove('hidden');
-  $('cardNo').textContent = c.id;
-  $('phoneBox').classList.toggle('hidden', c.phoneVerified);
-  const d = c.discount;
-  $('stampsBox').classList.toggle('hidden', !!d);
-  $('discBox').classList.toggle('hidden', !d);
-  $('codeEnter').classList.toggle('hidden', !!d);
-  if (d) {
-    $('discGroup').textContent = d.group;
-    $('discPercent').textContent = `−${d.percent}%`;
-    $('discInfo').textContent = 'Покажи QR кассиру. Одна операция в день.';
-  } else {
-    $('stamps').innerHTML = Array.from({ length: c.stampsForReward }, (_, i) => `<div class="stamp ${i < c.stamps ? 'on' : ''}">${i < c.stamps ? '☕' : ''}</div>`).join('');
-    $('stampsText').textContent = `${c.stamps} из ${c.stampsForReward}. Ещё ${c.stampsForReward - c.stamps} — и кофе бесплатно.`;
-    $('rewards').innerHTML = c.rewards ? `<span class="pill">Бесплатный кофе: ${c.rewards} — покажи QR кассиру</span>` : '';
-    $('rules').textContent = me?.receiptMode ? `После оплаты отсканируй QR внизу чека. Штамп от ${c.minSum} ₸, один в день.` : 'Покажи QR кассиру при каждой покупке — он поставит штамп. Одна операция в день.';
+  if (curTab === 'card') $('guest').classList.remove('hidden');
+  const ok = !!c.phoneVerified;
+  $('cardName').textContent = c.name || 'Гость';
+  $('cardNo').textContent = ok ? c.id : '';
+  $('cardNoLabel').classList.toggle('hidden', !ok);
+  $('cardState').classList.toggle('hidden', ok && !c.blocked);
+  if (c.blocked) $('cardState').innerHTML = '<span class="dot off"></span>Заблокирована';
+  $('phoneBox').classList.toggle('hidden', ok);
+  $('qrBox').classList.toggle('hidden', !ok || c.blocked);
+  const t = ok ? c.today : null; // скидку гость видит только после того, как кассир её применил
+  $('discBox').classList.toggle('hidden', !t);
+  $('codeEnter').classList.toggle('hidden', !ok || !!c.invited || !!(me && (me.cashier || me.admin))); // уже со скидкой, кассир или админ — код не нужен
+  if (t) {
+    $('discPercent').textContent = `−${t.percent}%`;
+    $('discInfo').textContent = `${t.amount ? '−' + money(t.amount) + ' ₸ · ' : ''}${t.branch} · ${new Date(t.ts).toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' })}`;
   }
-  $('couponsBox').classList.toggle('hidden', !c.coupons.length);
-  $('coupons').innerHTML = c.coupons.map((x) => `<p style="margin:0 0 8px"><b>${esc(x.title)}</b> −${x.discount}%<br><span class="muted">до ${new Date(x.expires).toLocaleDateString('ru')} · покажи QR кассиру</span></p>`).join('');
-  if (c.blocked) $('hello').textContent = 'Карта заблокирована';
+  const hasC = ok && c.coupons.length > 0;
+  $('couponsBox').classList.toggle('hidden', !hasC); $('couponsCap').classList.toggle('hidden', !hasC);
+  $('coupons').innerHTML = c.coupons.map((x) => `<div class="li"><span class="grow"><b>${esc(x.title)}</b><span class="sub">до ${new Date(x.expires).toLocaleDateString('ru')} · покажите QR кассиру</span></span><span class="val">−${x.discount}%</span></div>`).join('');
 }
 
 async function refreshCode() {
   clearTimeout(codeTimer);
   try {
     const r = await api('code');
-    if (r.card) { const was = me?.card; me.card = r.card; renderCard(r.card);
-      if (was && (was.stamps !== r.card.stamps || was.rewards !== r.card.rewards)) haptic('success'); }
-    $('code').textContent = r.code.replace(/(\d{3})(\d{3})/, '$1 $2');
+    if (r.card) { me.card = r.card; renderCard(r.card); }
+    setCode(r.code);
     if (!qrObj) qrObj = new QRCode($('qr'), { text: r.qr, width: 400, height: 400, correctLevel: QRCode.CorrectLevel.M });
-    else if (r.qr !== lastQr) qrObj.makeCode(r.qr);
+    else if (r.qr !== lastQr) { $('qrWrap').classList.add('swap'); setTimeout(() => { qrObj.makeCode(r.qr); $('qrWrap').classList.remove('swap'); }, 180); }
     lastQr = r.qr;
     const bar = $('timer');
     bar.style.transition = 'none'; bar.style.width = (r.secondsLeft / 30 * 100) + '%';
@@ -342,122 +715,171 @@ async function refreshCode() {
   } catch { codeTimer = setTimeout(refreshCode, 5000); }
 }
 
-$('scanReceipt').onclick = async () => {
-  try {
-    const text = await scan('Наведи на QR внизу чека');
-    const r = await api('receipt', { qr: text });
-    haptic('success');
-    show($('scanMsg'), r.gotReward ? '🎉 Бесплатный кофе твой!' : `Штамп засчитан: ${r.stamps} из 6`, true);
-    load();
-  } catch (e) { if (e.message) { haptic('error'); show($('scanMsg'), e.message); } }
-};
-
 // Номер: Telegram показывает «Поделиться номером», контакт уходит боту, а мы сразу просим скрипт его забрать
 $('phoneBtn').onclick = () => {
-  if (!tg?.requestContact || !tg.isVersionAtLeast?.('6.9')) return show($('phoneMsg'), 'Обнови Telegram или напиши боту /start');
+  if (!tg?.requestContact || !tg.isVersionAtLeast?.('6.9')) return show($('phoneMsg'), 'Обновите Telegram или напишите боту /start');
   tg.requestContact(async (sent) => {
-    if (!sent) return show($('phoneMsg'), 'Без номера карта тоже работает — подтвердишь позже');
-    show($('phoneMsg'), 'Проверяю номер…', true);
+    if (!sent) return show($('phoneMsg'), 'Без номера карта не активируется. Нажмите ещё раз, когда будете готовы.', 'warn');
+    $('phoneBtn').disabled = true; $('phoneBtn').textContent = 'Проверяем номер';
     for (let i = 0; i < 6; i++) {
-      try { await api('poll'); const r = await api('me'); if (r.card.phoneVerified) { haptic('success'); show($('phoneMsg'), '✅ Номер подтверждён', true); return load(); } } catch {}
+      try { await api('poll'); const r = await api('me'); if (r.card.phoneVerified) { haptic('success'); hide($('phoneMsg')); return load(); } } catch {}
       await sleep(1500);
     }
-    show($('phoneMsg'), 'Номер отправлен, подтверждение придёт в течение минуты');
+    $('phoneBtn').disabled = false; $('phoneBtn').textContent = 'Подтвердить номер';
+    show($('phoneMsg'), 'Номер отправлен. Подтверждение придёт в течение минуты — откройте карту заново.', 'warn');
   });
 };
 
 // Код приглашения (если ссылка не открылась)
 $('invCodeBtn').onclick = async () => {
+  $('invCodeBtn').disabled = true;
   try {
     const r = await api('redeemCode', { code: $('invCodeIn').value });
-    haptic('success'); show($('invCodeMsg'), `✅ Готово! Твоя скидка «${r.invite.label}»: −${r.invite.percent}%`, true);
+    haptic('success'); hide($('invCodeMsg')); $('codeEnter').open = false; $('invCodeIn').value = '';
+    congrats({ heart: false, title: 'Скидка подключена', pct: r.invite.percent, text: `«${r.invite.label}». Показывайте QR кассиру при оплате.` });
     me.card = r.card; renderCard(r.card);
   } catch (e) { haptic('error'); show($('invCodeMsg'), e.message); }
+  $('invCodeBtn').disabled = false;
 };
 
-// ══════════ Касса ══════════
-let guest = null;
-function renderGuest(c, today, own) {
-  $('gBox').classList.remove('hidden'); $('gMsg').className = 'msg'; $('gToday').className = 'msg';
-  if (own) show($('gToday'), 'Это твоя карта — обслуживать себя нельзя');
-  else if (today) show($('gToday'), 'Сегодня по этой карте уже была операция. Следующая — завтра');
-  const lock = !!(today || own || c.blocked);
-  ['bStamp', 'bRedeem', 'bDisc', 'bCoupon'].forEach((id) => { $(id).disabled = lock; });
-  $('gName').textContent = `${c.name} · ${c.id}`;
-  const d = c.discount;
-  $('gInfo').textContent = d
-    ? `${d.group}: скидка −${d.percent}%`
-    : `Штампы ${c.stamps}/${c.stampsForReward}`;
-  $('gRegular').classList.toggle('hidden', !!d);
-  $('gRewards').innerHTML = c.rewards ? `<span class="pill">Бесплатный кофе: ${c.rewards}</span>` : '<span class="muted">Бесплатного кофе нет</span>';
-  $('bRedeem').classList.toggle('hidden', !!d || !c.rewards);
-  $('bStamp').classList.toggle('hidden', !!d);
-  $('gDisc').classList.toggle('hidden', !d); $('dSum').value = '';
-  $('bDisc').textContent = d ? `Применить скидку «${d.group}»` : '';
-  $('gCoupons').classList.toggle('hidden', !c.coupons.length);
-  $('couponSel').innerHTML = c.coupons.map((x) => `<option value="${esc(x.id)}">${esc(x.title)} −${x.discount}%</option>`).join('');
-}
-async function lookup(g) {
-  try { guest = g; const r = await api('lookup', g); $('kMsg').className = 'msg'; renderGuest(r.card, r.usedToday, r.own); haptic(r.usedToday || r.own ? 'warning' : 'success'); }
-  catch (e) { guest = null; $('gBox').classList.add('hidden'); show($('kMsg'), e.message); haptic('error'); }
-}
-$('scanGuest').onclick = async () => { try { lookup({ qr: await scan('Наведи на QR с карты гостя') }); } catch (e) { if (e.message) show($('kMsg'), e.message); } };
-
-async function act(action, extra, btn) {
-  btn.disabled = true;
+// ══════════ Касса: один скан — одна операция, скидка применяется сразу ══════════
+function kassaResult(html) { const el = $('kRes'); el.innerHTML = html; enter(el); }
+$('scanGuest').onclick = async () => {
+  let qr;
+  try { qr = await scan('Наведите на QR с карты гостя'); } catch (e) { if (e.message) kassaResult(`<div class="card kres bad"><div class="cross"></div><div class="grp">${esc(e.message)}</div></div>`); return; }
+  $('scanGuest').disabled = true;
   try {
-    const r = await api(action, { ...guest, ...extra });
+    const r = await api('scan', { qr });
     haptic('success');
-    show($('gMsg'), (r.discount !== undefined ? `Скидка ${r.discount} ₸, к оплате ${r.toPay} ₸. ` : '') + r.note, true);
-    ['bStamp', 'bRedeem', 'bDisc', 'bCoupon'].forEach((id) => { $(id).disabled = true; }); // QR сгорел — операция одна
-    guest = null;
-    return;
-  } catch (e) { haptic('error'); show($('gMsg'), e.message); }
-  btn.disabled = false;
-}
-$('bStamp').onclick = () => act('stamp', {}, $('bStamp'));
-$('bRedeem').onclick = () => act('redeem', {}, $('bRedeem'));
-$('bDisc').onclick = () => act('discount', { sum: $('dSum').value }, $('bDisc'));
-$('bCoupon').onclick = () => act('coupon', { couponId: $('couponSel').value }, $('bCoupon'));
+    kassaResult(`<div class="card kres">${checkSvg('big')}<div class="who">${esc(r.name)}</div>
+      <div class="hero-num" id="kPct">−0%</div><div class="grp">${esc(r.group)}</div></div>
+      <div class="msg ok" style="display:block">${esc(r.note)}</div>`);
+    countTo($('kPct'), r.percent, '%', '−', 700);
+  } catch (e) {
+    haptic('error');
+    kassaResult(`<div class="card kres bad"><div class="cross"></div>${e.data?.guest ? `<div class="who">${esc(e.data.guest)}</div>` : ''}<div class="grp" style="color:var(--red)">${esc(e.message)}</div></div>`);
+  }
+  $('scanGuest').disabled = false;
+};
 
 // ══════════ Админ ══════════
 const fmtTime = (ts) => new Date(ts).toLocaleString('ru', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 let AD = null;
-const NOTIFY_LABELS = { discount: 'Каждая скидка (семья, сотрудники, группы)', redeem: 'Каждый бесплатный кофе', coupon: 'Каждый использованный купон', cashier: 'Кассиры: новый / заблокирован', guest: 'Каждый новый гость' };
+const can = (perm) => !!AD && AD.me.perms.indexOf(perm) >= 0;
+function applyPerms() { document.querySelectorAll('[data-perm]').forEach((el) => el.classList.toggle('hidden', !can(el.dataset.perm))); }
+const NOTIFY_LABELS = { discount: 'Каждая скидка', coupon: 'Каждый купон', cashier: 'Кассиры и админы: новые и блокировки', guest: 'Каждый новый гость' };
+const CAT = { regular: 'Постоянные гости', staff: 'Сотрудники', friend: 'Знакомые' };
+const CAT1 = { regular: 'Постоянный гость', staff: 'Сотрудник', friend: 'Знакомый' };
+
+// навигация внутри админки
+let curPage = null;
+function openPage(id) {
+  $('aHome').classList.add('hidden');
+  document.querySelectorAll('#admin .page').forEach((p) => p.classList.add('hidden'));
+  const p = $(id); p.classList.remove('hidden'); p.classList.remove('push'); void p.offsetWidth; p.classList.add('push');
+  curPage = id; window.scrollTo(0, 0); tick();
+  try { tg?.BackButton?.show(); } catch {}
+  if (id === 'pLog') loadLog();
+  if (id === 'pPeople') requestAnimationFrame(() => segMove($('catSeg')));
+}
+function closePage() {
+  if (!curPage) return;
+  document.querySelectorAll('#admin .page').forEach((p) => p.classList.add('hidden'));
+  const h = $('aHome'); h.classList.remove('hidden'); h.classList.remove('popback'); void h.offsetWidth; h.classList.add('popback');
+  curPage = null; window.scrollTo(0, 0);
+  try { tg?.BackButton?.hide(); } catch {}
+}
+tg?.BackButton?.onClick?.(closePage);
+document.addEventListener('click', (e) => {
+  const g = e.target.closest('[data-go]'); if (g) return openPage(g.dataset.go);
+  if (e.target.closest('[data-back]')) closePage();
+});
+
+function countUp(el, to, suffix = '') {
+  const start = performance.now(), dur = 700;
+  const step = (t) => { const k = Math.min(1, (t - start) / dur), v = Math.round(to * (1 - Math.pow(1 - k, 3))); el.textContent = money(v) + suffix; if (k < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+
+function renderStats(s) {
+  const tiles = [['Скидок за 7 дней', s.discounts, ''], ['Новых карт', s.newCards, ''], ['Сканов на кассе', s.scans, ''], ['Отказов', s.rejected, '', s.rejected > 0]];
+  $('stats').innerHTML = tiles.map((t, i) => `<button class="tile ${t[3] ? 'warn' : ''}" data-go="${i === 3 ? 'pLog' : 'pReport'}"><div class="n" data-n="${t[1]}" data-s="${t[2]}">0</div><div class="l">${t[0]}</div></button>`).join('');
+  $('stats').querySelectorAll('.n').forEach((el) => countUp(el, Number(el.dataset.n), el.dataset.s));
+  const sus = s.cashiers.filter((k) => k.sus);
+  const sm = $('susMsg');
+  if (sus.length) { sm.textContent = 'Подозрительно много операций: ' + sus.map((k) => k.name).join(', ') + '. Сверьте с r_keeper.'; sm.style.display = 'block'; }
+  else sm.style.display = 'none';
+
+  $('reportBody').innerHTML = `
+    <div class="list">
+      <div class="li"><span class="grow">Карт всего</span><span class="val">${money(s.cards)}</span></div>
+      <div class="li"><span class="grow">Новых за неделю</span><span class="val">${money(s.newCards)}</span></div>
+      <div class="li"><span class="grow">Сканов на кассе</span><span class="val">${money(s.scans)}</span></div>
+      <div class="li"><span class="grow">Купонов</span><span class="val">${money(s.coupons)}</span></div>
+      <div class="li"><span class="grow">Отказов</span><span class="val">${money(s.rejected)}</span></div>
+    </div>
+    <div class="caps">Скидки по категориям</div>
+    <div class="list">${s.groups.length ? s.groups.map((g) => `<div class="li"><span class="grow">${esc(g.name)}</span><span class="val">${g.n} раз</span></div>`).join('') : '<div class="empty">Скидок не было</div>'}</div>
+    <div class="caps">Сверка с r_keeper по кассирам</div>
+    <div class="list">${s.cashiers.length ? s.cashiers.map((k) => `<div class="li"><span class="grow">${esc(k.name)}${k.sus ? '<span class="tag warn">проверить</span>' : ''}<span class="sub">${esc(k.branch)} · купонов ${k.coupon}</span></span><span class="val">${k.disc} скидок</span></div>`).join('') : '<div class="empty">Выдач не было</div>'}</div>
+    <div class="note">Количество скидок каждого кассира должно совпадать со скидками в r_keeper за те же дни.</div>`;
+}
 
 async function loadAdmin() {
   try {
     AD = await api('adminData');
-    $('report').innerHTML = AD.report; // текст собран на сервере, имена экранированы
+    renderStats(AD.stats);
+
+    // счётчики на главной
+    const activeCash = AD.cashiers.filter((k) => k.status === 'active').length;
+    $('cntCashiers').textContent = activeCash || '';
+    $('cntPeople').textContent = AD.people.length || '';
+    $('cntCoupons').textContent = AD.coupons.length || '';
+    $('cntAdmins').textContent = AD.admins.length || '';
 
     // кассиры
-    $('cashiers').innerHTML = AD.cashiers.length ? AD.cashiers.map((k) => `<div class="item"><span>${esc(k.name)}<br><span class="muted">${esc(k.branch)}</span>
-      <span class="tag ${k.status === 'active' ? 'on' : 'off'}">${k.status === 'active' ? 'работает' : 'заблокирован'}</span></span>
-      <button class="small ${k.status === 'active' ? 'ghost' : ''}" data-k="${k.tgId}" data-s="${k.status === 'active' ? 'off' : 'active'}">${k.status === 'active' ? 'Заблокировать' : 'Разблокировать'}</button></div>`).join('')
-      : 'Кассиров пока нет';
-    $('invBranch').innerHTML = AD.branches.map((b) => `<option>${esc(b)}</option>`).join('');
+    $('cashiers').innerHTML = AD.cashiers.length ? AD.cashiers.map((k) => `<div class="li ${k.status === 'active' ? '' : 'dis'}"><span class="grow">${esc(k.name)}${k.status === 'active' ? '' : '<span class="tag off">заблокирован</span>'}<span class="sub">${esc(k.branch)}</span></span>
+      ${can('cashiers') ? `<button class="pill ${k.status === 'active' ? 'red' : ''}" data-k="${k.tgId}" data-s="${k.status === 'active' ? 'off' : 'active'}">${k.status === 'active' ? 'Заблокировать' : 'Вернуть'}</button>` : ''}</div>`).join('')
+      : '<div class="empty">Кассиров пока нет</div>';
+    const curBranch = $('invBranch').value;
+    $('invBranch').innerHTML = AD.branches.map((b) => `<option ${b === curBranch ? 'selected' : ''}>${esc(b)}</option>`).join('');
 
-    // знакомые и сотрудники
+    // скидки людям
     $('staffNote').textContent = `Сотрудникам скидка ставится автоматически: ${AD.staffPercent}%`;
-    $('pInvites').innerHTML = AD.invites.length ? '<h2 style="margin-top:16px">Коды ждут активации</h2>' + AD.invites.map((i) => `<div class="item"><span>${i.label} −${i.percent}% ${i.note ? '· ' + esc(i.note) : ''}<br><span class="muted">код ${i.code} · до ${fmtTime(i.expires)}</span></span><button class="small ghost" data-icancel="${i.code}">Отменить</button></div>`).join('') : '';
-    const byCat = (c) => AD.people.filter((p) => p.category === c);
-    const personRow = (p) => `<div class="item"><span>${esc(p.name)} ${p.note ? `<span class="muted">· ${esc(p.note)}</span>` : ''} ${p.blocked ? '<span class="tag off">заблокирован</span>' : ''}<br>
-      <span class="muted">−${p.percent}% · ${p.usedWeek} раз за 7 дн. · пригласил ${esc(p.addedBy || '—')}</span></span>
-      <span class="btns">${p.category === 'friend' ? `<button class="small ghost" data-ppct="${p.tgId}" data-cur="${p.percent}">%</button>` : ''}
-      <button class="small ${p.blocked ? '' : 'ghost'}" data-pblock="${p.tgId}" data-v="${p.blocked ? 0 : 1}">${p.blocked ? 'Разблок.' : 'Блок'}</button>
-      <button class="small ghost" data-pdel="${p.tgId}">✕</button></span></div>`;
-    $('people').innerHTML = (byCat('staff').length ? `<p style="margin:0 0 4px"><b>Сотрудники</b></p>${byCat('staff').map(personRow).join('')}` : '')
-      + (byCat('friend').length ? `<p style="margin:12px 0 4px"><b>Знакомые</b></p>${byCat('friend').map(personRow).join('')}` : '')
-      || 'Пока никого. Пригласи через QR или код.';
+    $('pInvites').innerHTML = AD.invites.length ? '<div class="caps">Коды ждут активации</div><div class="list">' + AD.invites.map((i) => `<div class="li"><span class="grow">${esc(i.label)} −${i.percent}%${i.note ? ' · ' + esc(i.note) : ''}<span class="sub">код ${esc(i.code)} · до ${fmtTime(i.expires)}</span></span>${can('people') ? `<button class="pill red" data-icancel="${esc(i.code)}">Отменить</button>` : ''}</div>`).join('') + '</div>' : '';
+    const personRow = (p) => `<div class="li stack ${p.blocked ? 'dis' : ''}"><span class="grow">${esc(p.name)}${p.blocked ? '<span class="tag off">заблокирован</span>' : ''}
+      <span class="sub">−${p.percent}%${p.note ? ' · ' + esc(p.note) : ''} · ${p.usedWeek} раз за неделю</span></span>
+      ${can('people') ? `<span class="acts">${p.category !== 'staff' ? `<button class="pill" data-ppct="${p.tgId}" data-cur="${p.percent}">Изменить %</button>` : ''}
+      <button class="pill" data-pblock="${p.tgId}" data-v="${p.blocked ? 0 : 1}">${p.blocked ? 'Вернуть' : 'Пауза'}</button>
+      <button class="pill red" data-pdel="${p.tgId}">Удалить</button></span>` : ''}</div>`;
+    $('people').innerHTML = ['regular', 'friend', 'staff'].map((c) => {
+      const list = AD.people.filter((p) => p.category === c);
+      return list.length ? `<div class="caps">${CAT[c]} · ${list.length}</div><div class="list">${list.map(personRow).join('')}</div>` : '';
+    }).join('') || '<div class="note" style="text-align:center">Пока никого. Выдайте скидку через QR.</div>';
 
     // купоны
-    $('couponList').innerHTML = AD.coupons.length ? AD.coupons.map((c) => `<div class="item"><span><b>${esc(c.title)}</b> −${c.discount}%<br><span class="muted">до ${new Date(c.expires).toLocaleDateString('ru')} · использовали ${c.used}</span></span>
-      <button class="small ghost" data-coff="${esc(c.id)}">Отключить</button></div>`).join('') : '<p class="muted" style="margin-top:0">Активных купонов нет</p>';
+    $('couponList').innerHTML = AD.coupons.length ? AD.coupons.map((c) => `<div class="li"><span class="grow"><b>${esc(c.title)}</b> −${c.discount}%<span class="sub">до ${new Date(c.expires).toLocaleDateString('ru')} · использовали ${c.used}</span></span>
+      ${can('coupons') ? `<button class="pill red" data-coff="${esc(c.id)}">Отключить</button>` : ''}</div>`).join('') : '<div class="empty">Активных купонов нет</div>';
 
     // уведомления
-    $('notify').innerHTML = Object.keys(NOTIFY_LABELS).map((k) => `<label class="switch"><span>${NOTIFY_LABELS[k]}</span><input type="checkbox" data-n="${k}" ${AD.notify[k] ? 'checked' : ''}></label>`).join('')
-      + '<p class="muted">Подозрительные действия (повтор чека, накрутка, ошибки) приходят всегда.</p>';
-  } catch (e) { $('report').textContent = e.message; }
+    $('notify').innerHTML = Object.keys(NOTIFY_LABELS).map((k) => `<label class="sw"><span>${NOTIFY_LABELS[k]}</span><input type="checkbox" data-n="${k}" ${AD.notify[k] ? 'checked' : ''}></label>`).join('');
+
+    // админы
+    const L = AD.permLabels;
+    const permsText = (a) => a.super ? 'Все права' : a.perms.length ? a.perms.length + ' из ' + Object.keys(L).length + ' прав' : 'Только просмотр';
+    $('admins').innerHTML = AD.admins.map((a) => {
+      const editable = can('admins') && !a.super;
+      return `<div class="list">
+        <div class="li ${a.status !== 'active' ? 'dis' : ''}"><span class="grow"><b>${esc(a.name)}</b>${a.super ? '<span class="tag on">главный</span>' : a.status !== 'active' ? '<span class="tag off">заблокирован</span>' : ''}
+          <span class="sub">${permsText(a)}${a.addedBy ? ' · добавил ' + esc(a.addedBy) : ''}</span></span>
+          ${editable ? `<button class="pill ${a.status === 'active' ? 'red' : ''}" data-ablock="${a.tgId}" data-v="${a.status === 'active' ? 'off' : 'active'}">${a.status === 'active' ? 'Заблокировать' : 'Вернуть'}</button>` : ''}</div>
+        ${editable ? Object.keys(L).map((p) => `<label class="sw"><span>${L[p]}</span><input type="checkbox" data-aperm="${a.tgId}" value="${p}" ${a.perms.indexOf(p) >= 0 ? 'checked' : ''}></label>`).join('')
+          + `<label class="sw"><span>Получает уведомления</span><input type="checkbox" data-anotify="${a.tgId}" ${a.notify ? 'checked' : ''}></label>` : ''}
+      </div>`;
+    }).join('');
+    if (!$('newPerms').innerHTML) $('newPerms').innerHTML = Object.keys(L).map((p) => `<label class="sw"><span>${L[p]}</span><input type="checkbox" data-np value="${p}"></label>`).join('');
+    applyPerms();
+  } catch (e) { $('stats').innerHTML = `<div class="msg err" style="grid-column:1/-1">${esc(e.message)}</div>`; }
 }
 
 async function adminAct(action, data, okMsg) {
@@ -477,19 +899,19 @@ $('cashiers').onclick = async (e) => {
 let invQr = null, invCode = null, invPoll = null;
 function stopInvite() { clearInterval(invPoll); invCode = null; $('invBox').classList.add('hidden'); $('invBtn').classList.remove('hidden'); }
 $('invBtn').onclick = async () => {
-  $('invBtn').disabled = true; $('invMsg').className = 'msg';
+  $('invBtn').disabled = true; hide($('invMsg'));
   try {
     const r = await api('adminInvite', { branch: $('invBranch').value });
     invCode = r.code;
-    $('invBox').classList.remove('hidden'); $('invBtn').classList.add('hidden');
+    $('invBox').classList.remove('hidden'); enter($('invBox')); $('invBtn').classList.add('hidden');
     if (!invQr) invQr = new QRCode($('invQr'), { text: r.link, width: 400, height: 400, correctLevel: QRCode.CorrectLevel.M });
     else invQr.makeCode(r.link);
-    $('invInfo').textContent = `${r.branch} · ждёт сканирования…`;
+    $('invInfo').textContent = `${r.branch} · ждёт сканирования`;
     clearInterval(invPoll);
     invPoll = setInterval(async () => {
       try {
         const s = await api('adminInviteStatus', { code: invCode });
-        if (s.status === 'used') { stopInvite(); haptic('success'); show($('invMsg'), `✅ ${s.usedName} добавлен кассиром. QR сгорел.`, true); loadAdmin(); }
+        if (s.status === 'used') { stopInvite(); haptic('success'); show($('invMsg'), `${s.usedName} добавлен кассиром. QR сгорел.`, true); loadAdmin(); }
         else if (s.status !== 'new') { stopInvite(); show($('invMsg'), 'QR отменён'); }
       } catch {}
     }, 2500);
@@ -498,31 +920,36 @@ $('invBtn').onclick = async () => {
 };
 $('invCancel').onclick = async () => { const c = invCode; stopInvite(); try { await api('adminInviteCancel', { code: c }); show($('invMsg'), 'QR отменён', true); } catch {} };
 
-// знакомые и сотрудники
-let pCat = 'friend', pQr = null, pQrCode = null, pQrPoll = null, pCodeText = '';
+// скидки людям
+let pCat = 'regular', pQr = null, pQrCode = null, pQrPoll = null, pCodeText = '';
 function setCat(c) {
-  pCat = c;
-  $('catFriend').classList.toggle('ghost', c !== 'friend'); $('catStaff').classList.toggle('ghost', c !== 'staff');
-  $('pctWrap').classList.toggle('hidden', c !== 'friend'); $('staffNote').classList.toggle('hidden', c !== 'staff');
+  pCat = c; tick();
+  [['catRegular', 'regular'], ['catFriend', 'friend'], ['catStaff', 'staff']].forEach(([id, k]) => $(id).classList.toggle('active', c === k));
+  segMove($('catSeg'));
+  $('pctWrap').classList.toggle('hidden', c === 'staff');
+  $('staffNote').style.display = c === 'staff' ? 'block' : 'none'; $('staffNote').classList.toggle('hidden', c !== 'staff');
+  $('pCodeBtn').classList.toggle('hidden', c !== 'friend'); // код на 24 ч — только для знакомых
 }
+$('catRegular').onclick = () => setCat('regular');
 $('catFriend').onclick = () => setCat('friend');
 $('catStaff').onclick = () => setCat('staff');
+setCat('regular');
 const inviteData = (kind) => ({ kind, category: pCat, percent: $('pPercent').value, note: $('pNote').value });
 function stopPersonQr() { clearInterval(pQrPoll); pQrCode = null; $('pQrBox').classList.add('hidden'); }
 
 $('pQrBtn').onclick = async () => {
-  $('pMsg').className = 'msg'; $('pCodeBox').classList.add('hidden');
+  hide($('pMsg')); $('pCodeBox').classList.add('hidden');
   try {
     const r = await api('adminPersonInvite', inviteData('qr'));
-    pQrCode = r.code; $('pQrBox').classList.remove('hidden');
+    pQrCode = r.code; $('pQrBox').classList.remove('hidden'); enter($('pQrBox'));
     if (!pQr) pQr = new QRCode($('pQr'), { text: r.link, width: 400, height: 400, correctLevel: QRCode.CorrectLevel.M });
     else pQr.makeCode(r.link);
-    $('pQrInfo').textContent = `${r.category === 'staff' ? 'Сотрудник' : 'Знакомый'} −${r.percent}% · пусть отсканирует камерой телефона`;
+    $('pQrInfo').textContent = `${CAT1[r.category]} · −${r.percent}% · пусть отсканирует камерой телефона`;
     clearInterval(pQrPoll);
     pQrPoll = setInterval(async () => {
       try {
         const st = await api('adminPersonInviteStatus', { code: pQrCode });
-        if (st.status === 'used') { stopPersonQr(); haptic('success'); show($('pMsg'), `✅ ${st.usedName} получил скидку. QR сгорел.`, true); loadAdmin(); }
+        if (st.status === 'used') { stopPersonQr(); haptic('success'); show($('pMsg'), `${st.usedName} получил скидку. QR сгорел.`, true); $('pPercent').value = ''; $('pNote').value = ''; loadAdmin(); }
         else if (st.status !== 'new') { stopPersonQr(); show($('pMsg'), 'QR отменён'); }
       } catch {}
     }, 2500);
@@ -531,18 +958,18 @@ $('pQrBtn').onclick = async () => {
 $('pQrCancel').onclick = async () => { const c = pQrCode; stopPersonQr(); try { await api('adminPersonInviteCancel', { code: c }); show($('pMsg'), 'QR отменён', true); } catch {} };
 
 $('pCodeBtn').onclick = async () => {
-  $('pMsg').className = 'msg'; stopPersonQr();
+  hide($('pMsg')); stopPersonQr();
   try {
     const r = await api('adminPersonInvite', inviteData('code'));
-    pCodeText = `Seven Times: персональная скидка −${r.percent}% для тебя. Открой ссылку в Telegram (действует 24 часа, только для тебя):\n${r.link}\n\nЕсли ссылка не открылась — открой карту Seven Times и введи код: ${r.code}`;
-    $('pCodeBox').classList.remove('hidden');
-    $('pCodeInfo').textContent = `${r.category === 'staff' ? 'Сотрудник' : 'Знакомый'} −${r.percent}% · до ${fmtTime(r.expires)} · один человек`;
+    pCodeText = `Seven Times: персональная скидка ${r.percent}% для вас. Откройте ссылку в Telegram (действует 24 часа, только для вас):\n${r.link}\n\nЕсли ссылка не открылась — откройте карту Seven Times и введите код: ${r.code}`;
+    $('pCodeBox').classList.remove('hidden'); enter($('pCodeBox'));
+    $('pCodeInfo').textContent = `Знакомый · −${r.percent}% · до ${fmtTime(r.expires)} · один человек`;
     $('pCodeText').textContent = r.code;
     loadAdmin();
   } catch (e) { show($('pMsg'), e.message); }
 };
 $('pCodeCopy').onclick = async () => {
-  try { await navigator.clipboard.writeText(pCodeText); alertMsg('Скопировано. Отправь человеку лично.'); }
+  try { await navigator.clipboard.writeText(pCodeText); haptic('success'); alertMsg('Скопировано. Отправьте человеку лично.'); }
   catch { alertMsg(pCodeText); }
 };
 
@@ -554,7 +981,47 @@ $('people').onclick = async (e) => {
   const t = e.target.closest('button'); if (!t) return;
   if (t.dataset.pblock) adminAct('adminPersonUpdate', { tgId: t.dataset.pblock, blocked: t.dataset.v === '1' });
   else if (t.dataset.pdel) { if (await ask('Удалить скидку у человека?')) adminAct('adminPersonRemove', { tgId: t.dataset.pdel }); }
-  else if (t.dataset.ppct) { const v = prompt('Новая скидка, %', t.dataset.cur); if (v) adminAct('adminPersonUpdate', { tgId: t.dataset.ppct, percent: v }); }
+  else if (t.dataset.ppct) { const v = await askNumber('Новая скидка, %', t.dataset.cur); if (v) adminAct('adminPersonUpdate', { tgId: t.dataset.ppct, percent: v }); }
+};
+
+// админы
+let admQr = null, admCode = null, admPoll = null;
+function stopAdmQr() { clearInterval(admPoll); admCode = null; $('admQrBox').classList.add('hidden'); $('admQrBtn').classList.remove('hidden'); }
+$('admQrBtn').onclick = async () => {
+  hide($('admMsg'));
+  const perms = [...document.querySelectorAll('input[data-np]:checked')].map((x) => x.value);
+  if (!perms.length && !(await ask('Всё выключено: админ сможет только смотреть отчёт и журнал. Создать QR?'))) return;
+  try {
+    const r = await api('adminAdminInvite', { perms });
+    admCode = r.code; $('admQrBox').classList.remove('hidden'); enter($('admQrBox')); $('admQrBtn').classList.add('hidden');
+    if (!admQr) admQr = new QRCode($('admQr'), { text: r.link, width: 400, height: 400, correctLevel: QRCode.CorrectLevel.M });
+    else admQr.makeCode(r.link);
+    clearInterval(admPoll);
+    admPoll = setInterval(async () => {
+      try {
+        const st = await api('adminAdminInviteStatus', { code: admCode });
+        if (st.status === 'used') { stopAdmQr(); haptic('success'); show($('admMsg'), `${st.usedName} стал админом. Админка откроется, когда он подтвердит номер.`, true); document.querySelectorAll('input[data-np]').forEach((x) => { x.checked = false; }); loadAdmin(); }
+        else if (st.status !== 'new') { stopAdmQr(); show($('admMsg'), 'QR отменён'); }
+      } catch {}
+    }, 2500);
+  } catch (e) { show($('admMsg'), e.message); }
+};
+$('admQrCancel').onclick = async () => { const c = admCode; stopAdmQr(); try { await api('adminAdminInviteCancel', { code: c }); show($('admMsg'), 'QR отменён', true); } catch {} };
+$('admins').onclick = async (e) => {
+  const b = e.target.closest('button[data-ablock]'); if (!b) return;
+  if (b.dataset.v === 'off' && !(await ask('Заблокировать админа? Админка у него сразу пропадёт.'))) return;
+  adminAct('adminAdminUpdate', { tgId: b.dataset.ablock, status: b.dataset.v }, false);
+};
+$('admins').onchange = async (e) => {
+  const cb = e.target;
+  try {
+    if (cb.dataset.aperm) {
+      const id = cb.dataset.aperm;
+      const perms = [...document.querySelectorAll(`input[data-aperm="${id}"]:checked`)].map((x) => x.value);
+      await api('adminAdminUpdate', { tgId: id, perms });
+    } else if (cb.dataset.anotify) await api('adminAdminUpdate', { tgId: cb.dataset.anotify, notify: cb.checked });
+    tick();
+  } catch (err) { cb.checked = !cb.checked; alertMsg(err.message); }
 };
 
 // журнал всех действий
@@ -562,15 +1029,19 @@ function logLine(e) {
   const m = e.meta || {};
   const parts = [];
   if (e.guest) parts.push(`${esc(e.guest)} · ${e.card}`);
-  if (e.type === 'discount_use') parts.push(`${m.category === 'staff' ? 'сотрудник' : 'знакомый'} −${m.percent}% · чек ${m.sum} ₸ → скидка ${e.amount} ₸`);
+  const catName = (c) => ({ regular: 'постоянный гость', staff: 'сотрудник', friend: 'знакомый' })[c] || c;
+  if (e.type === 'discount_use') parts.push(`${catName(m.category)} −${m.percent}%${m.sum ? ` · чек ${money(m.sum)} ₸` : ''}`);
   if (e.type === 'rejected') parts.push(esc(m.reason === 'bad_code' ? 'старый или чужой QR' : m.reason || ''));
-  if (e.type === 'person_added') parts.push(`${esc(m.name)} · ${m.category === 'staff' ? 'сотрудник' : 'знакомый'} −${m.percent}% · через ${m.via === 'qr' ? 'QR' : 'код'}, пригласил ${esc(m.by)}`);
-  if (e.type === 'admin_invite') parts.push(`${m.category === 'staff' ? 'сотрудник' : 'знакомый'} ${m.percent ? '−' + m.percent + '%' : ''} · ${m.kind === 'qr' ? 'QR' : 'код 24 ч'} ${m.note ? '· ' + esc(m.note) : ''}`);
-  if (e.type === 'admin_person') parts.push(`${esc(m.who)} · ${m.removed ? 'удалён' : 'blocked' in m ? (m.blocked ? 'заблокирован' : 'разблокирован') : 'скидка ' + m.percent + '%'}`);
-  if (e.type === 'admin_cashier') parts.push(m.status === 'active' ? 'разблокирован' : 'заблокирован');
+  if (e.type === 'person_added') parts.push(`${esc(m.name)} · ${catName(m.category)} −${m.percent}% · через ${m.via === 'qr' ? 'QR' : 'код'}, выдал ${esc(m.by)}`);
+  if (e.type === 'admin_invite') parts.push(`${catName(m.category)}${m.percent ? ' −' + m.percent + '%' : ''} · ${m.kind === 'qr' ? 'QR' : 'код на 24 часа'}${m.note ? ' · ' + esc(m.note) : ''}`);
+  if (e.type === 'admin_person') parts.push(`${esc(m.who)} · ${m.removed ? 'удалён' : 'blocked' in m ? (m.blocked ? 'на паузе' : 'возвращён') : 'скидка ' + m.percent + '%'}`);
+  if (e.type === 'admin_cashier') parts.push(m.status === 'active' ? 'возвращён' : 'заблокирован');
   if (e.type === 'push') parts.push(esc((m.text || '').slice(0, 60)));
+  if (e.type === 'admin_added') parts.push(`${esc(m.name)} · ${(m.perms || []).length ? (m.perms || []).length + ' прав' : 'только просмотр'}`);
+  if (e.type === 'admin_admin') parts.push(m.action === 'qr' ? 'создан QR админа' : `${esc(m.who || '')} · ${m.status ? (m.status === 'active' ? 'возвращён' : 'заблокирован') : m.notify ? 'уведомления ' + (m.notify === 'on' ? 'включены' : 'выключены') : 'права изменены'}`);
   const who = [e.cashier && `${e.type.startsWith('admin') ? '' : 'кассир '}${esc(e.cashier)}`, e.branch && esc(e.branch)].filter(Boolean).join(' · ');
-  return `<div class="item"><span><b>${e.label}</b><br>${parts.join('<br>')}${who ? `<br><span class="muted">${who}</span>` : ''}</span><time>${fmtTime(e.ts)}</time></div>`;
+  const bad = e.type === 'rejected';
+  return `<div class="li"><span class="grow"><b style="${bad ? 'color:var(--red)' : ''}">${esc(e.label)}</b>${parts.map((p) => `<span class="sub">${p}</span>`).join('')}${who ? `<span class="sub" style="color:var(--text-3)">${who}</span>` : ''}</span><time>${fmtTime(e.ts)}</time></div>`;
 }
 async function loadLog() {
   try {
@@ -578,13 +1049,13 @@ async function loadLog() {
     const r = await api('adminLog', { cashier: cur, type: $('logType').value, limit: 150 });
     const names = [...new Set(r.cashiers)];
     $('logCashier').innerHTML = '<option value="">Все кассиры</option>' + names.map((n) => `<option ${n === cur ? 'selected' : ''}>${esc(n)}</option>`).join('');
-    $('logList').innerHTML = r.events.length ? r.events.map(logLine).join('') : '<p class="muted">Пока пусто</p>';
-  } catch (e) { $('logList').textContent = e.message; }
+    $('logList').innerHTML = r.events.length ? r.events.map(logLine).join('') : '<div class="empty">Пока пусто</div>';
+    enter($('logList'));
+  } catch (e) { $('logList').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }
-$('logBtn').onclick = loadLog;
+$('logBtn').onclick = () => { tick(); loadLog(); };
 $('logCashier').onchange = loadLog;
 $('logType').onchange = loadLog;
-$('logBox').addEventListener('toggle', () => { if ($('logBox').open) loadLog(); });
 
 // купоны
 $('couponList').onclick = async (e) => {
@@ -603,22 +1074,29 @@ $('couponBtn').onclick = async () => {
 $('pushBtn').onclick = async () => {
   const text = $('pushText').value.trim(); if (!text) return;
   if (!(await ask('Отправить всем гостям?'))) return;
-  $('pushBtn').disabled = true; show($('pushMsg'), 'Отправляю… не закрывай карту', true);
+  $('pushBtn').disabled = true; show($('pushMsg'), 'Отправляем. Не закрывайте карту.', 'warn');
   try { const r = await api('adminPush', { text }); show($('pushMsg'), r.message, true); $('pushText').value = ''; } catch (e) { show($('pushMsg'), e.message); }
   $('pushBtn').disabled = false;
 };
 
 // поиск и блокировка карт
 async function find() {
+  if (!$('q').value.trim()) return;
+  $('qBtn').disabled = true;
   try {
     const r = await api('adminFind', { q: $('q').value });
-    $('found').innerHTML = r.cards.length ? r.cards.map((c) => `<div class="item"><span>${esc(c.name)} · <b>${c.id}</b> ${c.blocked ? '<span class="tag off">блок</span>' : ''}<br><span class="muted">${c.phone ? '+' + esc(c.phone) : 'номер не подтверждён'} · ${c.group ? `скидка «${esc(c.group)}»` : `${c.stamps} шт, ${c.rewards} ☕`} · ${c.visits} виз.</span></span>
-      <button class="small ${c.blocked ? '' : 'ghost'}" data-b="${c.id}" data-v="${c.blocked ? 0 : 1}">${c.blocked ? 'Разблок.' : 'Блок'}</button></div>`).join('') : '<p class="muted">Ничего не найдено</p>';
-  } catch (e) { $('found').textContent = e.message; }
+    $('found').classList.remove('hidden');
+    $('found').innerHTML = r.cards.length ? r.cards.map((c) => `<div class="li ${c.blocked ? 'dis' : ''}"><span class="grow">${esc(c.name)} · <b>${c.id}</b>${c.blocked ? '<span class="tag off">заблокирована</span>' : ''}<span class="sub">${c.phone ? '+' + esc(c.phone) : 'номер не подтверждён'} · ${c.group ? esc(c.group) : 'без скидки'} · визитов ${c.visits}</span></span>
+      <button class="pill ${c.blocked ? '' : 'red'}" data-b="${c.id}" data-v="${c.blocked ? 0 : 1}">${c.blocked ? 'Вернуть' : 'Заблокировать'}</button></div>`).join('') : '<div class="empty">Ничего не найдено</div>';
+    enter($('found'));
+  } catch (e) { $('found').classList.remove('hidden'); $('found').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+  $('qBtn').disabled = false;
 }
 $('qBtn').onclick = find;
+$('q').onkeydown = (e) => { if (e.key === 'Enter') find(); };
 $('found').onclick = async (e) => {
   const b = e.target.closest('button[data-b]'); if (!b) return;
+  if (b.dataset.v === '1' && !(await ask('Заблокировать карту? Гость не сможет получать скидки.'))) return;
   try { await api('adminBlock', { cardId: b.dataset.b, blocked: b.dataset.v === '1' }); haptic('success'); } catch (err) { alertMsg(err.message); }
   find();
 };
@@ -626,39 +1104,62 @@ $('found').onclick = async (e) => {
 // уведомления
 $('notify').onchange = async (e) => {
   const cb = e.target.closest('input[data-n]'); if (!cb) return;
-  try { await api('adminNotify', { settings: { [cb.dataset.n]: cb.checked } }); haptic('success'); }
+  try { await api('adminNotify', { settings: { [cb.dataset.n]: cb.checked } }); tick(); }
   catch (err) { cb.checked = !cb.checked; alertMsg(err.message); }
 };
 
 // ══════════ Вкладки ══════════
+const TAB_ORDER = ['card', 'kassa', 'admin'];
 function tab(which) {
+  const dir = TAB_ORDER.indexOf(which) - TAB_ORDER.indexOf(curTab);
+  if (which !== curTab) tick();
+  curTab = which;
   ['card', 'kassa', 'admin'].forEach((t) => {
-    $(t === 'card' ? 'guest' : t).classList.toggle('hidden', which !== t);
-    $('tab' + t[0].toUpperCase() + t.slice(1)).classList.toggle('ghost', which !== t);
+    const sec = $(t === 'card' ? 'guest' : t);
+    sec.classList.toggle('hidden', which !== t);
+    if (which === t && dir) { sec.style.setProperty('--from', (dir > 0 ? 36 : -36) + 'px'); sec.classList.remove('slide'); void sec.offsetWidth; sec.classList.add('slide'); enter(sec); }
+    $('tab' + t[0].toUpperCase() + t.slice(1)).classList.toggle('active', which === t);
   });
+  segMove($('tabs'));
+  closePage();
   if (which === 'admin') loadAdmin();
 }
 $('tabCard').onclick = () => tab('card');
 $('tabKassa').onclick = () => tab('kassa');
 $('tabAdmin').onclick = () => tab('admin');
 
+let firstLoad = true;
 async function load() {
   try {
     me = await api('me');
-    $('hello').textContent = me.cashier ? `${me.cashier.name} · ${me.cashier.branch}` : `Привет, ${me.card.name}!`;
-    $('scanReceipt').classList.toggle('hidden', !me.receiptMode);
+    $('loader').classList.add('hidden');
+    $('hello').textContent = me.cashier ? me.cashier.name : `Здравствуйте, ${me.card.name}`;
+    if (me.cashier) $('hello').insertAdjacentHTML('beforeend', `<div class="muted" style="font-size:15px;font-weight:400;letter-spacing:0">${esc(me.cashier.branch)}</div>`);
     renderCard(me.card);
-    if (!qrObj) refreshCode();
-    $('tabs').classList.toggle('hidden', !(me.cashier || me.admin));
+    if (firstLoad) enter($('guest'));
+    if (me.card.phoneVerified && !codeTimer) refreshCode(); // QR только после подтверждения номера
+    const multi = !!(me.cashier || me.admin);
+    $('tabs').classList.toggle('hidden', !multi);
     $('tabKassa').classList.toggle('hidden', !me.cashier);
     $('tabAdmin').classList.toggle('hidden', !me.admin);
-    if (me.invite?.joined) { haptic('success'); tab('kassa'); show($('kMsg'), `✅ Ты кассир Seven Times (${me.invite.branch}). Сканируй QR с карты гостя.`, true); }
-    else if (me.invite?.joinedPerson) { haptic('success'); show($('inviteMsg'), `🎁 Тебе открыта скидка «${me.invite.label}»: −${me.invite.percent}%. Показывай QR кассиру.`, true); }
-    else if (me.invite?.error) show($('inviteMsg'), me.invite.error);
-  } catch (e) { $('hello').textContent = e.message; }
+    if (multi) requestAnimationFrame(() => segMove($('tabs')));
+    if (me.adminNeedsPhone) $('phoneText').textContent = 'Подтвердите номер — откроются карта, QR и админ-панель.';
+    if (firstLoad) {
+      const inv = me.invite;
+      if (inv?.joined) { haptic('success'); tab('kassa'); kassaResult(`<div class="msg ok" style="display:block">Вы кассир Seven Times, ${esc(inv.branch)}. Сканируйте QR с карты гостя.</div>`); }
+      else if (inv?.joinedPerson) {
+        haptic('success');
+        if (inv.label === 'Постоянный гость') congrats({ heart: true, title: 'Поздравляем!', pct: inv.percent, text: 'Вы получили скидку. Спасибо, что остаётесь с нами. Показывайте QR кассиру при каждой покупке.' });
+        else congrats({ heart: false, title: 'Скидка подключена', pct: inv.percent, text: `«${inv.label}». Показывайте QR кассиру при оплате.` });
+      }
+      else if (inv?.joinedAdmin) { haptic('success'); show($('inviteMsg'), me.admin ? 'Вы админ Seven Times. Админка — во вкладке «Админ» сверху.' : 'Вы админ Seven Times. Подтвердите номер телефона — и откроется админка.', true); }
+      else if (inv?.error) show($('inviteMsg'), inv.error);
+    }
+    firstLoad = false;
+  } catch (e) { $('loader').classList.add('hidden'); $('hello').textContent = e.message; }
 }
 
-if (!tg?.initData) $('hello').textContent = 'Открой карту через бота Seven Times в Telegram';
+if (!tg?.initData) { $('loader').classList.add('hidden'); $('hello').textContent = 'Откройте карту через бота Seven Times в Telegram'; }
 else {
   load();
   api('poll').catch(() => {}); // заодно забираем сообщения, которые ждут у бота
