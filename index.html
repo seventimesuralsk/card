@@ -137,6 +137,16 @@
   .w-foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
   .w-label { font-size: 11px; opacity: .55; letter-spacing: .08em; text-transform: uppercase; }
   .w-val { font-size: 17px; font-weight: 600; margin-top: 2px; letter-spacing: .04em; }
+  .w-mid { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
+  .chip { position: relative; width: 44px; height: 33px; border-radius: 7px; overflow: hidden; background: linear-gradient(135deg, #f3dd9b 0%, #c9a24c 45%, #f0d792 60%, #a8842f 100%); box-shadow: inset 0 0 0 1px rgba(0,0,0,.25), 0 1px 2px rgba(0,0,0,.35); }
+  .chip i { position: absolute; background: rgba(90,64,12,.45); }
+  .chip i:nth-child(1) { left: 0; right: 0; top: 11px; height: 1px; } .chip i:nth-child(2) { left: 0; right: 0; bottom: 11px; height: 1px; }
+  .chip i:nth-child(3) { top: 0; bottom: 0; left: 16px; width: 12px; border-left: 1px solid rgba(90,64,12,.45); border-right: 1px solid rgba(90,64,12,.45); background: none; }
+  /* номер как на пластике: моноширинные выпуклые цифры группами по 4 */
+  .w-num { font: 600 clamp(17px, 5.6vw, 23px)/1 ui-monospace, "SF Mono", Menlo, "Courier New", monospace; letter-spacing: .09em; white-space: nowrap; color: #f4f1ea;
+    text-shadow: 0 1px 0 rgba(0,0,0,.55), 0 -1px 0 rgba(255,255,255,.18); font-variant-numeric: tabular-nums; }
+  .w-name { font-size: 15px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; margin-top: 3px; text-shadow: 0 1px 0 rgba(0,0,0,.45); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 62vw; }
+  .w-holder { min-width: 0; }
   .w-state { font-size: 12px; padding: 5px 10px; border-radius: 999px; background: rgba(255,255,255,.14); backdrop-filter: blur(8px); }
   .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--green); margin-right: 6px; vertical-align: 1px; animation: pulse 2.4s infinite; }
   .dot.off { background: var(--orange); animation: none; }
@@ -357,16 +367,11 @@
         </div>
         <img class="w-logo" src="logo-card.png" width="54" height="54" decoding="async" alt="Seven Times">
       </div>
+      <div class="w-mid"><span class="chip" aria-hidden="true"><i></i><i></i><i></i></span><span class="w-state hidden" id="cardState"><span class="dot off"></span>Не активна</span></div>
+      <div class="w-num" id="cardNo"></div>
       <div class="w-foot">
-        <div>
-          <div class="w-label">Гость</div>
-          <div class="w-val" id="cardName"></div>
-        </div>
-        <div style="text-align:right">
-          <div class="w-label" id="cardNoLabel">Карта</div>
-          <div class="w-val" id="cardNo"></div>
-          <span class="w-state hidden" id="cardState"><span class="dot off"></span>Не активна</span>
-        </div>
+        <div class="w-holder"><div class="w-label" id="cardNoLabel">Гость</div><div class="w-name" id="cardName"></div></div>
+        <div class="w-label" style="text-align:right">Seven<br>Times</div>
       </div>
     </div></div>
 
@@ -896,12 +901,18 @@ $('dlgNo').onclick = () => { closeSheets(); if (dlgRes) dlgRes(null); dlgRes = n
 $('dlgIn').onkeydown = (e) => { if (e.key === 'Enter') $('dlgYes').click(); };
 
 // ══════════ Карта гостя ══════════
+// Номер группами по 4, как на банковской карте: 4400 1234 5678 9012
+const fmtCardNo = (n) => String(n || '').replace(/(\d{4})(?=\d)/g, '$1 ');
+// Имя на пластике — латиницей, как на банковских картах
+const LAT = { а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'e', ж: 'zh', з: 'z', и: 'i', й: 'y', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r', с: 's', т: 't', у: 'u', ф: 'f', х: 'kh', ц: 'ts', ч: 'ch', ш: 'sh', щ: 'shch', ъ: '', ы: 'y', ь: '', э: 'e', ю: 'yu', я: 'ya', ә: 'a', ғ: 'g', қ: 'q', ң: 'n', ө: 'o', ұ: 'u', ү: 'u', һ: 'h', і: 'i' };
+const latin = (s) => String(s).split('').map((ch) => { const l = LAT[ch.toLowerCase()]; return l === undefined ? ch : ch === ch.toLowerCase() ? l : l.charAt(0).toUpperCase() + l.slice(1); }).join('');
 let qrObj = null, codeTimer = 0, codeBusy = false, codeOn = false, codeFails = 0, codeExp = 0, staleTimer = 0, lastQr = '';
 function renderCard(c) {
   if (curTab === 'card') $('guest').classList.remove('hidden');
   const ok = !!c.phoneVerified, blocked = !!c.blocked; // !!: toggle(x, undefined) не ставит, а ПЕРЕКЛЮЧАЕТ класс — QR мигал бы
-  $('cardName').textContent = c.name || 'Гость';
-  $('cardNo').textContent = ok ? (c.id ?? '') : '';
+  document.querySelector('.stage').classList.toggle('hidden', !ok); // пока номер не подтверждён — карты не видно
+  $('cardName').textContent = latin(c.name || 'Guest');
+  $('cardNo').textContent = ok ? fmtCardNo(c.number || c.id) : '';
   $('cardNoLabel').classList.toggle('hidden', !ok);
   $('cardState').classList.toggle('hidden', ok && !blocked);
   $('cardState').innerHTML = `<span class="dot off"></span>${blocked ? 'Заблокирована' : 'Не активна'}`;
@@ -1442,7 +1453,7 @@ async function find() {
   try {
     const r = await api('adminFind', { q: $('q').value });
     $('found').classList.remove('hidden');
-    $('found').innerHTML = r.cards.length ? r.cards.map((c) => `<div class="li ${c.blocked ? 'dis' : ''}"><span class="grow">${esc(c.name)} · <b>${esc(c.id)}</b>${c.blocked ? '<span class="tag off">заблокирована</span>' : ''}<span class="sub">${c.phone ? '+' + esc(c.phone) : 'номер не подтверждён'} · ${c.group ? esc(c.group) : 'без скидки'} </span><span class="sub">визитов за 90 дней: ${esc(c.v90 ?? 0)}${c.left ? ` · до ${esc(c.next)}%: ещё ${esc(c.left)}` : ''}</span></span>
+    $('found').innerHTML = r.cards.length ? r.cards.map((c) => `<div class="li ${c.blocked ? 'dis' : ''}"><span class="grow">${esc(c.name)} · <b>${esc(c.number ? fmtCardNo(c.number) : c.id)}</b>${c.blocked ? '<span class="tag off">заблокирована</span>' : ''}<span class="sub">${c.phone ? '+' + esc(c.phone) : 'номер не подтверждён'} · ${c.group ? esc(c.group) : 'без скидки'} </span><span class="sub">визитов за 90 дней: ${esc(c.v90 ?? 0)}${c.left ? ` · до ${esc(c.next)}%: ещё ${esc(c.left)}` : ''}</span></span>
       <button class="pill ${c.blocked ? '' : 'red'}" data-b="${esc(c.id)}" data-v="${c.blocked ? 0 : 1}">${c.blocked ? 'Вернуть' : 'Заблокировать'}</button></div>`).join('') : '<div class="empty">Ничего не найдено</div>';
     enter($('found'));
   } catch (e) { $('found').classList.remove('hidden'); $('found').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
@@ -1493,7 +1504,7 @@ function saveMe(m) {
   if (!CACHE || !m?.card) return;
   const c = m.card;
   const slim = { cashier: m.cashier ? { name: m.cashier.name, branch: m.cashier.branch } : null, admin: !!m.admin, wallet: !!m.wallet, walletApple: !!m.walletApple, adminNeedsPhone: !!m.adminNeedsPhone,
-    card: { name: c.name, id: c.id, phoneVerified: !!c.phoneVerified, blocked: !!c.blocked, invited: !!c.invited, wallet: c.wallet || null, coupons: Array.isArray(c.coupons) ? c.coupons : [],
+    card: { name: c.name, id: c.id, number: c.number || '', phoneVerified: !!c.phoneVerified, blocked: !!c.blocked, invited: !!c.invited, wallet: c.wallet || null, coupons: Array.isArray(c.coupons) ? c.coupons : [],
       history: Array.isArray(c.history) ? c.history : [] } };
   try { localStorage.setItem(CACHE, JSON.stringify(slim)); } catch {}
 }
