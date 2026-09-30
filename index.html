@@ -415,6 +415,8 @@
   <section id="kassa" class="hidden">
     <button class="scanbtn" id="scanGuest"><span class="vf"><i></i><i></i><i></i><i></i><b></b></span><span>Сканировать QR гостя</span><span class="hint">Один скан — скидка применяется сразу</span></button>
     <div id="kRes"></div>
+    <div class="caps">Мои сканы</div>
+    <div class="list log" id="kLog"><div class="empty">Загрузка</div></div>
   </section>
 
   <!-- ═════ АДМИН ═════ -->
@@ -804,7 +806,7 @@ function countTo(el, to, suffix = '', prefix = '', dur = 800) {
 
 // Чтения можно безопасно повторить: при обрыве сети, зависании или HTML-ошибке Apps Script пробуем ещё раз.
 // Действия (скидка, рассылка, выдача прав) не повторяем никогда — иначе двойная скидка или двойная рассылка.
-const READS = new Set(['me', 'code', 'adminData', 'adminLog', 'adminFind', 'adminInviteStatus', 'adminPersonInviteStatus', 'adminAdminInviteStatus']);
+const READS = new Set(['me', 'code', 'cashierLog', 'adminData', 'adminLog', 'adminFind', 'adminInviteStatus', 'adminPersonInviteStatus', 'adminAdminInviteStatus']);
 const NET_ERR = 'Сервер не отвечает. Проверьте интернет и попробуйте ещё раз.';
 async function api(action, data = {}) {
   const read = READS.has(action), tries = read ? 3 : 1;
@@ -1026,7 +1028,7 @@ $('scanGuest').onclick = async () => {
     const r = await api('scan', { qr });
     haptic('success');
     const visitOnly = r.kind === 'visit' || !r.percent;
-    kassaResult(`<div class="card kres">${checkSvg('big')}<div class="who">${esc(r.name)}</div>
+    kassaResult(`<div class="card kres">${checkSvg('big')}<div class="who">${esc(r.name)}</div>${r.card ? `<div class="grp">Карта ${esc(r.card)}</div>` : ''}
       <div class="hero-num" id="kPct">${visitOnly ? 'Визит' : '−0%'}</div><div class="grp">${esc(r.group)}</div></div>
       <div class="msg ${visitOnly ? 'warn' : 'ok'}" style="display:block">${esc(r.note)}</div>`);
     if (!visitOnly) countTo($('kPct'), r.percent, '%', '−', 700);
@@ -1035,7 +1037,24 @@ $('scanGuest').onclick = async () => {
     kassaResult(`<div class="card kres bad"><div class="cross"></div>${e.data?.guest ? `<div class="who">${esc(e.data.guest)}</div>` : ''}<div class="grp" style="color:var(--red)">${esc(e.message)}</div></div>`);
   }
   $('scanGuest').disabled = false;
+  loadKassaLog();
 };
+// Кассир видит только свои сканы: имя гостя, 2 последних символа карты, время и итог. Больше ничего
+let kLogSeq = 0;
+async function loadKassaLog() {
+  const seq = ++kLogSeq;
+  try {
+    const r = await api('cashierLog');
+    if (seq !== kLogSeq) return;
+    const today = new Date().toDateString();
+    $('kLog').innerHTML = r.scans.length ? r.scans.map((x) => {
+      const d = new Date(x.ts);
+      const when = d.toDateString() === today ? d.toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' }) : fmtTime(x.ts);
+      const res = !x.ok ? '<span class="tag off">отказ</span>' : x.percent ? `<span class="tag on">−${esc(x.percent)}%</span>` : '<span class="tag">визит</span>';
+      return `<div class="li"><span class="grow">${esc(x.name || 'Карта не найдена')} <span style="color:var(--text-3)">${esc(x.card)}</span>${res}${x.reason ? `<span class="sub">${esc(x.reason)}</span>` : ''}</span><time>${when}</time></div>`;
+    }).join('') : '<div class="empty">Сканов пока нет</div>';
+  } catch (e) { if (seq === kLogSeq) $('kLog').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+}
 
 // ══════════ Админ ══════════
 const fmtTime = (ts) => new Date(ts).toLocaleString('ru', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
@@ -1420,6 +1439,7 @@ function tab(which) {
   segMove($('tabs'));
   closePage();
   if (which === 'admin') loadAdmin();
+  if (which === 'kassa') loadKassaLog();
 }
 $('tabCard').onclick = () => tab('card');
 $('tabKassa').onclick = () => tab('kassa');
