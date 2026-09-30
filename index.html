@@ -137,6 +137,16 @@
   .w-foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
   .w-label { font-size: 11px; opacity: .55; letter-spacing: .08em; text-transform: uppercase; }
   .w-val { font-size: 17px; font-weight: 600; margin-top: 2px; letter-spacing: .04em; }
+  .w-mid { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
+  .chip { position: relative; width: 44px; height: 33px; border-radius: 7px; overflow: hidden; background: linear-gradient(135deg, #f3dd9b 0%, #c9a24c 45%, #f0d792 60%, #a8842f 100%); box-shadow: inset 0 0 0 1px rgba(0,0,0,.25), 0 1px 2px rgba(0,0,0,.35); }
+  .chip i { position: absolute; background: rgba(90,64,12,.45); }
+  .chip i:nth-child(1) { left: 0; right: 0; top: 11px; height: 1px; } .chip i:nth-child(2) { left: 0; right: 0; bottom: 11px; height: 1px; }
+  .chip i:nth-child(3) { top: 0; bottom: 0; left: 16px; width: 12px; border-left: 1px solid rgba(90,64,12,.45); border-right: 1px solid rgba(90,64,12,.45); background: none; }
+  /* номер как на пластике: моноширинные выпуклые цифры группами по 4 */
+  .w-num { font: 600 clamp(17px, 5.6vw, 23px)/1 ui-monospace, "SF Mono", Menlo, "Courier New", monospace; letter-spacing: .09em; white-space: nowrap; color: #f4f1ea;
+    text-shadow: 0 1px 0 rgba(0,0,0,.55), 0 -1px 0 rgba(255,255,255,.18); font-variant-numeric: tabular-nums; }
+  .w-name { font-size: 15px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; margin-top: 3px; text-shadow: 0 1px 0 rgba(0,0,0,.45); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 62vw; }
+  .w-holder { min-width: 0; }
   .w-state { font-size: 12px; padding: 5px 10px; border-radius: 999px; background: rgba(255,255,255,.14); backdrop-filter: blur(8px); }
   .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--green); margin-right: 6px; vertical-align: 1px; animation: pulse 2.4s infinite; }
   .dot.off { background: var(--orange); animation: none; }
@@ -325,6 +335,35 @@
   @keyframes fly { 0% { opacity: 0; transform: translate(-50%, 0) scale(.4); } 15% { opacity: .9; } 100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), -150px) scale(1) rotate(var(--rot)); } }
   @keyframes slide-in { from { opacity: 0; transform: translateX(var(--from)); } to { opacity: 1; transform: none; } }
   @keyframes pop-back { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
+  /* ── «выпуск карты»: 3D-переворот после подтверждения номера ── */
+  .reveal { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
+    background: radial-gradient(120% 80% at 50% 35%, rgba(40,40,44,.92), rgba(0,0,0,.96)); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); opacity: 0; pointer-events: none; transition: opacity .4s var(--ease); }
+  .reveal.open { opacity: 1; pointer-events: auto; }
+  .rv-stage { perspective: 1100px; width: min(100%, 400px); position: relative; }
+  .rv-card { position: relative; aspect-ratio: 1.586; transform-style: preserve-3d; }
+  .reveal.open .rv-card { animation: rv-in 1.7s cubic-bezier(.2,.85,.25,1) both; }
+  @keyframes rv-in {
+    0% { opacity: 0; transform: translateY(80px) translateZ(-600px) rotateX(40deg) rotateY(-200deg) scale(.45); }
+    30% { opacity: 1; }
+    62% { transform: translateY(-6px) translateZ(60px) rotateX(-8deg) rotateY(14deg) scale(1.05); }
+    80% { transform: rotateX(3deg) rotateY(-5deg) scale(.99); }
+    100% { transform: none; } }
+  .rv-card > * { position: absolute; inset: 0; -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+  .rv-card .wallet { transform: none !important; min-height: 0; cursor: default; box-shadow: 0 40px 70px -30px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.06) inset; }
+  .rv-back { transform: rotateY(180deg); border-radius: 22px; overflow: hidden; background: linear-gradient(135deg, #3a3a3c, #121214 70%); box-shadow: 0 30px 60px -30px rgba(0,0,0,.8); }
+  .rv-back i { position: absolute; left: 0; right: 0; top: 16%; height: 19%; background: #050506; }
+  .rv-back b { position: absolute; left: 22px; right: 90px; top: 46%; height: 14%; border-radius: 4px; background: repeating-linear-gradient(90deg, #e9e6dc 0 6px, #d9d5c8 6px 12px); }
+  .rv-back span { position: absolute; right: 22px; bottom: 18px; color: #fff; opacity: .55; font-size: 12px; font-weight: 700; letter-spacing: .3em; }
+  .rv-spark { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; border-radius: 50%; background: #f3d98f; box-shadow: 0 0 10px #f3d98f; opacity: 0; pointer-events: none; }
+  .reveal.open .rv-spark { animation: rv-spark 1.3s var(--ease) both; }
+  @keyframes rv-spark { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.3); } 20% { opacity: 1; } 100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1); } }
+  .rv-check { width: 58px; height: 58px; margin: 30px auto 12px; }
+  .rv-title { color: #fff; font-size: 30px; font-weight: 700; letter-spacing: -.03em; margin: 0; text-align: center; }
+  .rv-text { color: rgba(255,255,255,.72); font-size: 16px; line-height: 1.4; margin: 8px 12px 0; text-align: center; max-width: 340px; }
+  .reveal .btn { max-width: 360px; margin-top: 24px; background: #fff; color: #000; }
+  .reveal.open .rv-after > * { animation: rise .6s var(--ease) both; animation-delay: 1.35s; }
+  .reveal.open .rv-after > *:nth-child(2) { animation-delay: 1.45s; } .reveal.open .rv-after > *:nth-child(3) { animation-delay: 1.55s; } .reveal.open .rv-after > *:nth-child(4) { animation-delay: 1.7s; }
+  .rv-after { display: flex; flex-direction: column; align-items: center; width: 100%; }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 </head>
@@ -357,16 +396,11 @@
         </div>
         <img class="w-logo" src="logo-card.png" width="54" height="54" decoding="async" alt="Seven Times">
       </div>
+      <div class="w-mid"><span class="chip" aria-hidden="true"><i></i><i></i><i></i></span><span class="w-state hidden" id="cardState"><span class="dot off"></span>Не активна</span></div>
+      <div class="w-num" id="cardNo"></div>
       <div class="w-foot">
-        <div>
-          <div class="w-label">Гость</div>
-          <div class="w-val" id="cardName"></div>
-        </div>
-        <div style="text-align:right">
-          <div class="w-label" id="cardNoLabel">Карта</div>
-          <div class="w-val" id="cardNo"></div>
-          <span class="w-state hidden" id="cardState"><span class="dot off"></span>Не активна</span>
-        </div>
+        <div class="w-holder"><div class="w-label" id="cardNoLabel">Гость</div><div class="w-name" id="cardName"></div></div>
+        <div class="w-label" style="text-align:right">Seven<br>Times</div>
       </div>
     </div></div>
 
@@ -462,6 +496,7 @@
       <div class="list" data-perm="admins">
         <button class="li" data-go="pNotify"><span class="grow">Уведомления</span><span class="chev"></span></button>
       </div>
+      <div class="note" id="verLine" style="text-align:center;margin-top:18px"></div>
     </div>
 
     <!-- отчёт -->
@@ -616,6 +651,15 @@
 </main>
 
 <!-- нижние листы -->
+<div class="reveal" id="reveal" role="dialog" aria-modal="true" aria-label="Карта создана">
+  <div class="rv-stage"><div class="rv-card" id="rvCard"></div></div>
+  <div class="rv-after">
+    <svg class="chk rv-check" viewBox="0 0 52 52"><circle class="c" cx="26" cy="26" r="24"/><path class="p" d="M16 27l7 7 14-15"/></svg>
+    <p class="rv-title">Поздравляем!</p>
+    <p class="rv-text">Ваш номер подтверждён, карта успешно создана</p>
+    <button class="btn big" id="rvOk">Открыть карту</button>
+  </div>
+</div>
 <div class="scrim" id="scrim"></div>
 <div class="sheet" id="congrats">
   <div class="grab"></div>
@@ -634,7 +678,9 @@
 
 <script>
 // URL своего Apps Script (…/exec)
-const API_URL = 'https://script.google.com/macros/s/AKfycbxbUlG8xsT1o7R_yza6WFF3miQKWyc8-AtLuJ1RDgP8I9K_v3sj5FTi2Fk8QrzZ69DXCw/exec';
+// Версия карты — показывается в админке рядом с версией сервера
+const APP_VERSION = 'v10';
+const API_URL = 'https://script.google.com/macros/s/AKfycbw3QgJ51TwsJX6LFwgYjsgNdF2EHj_hh62yH2vO6-crAVq1p4WweJMGNpWWLW812D-3qg/exec';
 
 const tg = window.Telegram?.WebApp;
 let curTab = 'card', walletKind = '', me = null;
@@ -896,12 +942,18 @@ $('dlgNo').onclick = () => { closeSheets(); if (dlgRes) dlgRes(null); dlgRes = n
 $('dlgIn').onkeydown = (e) => { if (e.key === 'Enter') $('dlgYes').click(); };
 
 // ══════════ Карта гостя ══════════
+// Номер группами по 4, как на банковской карте: 4400 1234 5678 9012
+const fmtCardNo = (n) => String(n || '').replace(/(\d{4})(?=\d)/g, '$1 ');
+// Имя на пластике — латиницей, как на банковских картах
+const LAT = { а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'e', ж: 'zh', з: 'z', и: 'i', й: 'y', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r', с: 's', т: 't', у: 'u', ф: 'f', х: 'kh', ц: 'ts', ч: 'ch', ш: 'sh', щ: 'shch', ъ: '', ы: 'y', ь: '', э: 'e', ю: 'yu', я: 'ya', ә: 'a', ғ: 'g', қ: 'q', ң: 'n', ө: 'o', ұ: 'u', ү: 'u', һ: 'h', і: 'i' };
+const latin = (s) => String(s).split('').map((ch) => { const l = LAT[ch.toLowerCase()]; return l === undefined ? ch : ch === ch.toLowerCase() ? l : l.charAt(0).toUpperCase() + l.slice(1); }).join('');
 let qrObj = null, codeTimer = 0, codeBusy = false, codeOn = false, codeFails = 0, codeExp = 0, staleTimer = 0, lastQr = '';
 function renderCard(c) {
   if (curTab === 'card') $('guest').classList.remove('hidden');
   const ok = !!c.phoneVerified, blocked = !!c.blocked; // !!: toggle(x, undefined) не ставит, а ПЕРЕКЛЮЧАЕТ класс — QR мигал бы
-  $('cardName').textContent = c.name || 'Гость';
-  $('cardNo').textContent = ok ? (c.id ?? '') : '';
+  document.querySelector('.stage').classList.toggle('hidden', !ok); // пока номер не подтверждён — карты не видно
+  $('cardName').textContent = latin(c.name || 'Guest');
+  $('cardNo').textContent = ok ? fmtCardNo(c.number || c.id) : '';
   $('cardNoLabel').classList.toggle('hidden', !ok);
   $('cardState').classList.toggle('hidden', ok && !blocked);
   $('cardState').innerHTML = `<span class="dot off"></span>${blocked ? 'Заблокирована' : 'Не активна'}`;
@@ -928,6 +980,7 @@ function renderCard(c) {
   $('visitsList').innerHTML = hist.length
     ? hist.map((v) => `<div class="vrow"><span>${new Date(v.ts).toLocaleDateString('ru', { day: 'numeric', month: 'long', weekday: 'short' })}</span><span>${esc(v.branch)}</span></div>`).join('')
     : '<div class="muted">Визитов пока нет. Покажите QR кассиру при покупке — визит засчитается.</div>';
+  maybeReveal(c, ok && !blocked);
   welcomeCountdown(c.welcome, ok && !blocked);
   showNotice(c.notice);
 }
@@ -950,9 +1003,51 @@ function welcomeCountdown(w, show) {
   };
   paint(); welTimer = setInterval(paint, 30000);
 }
+// «Выпуск карты»: один раз — сразу после подтверждения номера (или при первом открытии, если номер подтвердили в боте)
+let lastOk, revealing = false, pendingNotice = null, revealTimer = 0;
+function maybeReveal(c, ok) {
+  const key = 'revealed_' + (c.id || ''), was = lastOk;
+  lastOk = ok;
+  if (!ok || revealing || !c.id) return;
+  let seen = false; try { seen = !!localStorage.getItem(key); } catch {}
+  if (seen) return;
+  const firstTime = was === false || (c.notice && c.notice.kind === 'welcome');
+  if (!firstTime) return;
+  try { localStorage.setItem(key, '1'); } catch {}
+  revealCard();
+}
+function revealCard() {
+  revealing = true;
+  const holder = $('rvCard');
+  const front = $('wallet').cloneNode(true); // лицевая сторона — точная копия карты гостя (цвет, номер, имя)
+  front.removeAttribute('id'); front.classList.remove('flip', 'live');
+  front.querySelectorAll('canvas').forEach((x) => x.remove());
+  front.querySelectorAll('[id]').forEach((x) => x.removeAttribute('id'));
+  const back = document.createElement('div'); back.className = 'rv-back'; back.innerHTML = '<i></i><b></b><span>SEVEN TIMES</span>';
+  holder.replaceChildren(back, front);
+  holder.parentElement.querySelectorAll('.rv-spark').forEach((x) => x.remove());
+  for (let i = 0; i < 18; i++) { // золотые искры после переворота
+    const sp = document.createElement('span'); sp.className = 'rv-spark';
+    const a = (i / 18) * 6.283, r = 140 + Math.random() * 90;
+    sp.style.setProperty('--dx', Math.cos(a) * r + 'px'); sp.style.setProperty('--dy', Math.sin(a) * r * 0.7 + 'px');
+    sp.style.animationDelay = (1 + Math.random() * 0.25) + 's';
+    holder.parentElement.appendChild(sp);
+  }
+  // номер «печатается» цифра за цифрой, пока карта разворачивается
+  const num = front.querySelector('.w-num'), full = num ? num.textContent : '';
+  if (num) { num.textContent = ''; let i = 0; clearInterval(revealTimer); setTimeout(() => { revealTimer = setInterval(() => { num.textContent = full.slice(0, ++i); if (i % 4 === 0) tick(); if (i >= full.length) clearInterval(revealTimer); }, 42); }, 900); }
+  const ov = $('reveal'); ov.classList.remove('open'); void ov.offsetWidth; ov.classList.add('open');
+  setTimeout(() => haptic('success'), 1100);
+}
+$('rvOk').onclick = () => {
+  $('reveal').classList.remove('open'); revealing = false; clearInterval(revealTimer);
+  enter($('guest'));
+  if (pendingNotice) { const n = pendingNotice; pendingNotice = null; setTimeout(() => showNotice(n), 350); }
+};
 const seenNotice = new Set(); // карта обновляется раз в 30 с — поздравление показываем один раз даже без localStorage
 function showNotice(n) {
   if (!n || !n.ts) return;
+  if (revealing) { pendingNotice = n; return; } // сначала «карта создана», потом поздравление со скидкой
   const key = 'notice_' + n.ts;
   if (seenNotice.has(key)) return; seenNotice.add(key);
   try { if (localStorage.getItem(key)) return; localStorage.setItem(key, '1'); } catch {}
@@ -1170,6 +1265,7 @@ async function loadAdmin() {
     if (seq !== adminSeq) return;
     AD = d;
     renderStats(AD.stats);
+    $('verLine').textContent = `Карта ${APP_VERSION} · сервер ${String(AD.version || 'старый').split(' ')[0]}`;
 
     // счётчики на главной
     const activeCash = AD.cashiers.filter((k) => k.status === 'active').length;
@@ -1442,7 +1538,7 @@ async function find() {
   try {
     const r = await api('adminFind', { q: $('q').value });
     $('found').classList.remove('hidden');
-    $('found').innerHTML = r.cards.length ? r.cards.map((c) => `<div class="li ${c.blocked ? 'dis' : ''}"><span class="grow">${esc(c.name)} · <b>${esc(c.id)}</b>${c.blocked ? '<span class="tag off">заблокирована</span>' : ''}<span class="sub">${c.phone ? '+' + esc(c.phone) : 'номер не подтверждён'} · ${c.group ? esc(c.group) : 'без скидки'} </span><span class="sub">визитов за 90 дней: ${esc(c.v90 ?? 0)}${c.left ? ` · до ${esc(c.next)}%: ещё ${esc(c.left)}` : ''}</span></span>
+    $('found').innerHTML = r.cards.length ? r.cards.map((c) => `<div class="li ${c.blocked ? 'dis' : ''}"><span class="grow">${esc(c.name)} · <b>${esc(c.number ? fmtCardNo(c.number) : c.id)}</b>${c.blocked ? '<span class="tag off">заблокирована</span>' : ''}<span class="sub">${c.phone ? '+' + esc(c.phone) : 'номер не подтверждён'} · ${c.group ? esc(c.group) : 'без скидки'} </span><span class="sub">визитов за 90 дней: ${esc(c.v90 ?? 0)}${c.left ? ` · до ${esc(c.next)}%: ещё ${esc(c.left)}` : ''}</span></span>
       <button class="pill ${c.blocked ? '' : 'red'}" data-b="${esc(c.id)}" data-v="${c.blocked ? 0 : 1}">${c.blocked ? 'Вернуть' : 'Заблокировать'}</button></div>`).join('') : '<div class="empty">Ничего не найдено</div>';
     enter($('found'));
   } catch (e) { $('found').classList.remove('hidden'); $('found').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
@@ -1493,7 +1589,7 @@ function saveMe(m) {
   if (!CACHE || !m?.card) return;
   const c = m.card;
   const slim = { cashier: m.cashier ? { name: m.cashier.name, branch: m.cashier.branch } : null, admin: !!m.admin, wallet: !!m.wallet, walletApple: !!m.walletApple, adminNeedsPhone: !!m.adminNeedsPhone,
-    card: { name: c.name, id: c.id, phoneVerified: !!c.phoneVerified, blocked: !!c.blocked, invited: !!c.invited, wallet: c.wallet || null, coupons: Array.isArray(c.coupons) ? c.coupons : [],
+    card: { name: c.name, id: c.id, number: c.number || '', phoneVerified: !!c.phoneVerified, blocked: !!c.blocked, invited: !!c.invited, wallet: c.wallet || null, coupons: Array.isArray(c.coupons) ? c.coupons : [],
       history: Array.isArray(c.history) ? c.history : [] } };
   try { localStorage.setItem(CACHE, JSON.stringify(slim)); } catch {}
 }
