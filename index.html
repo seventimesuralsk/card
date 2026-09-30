@@ -144,13 +144,19 @@
   /* ── QR ── */
   .qrcard { text-align: center; padding: 24px 20px 20px; }
   .qrwrap { background: #fff; border-radius: 18px; padding: 14px; width: 232px; max-width: 100%; margin: 0 auto; transition: opacity .25s, transform .25s var(--ease); }
-  .qrwrap.swap { opacity: .2; transform: scale(.96); filter: blur(2px); }
+  .qrwrap { position: relative; }
+  .qrover { position: absolute; inset: 0; border-radius: 18px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 20px; background: rgba(20,20,22,.72); color: #fff; font-size: 15px; font-weight: 600; line-height: 1.35; opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .qrwrap.swap .qrover, .qrwrap.stale .qrover { opacity: 1; } /* QR не исчезает — затемняется с подписью */
   .qrcard .qrwrap { box-shadow: 0 0 0 1px var(--sep), 0 12px 30px -16px rgba(0,0,0,.25); }
   .qrwrap img, .qrwrap canvas { width: 100% !important; height: auto !important; display: block; }
   .qrwrap > div { aspect-ratio: 1; } /* место под QR занято сразу — ничего не прыгает */
   #qr:empty { border-radius: 6px; background: linear-gradient(90deg, #f0f0f2 25%, #e4e4e8 50%, #f0f0f2 75%); background-size: 200% 100%; animation: shimmer 1.3s infinite linear; }
-  .qrwrap.stale { opacity: .15; filter: blur(3px); } /* код истёк, новый ещё не пришёл — старый не сканируется */
+  .qrwrap.stale #qr { filter: blur(2px); } /* код истёк, новый ещё не пришёл — старый не сканируется */
   .qrwrap.stale + .code { opacity: .3; }
+  .qrtitle { font-size: 17px; font-weight: 700; margin: 0 0 14px; }
+  .wel { display: flex; align-items: center; gap: 14px; }
+  .wel .pc { flex: 0 0 auto; font-size: 30px; font-weight: 700; letter-spacing: -.03em; color: var(--green); }
+  .wel .left { font-variant-numeric: tabular-nums; font-weight: 600; }
   .code { font-size: 32px; font-weight: 700; margin: 18px 0 2px; font-variant-numeric: tabular-nums; display: flex; justify-content: center; gap: 4px; height: 40px; overflow: hidden; }
   .code .dg { display: inline-block; width: .66em; text-align: center; }
   .code .dg.roll { animation: roll .5s var(--spring) both; }
@@ -371,12 +377,19 @@
       <div class="msg" id="phoneMsg"></div>
     </div>
 
+    <div class="card hidden" id="welBox">
+      <div class="wel"><div class="pc" id="welPct">3%</div>
+        <div><div class="h" id="welTitle" style="margin:0">Скидка для вас</div><div class="muted" id="welLeft"></div></div></div>
+      <div class="fine" style="margin-top:10px">Чтобы получить скидку, покажите кассиру ваш QR — он ниже 👇</div>
+    </div>
+
     <div class="card qrcard hidden" id="qrBox">
-      <div class="qrwrap" id="qrWrap"><div id="qr"></div></div>
+      <div class="qrtitle">Ваш QR для скидки</div>
+      <div class="qrwrap" id="qrWrap"><div id="qr"></div><div class="qrover">Создаём новый QR…<br>подождите</div></div>
       <div class="code" id="code">&nbsp;</div>
       <div class="bar"><i id="timer"></i></div>
-      <div class="muted">Покажите QR кассиру при оплате</div>
-      <div class="fine" style="margin-top:4px">Код обновляется каждые 30 секунд, скриншот не сработает</div>
+      <div class="muted">Покажите этот экран кассиру при оплате</div>
+      <div class="fine" style="margin-top:4px">QR меняется каждые 30 секунд — скриншот не сработает</div>
       <div class="fine hidden" id="qrErr" style="margin-top:8px;color:var(--red)"></div>
     </div>
 
@@ -621,7 +634,7 @@
 
 <script>
 // URL своего Apps Script (…/exec)
-const API_URL = 'https://script.google.com/macros/s/AKfycbxYyAEuS28Bz12e3pqJvAPtGitQcbOXIB1JS7vj1B8XMcoHn15BMBhFlepj2EHZjb4NwQ/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxpikfXwwO5M6iTyxc_jDeHVc3VAIfxe6ogxK_Ra7QNLuUopBVpuilcFUYDuwDMOM3K/exec';
 
 const tg = window.Telegram?.WebApp;
 let curTab = 'card', walletKind = '', me = null;
@@ -915,10 +928,28 @@ function renderCard(c) {
   $('visitsList').innerHTML = hist.length
     ? hist.map((v) => `<div class="vrow"><span>${new Date(v.ts).toLocaleDateString('ru', { day: 'numeric', month: 'long', weekday: 'short' })}</span><span>${esc(v.branch)}</span></div>`).join('')
     : '<div class="muted">Визитов пока нет. Покажите QR кассиру при покупке — визит засчитается.</div>';
+  welcomeCountdown(c.welcome, ok && !blocked);
   showNotice(c.notice);
 }
 
 // Поздравление (приветственная скидка или новый уровень) — один раз, потом сервер его забывает
+// Обратный отсчёт приветственной скидки: «начнёт действовать завтра» → «заканчивается через 2 дн 5 ч»
+let welData = null, welTimer = 0;
+function welcomeCountdown(w, show) {
+  if (w !== undefined) welData = w; // обновление QR приходит без поля — держим прошлое
+  clearInterval(welTimer);
+  const paint = () => {
+    const d = welData, now = Date.now();
+    const on = !!(show && d && now < d.to);
+    $('welBox').classList.toggle('hidden', !on);
+    if (!on) return clearInterval(welTimer);
+    $('welPct').textContent = d.percent + '%';
+    const left = (ms) => { const m = Math.max(1, Math.ceil(ms / 60000)), dd = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60), mm = m % 60; return dd ? `${dd} дн ${h} ч` : h ? `${h} ч ${mm} мин` : `${mm} мин`; };
+    if (now < d.from) { $('welTitle').textContent = `Скидка ${d.percent}% — с завтрашнего дня`; $('welLeft').innerHTML = `Начнёт действовать через <span class="left">${left(d.from - now)}</span>, продлится 7 дней`; }
+    else { $('welTitle').textContent = `Ваша скидка ${d.percent}%`; $('welLeft').innerHTML = `Заканчивается через <span class="left">${left(d.to - now)}</span>`; }
+  };
+  paint(); welTimer = setInterval(paint, 30000);
+}
 const seenNotice = new Set(); // карта обновляется раз в 10 с — поздравление показываем один раз даже без localStorage
 function showNotice(n) {
   if (!n || !n.ts) return;
@@ -947,7 +978,7 @@ async function refreshCode() {
     }
     setCode(r.code);
     if (!qrObj) qrObj = await makeQr($('qr'), r.qr);
-    else if (r.qr !== lastQr) { const w = $('qrWrap'), obj = qrObj; w.classList.add('swap'); setTimeout(() => { obj.makeCode(r.qr); w.classList.remove('swap'); }, 180); }
+    else if (r.qr !== lastQr) { const w = $('qrWrap'), obj = qrObj; w.classList.add('swap'); setTimeout(() => { obj.makeCode(r.qr); w.classList.remove('swap'); }, 450); }
     lastQr = r.qr; codeFails = 0;
     const left = Math.max(1, Number(r.secondsLeft) || 30);
     codeExp = Date.now() + left * 1000;
@@ -1475,7 +1506,7 @@ function renderMe() {
   $('loader').classList.add('hidden'); $('failBox').classList.add('hidden');
   $('hello').textContent = me.cashier ? me.cashier.name : `Здравствуйте, ${me.card.name || 'гость'}`;
   if (me.cashier) $('hello').insertAdjacentHTML('beforeend', `<div class="muted" style="font-size:15px;font-weight:400;letter-spacing:0">${esc(me.cashier.branch)}</div>`);
-  if (me.adminNeedsPhone) $('phoneText').textContent = 'Подтвердите номер — откроются карта, QR и админ-панель.';
+  if (me.adminNeedsPhone) $('phoneText').textContent = 'Подтвердите номер — откроются карта, QR и рабочие вкладки (касса, админка). Без номера они не работают.';
   renderCard(me.card);
   if (!painted) { enter($('guest')); painted = true; }
   const multi = !!(me.cashier || me.admin);
@@ -1486,15 +1517,17 @@ function renderMe() {
   if (multi) requestAnimationFrame(() => segMove($('tabs')));
 }
 
-let firstLoad = true, loadTry = 0;
+let loadTry = 0, inviteDone = false;
 async function load(pre) {
   try {
     me = pre || await api('me');
     loadTry = 0; saveMe(me);
     renderMe();
     if (me.card.phoneVerified) startCode(); else stopCode(); // QR только после подтверждения номера
-    if (firstLoad) {
-      const inv = me.invite;
+    const inv = me.invite;
+    if (inv?.needPhone) show($('inviteMsg'), 'Подтвердите номер телефона ниже — приглашение сработает сразу после этого.', 'warn');
+    else if (inv && !inviteDone) {
+      inviteDone = true; hide($('inviteMsg'));
       if (inv?.joined) { haptic('success'); tab('kassa'); kassaResult(`<div class="msg ok" style="display:block">Вы кассир Seven Times, ${esc(inv.branch)}. Сканируйте QR с карты гостя.</div>`); }
       else if (inv?.joinedPerson) {
         haptic('success');
@@ -1504,7 +1537,6 @@ async function load(pre) {
       else if (inv?.joinedAdmin) { haptic('success'); show($('inviteMsg'), me.admin ? 'Вы админ Seven Times. Админка — во вкладке «Админ» сверху.' : 'Вы админ Seven Times. Подтвердите номер телефона — и откроется админка.', true); }
       else if (inv?.error) show($('inviteMsg'), inv.error);
     }
-    firstLoad = false;
   } catch (e) {
     if (painted) { if (++loadTry <= 4) setTimeout(load, 3000 * loadTry); return; } // карта уже на экране из кэша — тихо пробуем ещё
     $('loader').classList.add('hidden');
