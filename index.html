@@ -422,8 +422,6 @@
   .cn-hint { color: #fff; font-size: 16px; font-weight: 600; margin-top: 34px; letter-spacing: .01em; animation: hint 1.6s ease-in-out infinite; }
   @keyframes hint { 0%, 100% { opacity: .9; transform: none; } 50% { opacity: .4; transform: scale(.97); } }
   .reveal.go .cn-hint, .reveal.done .cn-hint { display: none; }
-  .cn-skip { position: absolute; z-index: 5; top: calc(12px + env(safe-area-inset-top)); right: 14px; border: 0; border-radius: 999px; padding: 8px 14px; font-size: 14px; background: rgba(255,255,255,.14); color: #fff; display: none; }
-  .reveal.go:not(.done) .cn-skip { display: block; }
   .rv-after { display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 30px; opacity: 0; pointer-events: none; }
   .reveal.done .rv-after { opacity: 1; pointer-events: auto; }
   .reveal.done .rv-after > * { animation: rise .6s var(--ease) both; }
@@ -786,7 +784,6 @@
 <div class="reveal" id="reveal" role="dialog" aria-modal="true" aria-label="Карта создана">
   <canvas class="cn-fx" id="cnFx"></canvas>
   <div class="cn-flash" id="cnFlash"></div>
-  <button class="cn-skip" id="cnSkip">Пропустить</button>
   <div class="cn-scene" id="cnScene">
     <div class="rv-stage" id="cnStage"><div class="cn-prop" id="cnProp"></div><div class="rv-card" id="rvCard"></div></div>
     <div class="cn-hint" id="cnHint"></div>
@@ -1630,7 +1627,7 @@ function playCine(o) {
     } catch (err) { if (err !== STOP) { console.error(err); cineDone(tok); } }
   };
 }
-// Итог ролика (или «Пропустить»): карта на месте, номер и имя целиком, подпись и кнопки
+// Итог ролика: карта на месте, номер и имя целиком, подпись и кнопки
 function cineDone(tok) {
   if (tok !== cineTok) return;
   cineTok++; const ov = $('reveal'), front = $('rvCard').firstElementChild;
@@ -1643,7 +1640,6 @@ function cineDone(tok) {
   haptic('success');
 }
 document.addEventListener('pointerdown', () => Snd.init(), { once: true, passive: true }); // звук готов заранее — с первого касания
-$('cnSkip').onclick = (e) => { e.stopPropagation(); cineDone(cineTok); };
 $('rvAgain').onclick = (e) => { e.stopPropagation(); playCine(cineOpts); };
 $('rvOk').onclick = (e) => {
   e.stopPropagation(); cineTok++;
