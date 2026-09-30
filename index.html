@@ -963,6 +963,7 @@ function showNotice(n) {
 
 // QR обновляется сам. Один запрос за раз (раньше два цикла могли крутиться параллельно),
 // в фоне пауза, при возврате — сразу свежий код: истёкший QR на кассе = отказ и «подозрительная» запись в журнале
+const STALE_GRACE = 40000;
 function startCode() { if (!codeOn) { codeOn = true; refreshCode(); } }
 function stopCode() { codeOn = false; clearTimeout(codeTimer); codeTimer = 0; }
 async function refreshCode() {
@@ -973,8 +974,9 @@ async function refreshCode() {
   try {
     const r = await api('code');
     if (r.card && me) {
-      if (r.card.history === undefined) r.card.history = me.card?.history; // обновление QR приходит без истории визитов — держим прошлую
-      me.card = r.card; saveMe(me); renderCard(r.card);
+      // обновление QR приходит облегчённым (без купонов, Wallet, визитов) — недостающее берём из последнего полного профиля
+      const merged = Object.assign({}, me.card); Object.keys(r.card).forEach((key) => { if (r.card[key] !== undefined) merged[key] = r.card[key]; });
+      r.card = merged; me.card = merged; saveMe(me); renderCard(r.card);
     }
     setCode(r.code);
     if (!qrObj) qrObj = await makeQr($('qr'), r.qr);
@@ -983,11 +985,12 @@ async function refreshCode() {
     const left = Math.max(1, Number(r.secondsLeft) || 30);
     codeExp = Date.now() + left * 1000;
     $('qrWrap').classList.remove('stale'); $('qrErr').classList.add('hidden');
-    clearTimeout(staleTimer); staleTimer = setTimeout(() => $('qrWrap').classList.add('stale'), left * 1000);
+    // сервер принимает код ещё ~60 с после смены — затемняем, только если нового кода нет 40 с (нет связи)
+    clearTimeout(staleTimer); staleTimer = setTimeout(() => $('qrWrap').classList.add('stale'), left * 1000 + STALE_GRACE);
     const bar = $('timer');
     bar.style.transition = 'none'; bar.style.width = Math.min(100, left / 30 * 100) + '%';
     requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.transition = `width ${left}s linear`; bar.style.width = '0%'; }));
-    next = Math.min(left * 1000 + 300, 10000); // карта обновляется сама
+    next = left * 1000 + 300; // новый код — ровно в момент смены (раз в 30 с), втрое меньше запросов
   } catch (e) {
     codeFails++;
     if (!lastQr || Date.now() > codeExp) { $('qrErr').textContent = e.message === NET_ERR ? 'Сервер не отвечает — пробуем ещё раз' : e.message; $('qrErr').classList.remove('hidden'); }
@@ -997,7 +1000,7 @@ async function refreshCode() {
 }
 function wakeCode() {
   if (!codeOn || document.hidden) return;
-  if (codeExp && Date.now() > codeExp) $('qrWrap').classList.add('stale');
+  if (codeExp && Date.now() > codeExp + STALE_GRACE) $('qrWrap').classList.add('stale');
   refreshCode();
 }
 document.addEventListener('visibilitychange', () => { if (document.hidden) { clearTimeout(codeTimer); codeTimer = 0; } else wakeCode(); });
