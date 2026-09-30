@@ -436,23 +436,51 @@
   .cn-crack { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; }
   .cn-crack path { fill: none; stroke: rgba(255,255,255,.8); stroke-width: 1.3; stroke-dasharray: 1; stroke-linecap: round; filter: drop-shadow(0 0 2px rgba(255,255,255,.6)); }
 
-  /* Classic — подарок */
-  .cn-box { position: relative; width: 44%; aspect-ratio: 1 / .92; }
-  .cn-box.idle { animation: wob 2.4s ease-in-out infinite; }
-  @keyframes wob { 0%, 60%, 100% { transform: none; } 66% { transform: rotate(-5deg) translateY(-3px); } 74% { transform: rotate(5deg); } 82% { transform: rotate(-3deg); } 90% { transform: rotate(1deg); } }
-  .cn-glow { position: absolute; inset: -55%; background: radial-gradient(closest-side, rgba(170,210,255,.95), rgba(90,150,255,.35) 45%, transparent); opacity: 0; }
-  .cn-body { position: absolute; left: 7%; right: 7%; bottom: 0; height: 66%; display: flex; }
-  .cn-body b { position: relative; flex: 1; background: linear-gradient(160deg, #3677d8, #0e2c63 75%); box-shadow: inset 0 -14px 22px rgba(0,0,0,.35); }
-  .cn-body b.l { border-radius: 6px 0 0 12px; } .cn-body b.r { border-radius: 0 6px 12px 0; background: linear-gradient(200deg, #2c66c2, #0b2552 75%); }
-  .cn-body b::after { content: ""; position: absolute; top: 0; bottom: 0; width: 17%; background: linear-gradient(90deg, #b8862e, #fff0c0 50%, #b8862e); }
-  .cn-body b.l::after { right: 0; } .cn-body b.r::after { left: 0; }
-  .cn-lid { position: absolute; left: 0; right: 0; top: 16%; height: 20%; border-radius: 7px; z-index: 2; background: linear-gradient(90deg, transparent 41.5%, #f3d58a 41.5%, #fff3cf 50%, #f3d58a 58.5%, transparent 58.5%), linear-gradient(160deg, #4a8ae8, #133c84); box-shadow: 0 8px 14px rgba(0,0,0,.4); }
-  .cn-lid::before, .cn-lid::after { content: ""; position: absolute; bottom: 88%; width: 30%; height: 95%; border: 6px solid #f0cf7a; border-radius: 50% 50% 12% 50%; }
-  .cn-lid::before { left: 20%; transform: rotate(-24deg); } .cn-lid::after { right: 20%; transform: scaleX(-1) rotate(-24deg); }
+  /* настоящая карта в ролике: толщина, обратная сторона, живой блик и тень на «полу» */
+  .rv-card .wallet { -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+  .cn-slab { position: absolute; inset: 0; border-radius: 22px; background: var(--slab, #222); }
+  .cn-back { position: absolute; inset: 0; border-radius: 22px; overflow: hidden; -webkit-backface-visibility: hidden; backface-visibility: hidden; transform: translateZ(-7px) rotateY(180deg);
+    background: linear-gradient(135deg, var(--bk1, #2a2a2e), var(--bk2, #0c0c0e) 70%); box-shadow: 0 0 0 1px rgba(255,255,255,.06) inset; }
+  .cn-back i { position: absolute; left: 0; right: 0; top: 13%; height: 19%; background: #050506; }
+  .cn-back b { position: absolute; left: 7%; right: 30%; top: 44%; height: 13%; border-radius: 4px; background: repeating-linear-gradient(100deg, #efe9dc 0 7px, #ddd6c6 7px 14px); }
+  .cn-back span { position: absolute; right: 7%; bottom: 11%; color: #fff; opacity: .6; font-size: 12px; font-weight: 700; letter-spacing: .3em; }
+  .cn-glare { position: absolute; inset: 0; z-index: 6; pointer-events: none; mix-blend-mode: screen; border-radius: inherit;
+    background: radial-gradient(55% 45% at var(--gx, 30%) var(--gy, 20%), rgba(255,255,255,calc(var(--ga, 0) * .5)), transparent 62%),
+      linear-gradient(112deg, transparent calc(var(--gx, 30%) - 16%), rgba(255,255,255,calc(var(--ga, 0) * .38)) var(--gx, 30%), transparent calc(var(--gx, 30%) + 16%)); }
+  .cn-shade { position: absolute; inset: 0; z-index: 6; pointer-events: none; background: #000; opacity: var(--sh, 0); border-radius: inherit; }
+  .cn-floor { position: absolute; left: 12%; right: 12%; bottom: -16%; height: 12%; border-radius: 50%; background: radial-gradient(closest-side, rgba(0,0,0,.75), rgba(0,0,0,0)); opacity: 0; pointer-events: none; }
+  .reveal[data-k="classic"] { --slab: #0a2046; --bk1: #16366e; --bk2: #050d1f; }
+  .reveal[data-k="gold"] { --slab: #7a5516; --bk1: #6b4d17; --bk2: #1d1202; }
+  .reveal[data-k="platinum"] { --slab: #6f757f; --bk1: #5b616c; --bk2: #121417; }
+  .reveal[data-k="black"] { --slab: #161618; --bk1: #232326; --bk2: #030303; }
+  .reveal[data-k="team"] { --slab: #4a2412; --bk1: #6b3a1e; --bk2: #1a0b04; }
+  .reveal[data-k="owner"] { --slab: #6b4f1a; --bk1: #2a1646; --bk2: #07040c; }
+
+  /* Classic — чёрная коробка с тиснёным логотипом, как упаковка iPhone */
+  .cn-pbox { position: relative; width: 70%; aspect-ratio: 1.6; }
+  .cn-pbox.idle { animation: pfloat 3.2s ease-in-out infinite; }
+  @keyframes pfloat { 50% { transform: translateY(-6px); } }
+  .cn-pbox .base { position: absolute; left: 3%; right: 3%; top: 36%; bottom: 0; border-radius: 6px 6px 12px 12px; background: linear-gradient(180deg, #1c1c21, #0a0a0c 60%, #050506); box-shadow: 0 30px 40px -18px rgba(0,0,0,.9), 0 0 0 1px rgba(255,255,255,.05) inset; }
+  .cn-pbox .lid { position: absolute; left: 0; right: 0; top: 0; height: 40%; border-radius: 10px 10px 4px 4px; z-index: 2; display: flex; align-items: center; justify-content: center; gap: 10px;
+    background: linear-gradient(180deg, #2a2a30, #121215); box-shadow: 0 1px 0 rgba(255,255,255,.14) inset, 0 8px 16px rgba(0,0,0,.6); }
+  .cn-pbox .lid img { width: 34px; height: 34px; border-radius: 8px; filter: invert(1) grayscale(1); mix-blend-mode: screen; opacity: .75; }
+  .cn-pbox .lid span { color: #cfd6e0; font-size: 11px; font-weight: 700; letter-spacing: .38em; opacity: .75; text-shadow: 0 -1px 0 rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.12); }
+  .cn-pbox .seam { position: absolute; left: 4%; right: 4%; top: 39%; height: 2px; z-index: 3; background: #dbe9ff; box-shadow: 0 0 14px 4px rgba(140,190,255,.9); opacity: 0; }
+  .cn-pbox .beam { position: absolute; left: 6%; right: 6%; bottom: 60%; height: 220%; transform-origin: bottom; transform: scaleY(0); opacity: 0;
+    background: linear-gradient(to top, rgba(170,210,255,.55), rgba(170,210,255,0)); clip-path: polygon(8% 100%, 92% 100%, 100% 0, 0 0); }
+
+  /* Team — эспрессо: струя, лужица крема, пар */
+  .cn-esp { position: relative; width: 60%; aspect-ratio: 1; }
+  .cn-esp .stream { position: absolute; left: 48.5%; width: 3%; top: -70%; height: 132%; border-radius: 3px; transform-origin: top; transform: scaleY(.12);
+    background: linear-gradient(90deg, #2a1206, #c98a50 45%, #5a2c14); box-shadow: 0 0 12px rgba(200,130,70,.45); }
+  .cn-esp.idle .stream { animation: drip 1.6s ease-in infinite; }
+  @keyframes drip { 0% { transform: scaleY(.02); opacity: 1; } 70% { transform: scaleY(.16); opacity: 1; } 100% { transform: scaleY(.16) translateY(20%); opacity: 0; } }
+  .cn-esp .pool { position: absolute; left: 14%; right: 14%; top: 58%; height: 13%; border-radius: 50%; transform: scale(.28);
+    background: radial-gradient(closest-side, #e0a86a, #8a4e24 45%, #3a1a08 80%, rgba(0,0,0,0)); box-shadow: 0 0 30px rgba(210,140,70,.35); }
 
   /* Gold — монета */
-  .cn-coin { width: 36%; aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font: 800 clamp(40px, 13vw, 64px)/1 Georgia, "Times New Roman", serif; color: #8a6420; text-shadow: 0 1px 0 #fff3c4, 0 -1px 0 rgba(0,0,0,.25);
-    background: radial-gradient(circle at 35% 30%, #fff3c4, #f2c75a 32%, #b8862e 72%, #7a5516); box-shadow: 0 0 0 6px #d9a93f inset, 0 0 0 9px #8a6420 inset, 0 0 50px rgba(255,200,90,.55); }
+  .cn-coin { width: 36%; aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center;     background: radial-gradient(circle at 35% 30%, #fff3c4, #f2c75a 32%, #b8862e 72%, #7a5516); box-shadow: 0 0 0 6px #d9a93f inset, 0 0 0 9px #8a6420 inset, 0 0 50px rgba(255,200,90,.55); }
+  .cn-coin img { width: 56%; border-radius: 22%; mix-blend-mode: multiply; opacity: .85; filter: contrast(1.2) sepia(.6); }
   .cn-coin.idle { animation: coin-spin 2.6s linear infinite; }
   @keyframes coin-spin { to { transform: rotateY(360deg); } }
 
@@ -473,20 +501,9 @@
   .cn-ret.idle { animation: ret 2.4s ease-in-out infinite; }
   @keyframes ret { 0%, 100% { transform: scale(1) rotate(0); } 50% { transform: scale(.9) rotate(45deg); } }
 
-  /* Team — чашка кофе */
-  .cn-cup { position: relative; width: 38%; aspect-ratio: 1; }
-  .cn-cup.idle { animation: wob 3s ease-in-out infinite; }
-  .cn-cup .sau { position: absolute; left: -4%; right: 4%; bottom: 8%; height: 14%; border-radius: 50%; background: linear-gradient(#fbf8f4, #cfc8bf); box-shadow: 0 10px 18px rgba(0,0,0,.45); }
-  .cn-cup .body { position: absolute; left: 12%; right: 24%; bottom: 16%; height: 54%; border-radius: 0 0 46% 46% / 0 0 64% 64%; background: linear-gradient(90deg, #d9d2c9, #fffdf9 40%, #e3ddd5); }
-  .cn-cup .body i { position: absolute; left: 0; right: 0; top: -9%; height: 18%; border-radius: 50%; background: radial-gradient(#7a4526, #2a1408 75%); border: 3px solid #f6f2ec; box-sizing: border-box; }
-  .cn-cup .hdl { position: absolute; right: 7%; top: 40%; width: 24%; height: 28%; border: 7px solid #ebe5dd; border-radius: 50%; }
-  .cn-cup .st { position: absolute; bottom: 66%; width: 12%; height: 42%; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,255,255,.55), transparent); filter: blur(5px); animation: steam 2.4s ease-in infinite; opacity: 0; }
-  .cn-cup .st:nth-of-type(1) { left: 26%; } .cn-cup .st:nth-of-type(2) { left: 40%; animation-delay: .8s; } .cn-cup .st:nth-of-type(3) { left: 54%; animation-delay: 1.6s; }
-  @keyframes steam { 0% { opacity: 0; transform: translateY(20%) scaleX(.6); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(-80%) scaleX(1.4) rotate(12deg); } }
-
   /* Owner — портал */
   .cn-portal { position: relative; width: 54%; aspect-ratio: 1; }
-  .cn-portal .ring { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from var(--a), #ffd978, #b06bff, #3be3d0, #ff7ab8, #ffd978);
+  .cn-portal .ring { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from var(--a), #ffd978, #fff1c2, #9b5cff, #ffd978, #5b2a9e, #ffd978);
     -webkit-mask: radial-gradient(closest-side, transparent 70%, #000 72%, #000 90%, transparent 92%); mask: radial-gradient(closest-side, transparent 70%, #000 72%, #000 90%, transparent 92%); filter: drop-shadow(0 0 8px #ffd978); animation: spin-a 2.4s linear infinite; }
   .cn-portal .core { position: absolute; inset: 15%; border-radius: 50%; background: radial-gradient(closest-side, #000 35%, #2a0f4a 70%, rgba(80,30,140,0)); }
   .cn-portal .crown, .cn-crown { position: absolute; left: 50%; top: -34%; transform: translateX(-50%); font-size: clamp(40px, 12vw, 58px); line-height: 1; color: #ffd978; text-shadow: 0 0 18px rgba(255,200,90,.9), 0 2px 0 #8a6420; }
@@ -1238,53 +1255,78 @@ function maybeReveal(c, ok) {
 // Black — выстрел и карта-пуля в дыму, Team — карта вылетает из чашки кофе, Owner — портал, молнии и золотой взрыв.
 // Ролик стартует от нажатия: без касания телефон не даёт включить звук.
 
-// Звук синтезируем на лету (Web Audio) — ни одного файла, ничего не грузится
 const Snd = (() => {
-  let ac = null, master = null, noiseBuf = null;
+  // Звук синтезируем на лету (Web Audio) — ни одного файла. Всё идёт через «зал»: эхо из сгенерированного отклика,
+  // поэтому удары звучат глубоко, а звон — как металл, а не как писк
+  let ac = null, dry = null, wet = null, noiseBuf = null;
   const init = () => {
     try {
       if (!ac) {
         const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
-        ac = new C(); master = ac.createGain(); master.gain.value = .6;
-        const comp = ac.createDynamicsCompressor(); master.connect(comp); comp.connect(ac.destination);
-        const len = ac.sampleRate * 2; noiseBuf = ac.createBuffer(1, len, ac.sampleRate);
-        const d = noiseBuf.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+        ac = new C();
+        const comp = ac.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4; comp.connect(ac.destination);
+        const out = ac.createGain(); out.gain.value = .75; out.connect(comp);
+        dry = ac.createGain(); dry.connect(out);
+        const rev = ac.createConvolver(), sr = ac.sampleRate, len = Math.round(sr * 2.6), ir = ac.createBuffer(2, len, sr);
+        for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.2); }
+        rev.buffer = ir; wet = ac.createGain(); wet.gain.value = .32; wet.connect(rev); rev.connect(out);
+        const nl = sr * 2; noiseBuf = ac.createBuffer(1, nl, sr); const nd = noiseBuf.getChannelData(0); for (let i = 0; i < nl; i++) nd[i] = Math.random() * 2 - 1;
       }
       if (ac.state === 'suspended') ac.resume();
     } catch { ac = null; }
   };
-  const env = (g, t, a, peak, d) => { g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(.0001, t + a + d); };
-  const noise = (t, dur, type, f0, f1, peak, a) => {
-    a = a || .005; const s = ac.createBufferSource(); s.buffer = noiseBuf; s.loop = true;
-    const f = ac.createBiquadFilter(); f.type = type; f.frequency.setValueAtTime(f0, t); if (f1) f.frequency.exponentialRampToValueAtTime(f1, t + a + dur);
-    const g = ac.createGain(); env(g, t, a, peak, dur); s.connect(f); f.connect(g); g.connect(master); s.start(t); s.stop(t + a + dur + .05);
+  const bus = (node, pan, send) => {
+    let n = node;
+    if (pan && ac.createStereoPanner) { const p = ac.createStereoPanner(); p.pan.value = pan; n.connect(p); n = p; }
+    n.connect(dry); const s = ac.createGain(); s.gain.value = send ?? 1; n.connect(s); s.connect(wet);
   };
-  const tone = (t, type, f0, f1, dur, peak, a) => {
-    a = a || .005; const o = ac.createOscillator(); o.type = type; o.frequency.setValueAtTime(f0, t); if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + a + dur);
-    const g = ac.createGain(); env(g, t, a, peak, dur); o.connect(g); g.connect(master); o.start(t); o.stop(t + a + dur + .05);
+  const env = (g, t, a, peak, d) => { g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(.0001, t + a + d); };
+  const noise = (t, dur, type, f0, f1, peak, a, o) => {
+    o = o || {}; a = a || .005; const s = ac.createBufferSource(); s.buffer = noiseBuf; s.loop = true;
+    const f = ac.createBiquadFilter(); f.type = type; f.Q.value = o.q || 1; f.frequency.setValueAtTime(f0, t); if (f1) f.frequency.exponentialRampToValueAtTime(f1, t + a + dur);
+    const g = ac.createGain(); env(g, t, a, peak, dur); s.connect(f); f.connect(g);
+    if (o.sweep && ac.createStereoPanner) { const p = ac.createStereoPanner(); p.pan.setValueAtTime(-o.sweep, t); p.pan.linearRampToValueAtTime(o.sweep, t + a + dur); g.connect(p); bus(p, 0, o.send); } else bus(g, o.pan, o.send);
+    s.start(t); s.stop(t + a + dur + .05);
+  };
+  const tone = (t, type, f0, f1, dur, peak, a, o) => {
+    o = o || {}; a = a || .005; const osc = ac.createOscillator(); osc.type = type; osc.frequency.setValueAtTime(f0, t); if (f1) osc.frequency.exponentialRampToValueAtTime(f1, t + a + dur);
+    if (o.detune) osc.detune.value = o.detune;
+    const g = ac.createGain(); env(g, t, a, peak, dur); osc.connect(g); bus(g, o.pan, o.send); osc.start(t); osc.stop(t + a + dur + .05);
+  };
+  // металл: негармонические обертоны, как у пластины или карты
+  const metal = (t, base, peak, dur) => [1, 2.76, 5.4, 8.93].forEach((r, i) => tone(t, 'sine', base * r, 0, dur / (1 + i * .6), peak / (1 + i * 1.3), .002, { send: .9 }));
+  // колокольчик: частотная модуляция, мягкая атака
+  const bell = (t, f, peak, dur) => {
+    const c = ac.createOscillator(), m = ac.createOscillator(), mg = ac.createGain(), g = ac.createGain();
+    c.frequency.value = f; m.frequency.value = f * 3.5; mg.gain.setValueAtTime(f * 2, t); mg.gain.exponentialRampToValueAtTime(1, t + dur);
+    m.connect(mg); mg.connect(c.frequency); env(g, t, .004, peak, dur); c.connect(g); bus(g, 0, 1.2);
+    c.start(t); m.start(t); c.stop(t + dur + .1); m.stop(t + dur + .1);
   };
   const fx = {
-    boom(t) { noise(t, 1.5, 'lowpass', 3200, 50, .9); tone(t, 'sine', 120, 30, 1.3, .95); },
-    pop(t) { noise(t, .22, 'bandpass', 2000, 400, .5); tone(t, 'triangle', 700, 140, .18, .35); },
-    shot(t) { noise(t, .06, 'highpass', 1500, 0, 1, .001); noise(t + .01, .7, 'lowpass', 1800, 70, .8); tone(t, 'sine', 170, 38, .4, .95, .002); },
-    whoosh(t, d) { d = d || .8; noise(t, d * .55, 'bandpass', 250, 2800, .4, d * .45); },
-    rumble(t, d) { d = d || 2; noise(t, d * .25, 'lowpass', 110, 420, .55, d * .75); tone(t, 'sine', 42, 75, d * .25, .5, d * .75); },
-    riser(t, d) { d = d || 2.5; tone(t, 'sawtooth', 90, 1100, d * .1, .1, d * .9); noise(t, d * .1, 'bandpass', 400, 6000, .16, d * .9); },
-    thunder(t) { noise(t, .8, 'lowpass', 1600, 110, .5, .01); },
-    chime(t, b) { b = b || 880; [0, 4, 7, 12].forEach((s, i) => tone(t + i * .09, 'sine', b * 2 ** (s / 12), 0, 1.3, .2)); },
-    chord(t, b) { b = b || 110; [0, 7, 12, 16, 19, 24, 28].forEach((s, i) => tone(t + i * .025, i % 2 ? 'sine' : 'triangle', b * 2 ** (s / 12), 0, 2.8, .1, .3)); },
-    coin(t) { tone(t, 'sine', 2093, 0, .22, .16); tone(t + .05, 'sine', 3136, 0, .3, .1); },
-    beep(t, f) { tone(t, 'square', f || 1200, 0, .06, .05); },
-    thump(t) { tone(t, 'sine', 95, 38, .3, .85); noise(t, .12, 'lowpass', 900, 100, .35); },
-    tick(t) { tone(t, 'square', 2600, 0, .02, .035); },
-    sparkle(t) { for (let i = 0; i < 6; i++) tone(t + i * .05, 'sine', 2400 + Math.random() * 2600, 0, .2, .05); },
+    boom(t) { tone(t, 'sine', 70, 28, 1.6, .95, .004, { send: .6 }); noise(t, .9, 'lowpass', 2400, 60, .7, .003, { send: 1 }); noise(t, .05, 'highpass', 2000, 0, .45, .001); },
+    pop(t) { noise(t, .18, 'bandpass', 1400, 500, .35, .002, { q: 2 }); tone(t, 'sine', 420, 180, .16, .25); },
+    shot(t) { noise(t, .05, 'highpass', 1500, 0, 1, .001); noise(t + .01, .9, 'lowpass', 1800, 60, .8, .002, { send: 1.4 }); tone(t, 'sine', 150, 36, .45, .95, .002); },
+    whoosh(t, d) { d = d || .8; noise(t, d * .55, 'bandpass', 220, 2400, .45, d * .45, { q: .8, sweep: .8, send: .6 }); },
+    rumble(t, d) { d = d || 2; noise(t, d * .25, 'lowpass', 90, 300, .5, d * .75, { send: .4 }); tone(t, 'sine', 38, 60, d * .25, .45, d * .75, { send: .3 }); },
+    riser(t, d) { d = d || 2.5; noise(t, d * .1, 'bandpass', 300, 5200, .22, d * .9, { q: 3, send: 1 }); [0, 7, 12].forEach((s, i) => tone(t, 'sine', 110 * 2 ** (s / 12), 440 * 2 ** (s / 12), d * .1, .05, d * .9, { detune: i * 6 })); },
+    thunder(t) { noise(t, 1.1, 'lowpass', 1300, 90, .45, .01, { send: 1.3, pan: Math.random() - .5 }); },
+    chime(t, b) { b = b || 880; [0, 7, 12].forEach((s, i) => bell(t + i * .12, b * 2 ** (s / 12), .12, 1.8)); },
+    chord(t, b) { b = b || 110; [0, 7, 12, 16, 19].forEach((s, i) => { tone(t, 'sine', b * 2 ** (s / 12), 0, 2.2, .07, .5, { detune: -4, send: 1.2 }); tone(t, 'sine', b * 2 ** (s / 12), 0, 2.2, .07, .5, { detune: 4 + i, send: 1.2 }); }); },
+    coin(t) { metal(t, 1900 + Math.random() * 500, .13, .35); },
+    beep(t, f) { tone(t, 'sine', f || 1200, (f || 1200) * .7, .08, .045, .003, { send: 1 }); },
+    thump(t) { tone(t, 'sine', 85, 40, .35, .8, .003); noise(t, .08, 'lowpass', 700, 120, .3, .002); metal(t + .005, 520, .06, .5); },
+    land(t) { tone(t, 'sine', 75, 38, .4, .75, .003); metal(t, 640, .14, .9); },
+    tick(t) { noise(t, .012, 'highpass', 5000, 0, .1, .001, { send: .3 }); },
+    sparkle(t) { for (let i = 0; i < 5; i++) bell(t + i * .06, 2600 + Math.random() * 2400, .025, .5); },
+    shimmer(t) { noise(t, 1.4, 'bandpass', 5000, 9000, .06, .5, { q: 4, sweep: 1, send: 1.4 }); [0, 4, 7, 11].forEach((s, i) => bell(t + .15 + i * .15, 1318 * 2 ** (s / 12), .04, 1.6)); },
+    pour(t, d) { d = d || 1.2; for (let i = 0; i < 10; i++) noise(t + i * d / 10, .09, 'bandpass', 500 + Math.random() * 700, 0, .09, .01, { q: 6, send: .5 }); noise(t, d, 'lowpass', 600, 300, .12, .15, { send: .4 }); },
   };
   // пока контекст «просыпается», звук встаёт в очередь
   return { init, play(n, v) { if (!ac || ac.state === 'closed') return; try { fx[n](ac.currentTime + .01, v); } catch {} } };
 })();
 
 // Частицы на весь экран: конфетти, искры, монеты, зёрна, дым, кольца, лучи, молнии, «матрица», вихрь, звёзды
-const GLYPHS = 'アイウエオカキクケコサシスセソタチツテト0123456789';
+const GLYPHS = '0123456789ABCDEF'; // «поток данных» в голограмме Platinum
 const Scene = (() => {
   let cv = null, ctx = null, W = 0, H = 0, raf = 0, last = 0, on = false;
   let P = [], rays = null, cols = null, vort = null, starsOn = false, stars = [], smokeAt = null;
@@ -1316,7 +1358,7 @@ const Scene = (() => {
     if (cols) {
       ctx.font = '600 14px ui-monospace, Menlo, monospace';
       cols.forEach((c, i) => { c.y += c.v * dt; if (c.y > H + 240) c.y = R(-300, 0);
-        for (let j = 0; j < 14; j++) { const y = c.y - j * 16; if (y < -16 || y > H) continue; ctx.fillStyle = j ? `rgba(60,230,255,${(1 - j / 14) * .5 * c.a})` : `rgba(225,255,255,${.95 * c.a})`; ctx.fillText(GLYPHS[(i * 7 + j + (t * 10 | 0)) % GLYPHS.length], i * 16 + 2, y); } });
+        for (let j = 0; j < 14; j++) { const y = c.y - j * 16; if (y < -16 || y > H) continue; ctx.fillStyle = j ? `rgba(60,230,255,${(1 - j / 14) * .28 * c.a})` : `rgba(225,255,255,${.6 * c.a})`; ctx.fillText(GLYPHS[(i * 7 + j + (t * 10 | 0)) % GLYPHS.length], i * 16 + 2, y); } });
     }
     if (rays) {
       rays.a = Math.min(1, rays.a + dt * 1.2); ctx.save(); ctx.translate(rays.x, rays.y); ctx.rotate(t * .22); ctx.globalCompositeOperation = 'lighter';
@@ -1357,14 +1399,14 @@ const Scene = (() => {
 })();
 
 const CINE_PROPS = {
-  classic: '<div class="cn-box idle"><div class="cn-glow"></div><div class="cn-body"><b class="l"></b><b class="r"></b></div><div class="cn-lid"></div></div>',
-  gold: '<div class="cn-coin idle">7</div>',
+  classic: '<div class="cn-pbox idle"><div class="beam"></div><div class="base"></div><div class="lid"><img src="logo-card.png" alt=""><span>SEVEN TIMES</span></div><div class="seam"></div></div>',
+  gold: '<div class="cn-coin idle"><img src="logo-card.png" alt=""></div>',
   platinum: '<div class="cn-proj idle"><div class="beam"></div><div class="base"></div><svg class="cn-wire" viewBox="0 0 317 200" preserveAspectRatio="none"><rect x="1" y="1" width="315" height="198" rx="14" pathLength="1"/></svg><div class="cn-scan"></div></div>',
   black: '<svg class="cn-ret idle" viewBox="0 0 100 100"><circle cx="50" cy="50" r="30"/><circle class="o" cx="50" cy="50" r="44"/><circle class="d" cx="50" cy="50" r="2.4"/><path d="M50 2v24M50 74v24M2 50h24M74 50h24"/></svg>',
-  team: '<div class="cn-cup idle"><div class="sau"></div><div class="hdl"></div><div class="body"><i></i></div><span class="st"></span><span class="st"></span><span class="st"></span></div>',
+  team: '<div class="cn-esp idle"><div class="stream"></div><div class="pool"></div></div>',
   owner: '<div class="cn-portal idle"><div class="ring"></div><div class="core"></div><div class="crown">♛</div></div>',
 };
-const CINE_HINT = { classic: 'Нажмите на подарок', gold: 'Нажмите на монету', platinum: 'Нажмите, чтобы сканировать', black: 'Нажмите — и держитесь', team: 'Нажмите на чашку', owner: 'Нажмите, чтобы открыть портал' };
+const CINE_HINT = { classic: 'Нажмите, чтобы открыть', gold: 'Нажмите на монету', platinum: 'Нажмите, чтобы сканировать', black: 'Нажмите — и держитесь', team: 'Нажмите, чтобы налить эспрессо', owner: 'Нажмите, чтобы открыть портал' };
 
 let cineTok = 0, cineOpts = null, cineTimers = [], cineTexts = [], revealing = false, pendingNotice = null, rvStop = null;
 const STOP = {};
@@ -1476,24 +1518,23 @@ function cineText(kind, front, tok, later) {
 
 async function cineFly(holder, kf, dur, w, easing) { holder.animate(kf, { duration: dur, fill: 'forwards', easing: easing || 'cubic-bezier(.2,.8,.2,1)' }); await w(dur); }
 const CINE = {
-  async classic({ w, prop, holder, later, scene }) { // подарок трясётся, светится изнутри и взрывается
-    const box = prop.querySelector('.cn-box'), lid = box.querySelector('.cn-lid'), l = box.querySelector('.l'), r = box.querySelector('.r'), glow = box.querySelector('.cn-glow');
-    box.classList.remove('idle'); Snd.play('rumble', 2.3); Snd.play('riser', 2.3);
-    shake(box, 16, 2300, true);
-    A(glow, [{ opacity: 0, transform: 'scale(.5)' }, { opacity: 1, transform: 'scale(1.35)' }], { duration: 2300, easing: 'ease-in', fill: 'forwards' });
-    for (let i = 0; i < 8; i++) later(() => { const c = ctr(box); Scene.burst(c.x + (Math.random() - .5) * c.w * .7, c.y - c.h * .12, { n: 7, colors: ['#bfe0ff', '#fff'], speed: 170, g: 220, dur: .6 }); hap('light'); }, 250 + i * 260);
-    await w(2300);
-    const c = ctr(box); Snd.play('boom'); Snd.play('pop'); hap('heavy'); flash('#dbeaff', 700); shake(scene, 16, 520);
-    A(lid, [{ transform: 'none', opacity: 1 }, { transform: 'translate(-30%, -280%) rotate(-55deg)', opacity: 0 }], { duration: 950, fill: 'forwards', easing: 'cubic-bezier(.2,.7,.4,1)' });
-    A(l, [{ transform: 'none', opacity: 1 }, { transform: 'translate(-190%, 150%) rotate(-75deg)', opacity: 0 }], { duration: 1050, fill: 'forwards', easing: 'cubic-bezier(.3,.6,.6,1)' });
-    A(r, [{ transform: 'none', opacity: 1 }, { transform: 'translate(190%, 150%) rotate(75deg)', opacity: 0 }], { duration: 1050, fill: 'forwards', easing: 'cubic-bezier(.3,.6,.6,1)' });
-    A(glow, [{ opacity: 1 }, { opacity: 0 }], { duration: 500, fill: 'forwards' });
-    Scene.ring(c.x, c.y, '#9cc8ff'); Scene.rays(c.x, c.y, 'rgba(150,200,255,A)');
-    Scene.burst(c.x, c.y, { kind: 'confetti', n: 150, colors: ['#4f8cff', '#ffffff', '#f2c75a', '#9cc8ff', '#ff7ab8'], speed: 750, g: 520, dur: 2.3 });
-    Scene.burst(c.x, c.y, { n: 70, colors: ['#fff', '#bfe0ff'], speed: 540, g: 120 });
-    await w(110); Snd.play('whoosh', 1);
-    await cineFly(holder, [{ opacity: 0, transform: 'translateY(30%) scale(.12) rotateY(-900deg) rotateX(50deg)' }, { opacity: 1, transform: 'translateY(-14%) scale(1.08) rotateY(-24deg) rotateX(-10deg)', offset: .72 },
-      { opacity: 1, transform: 'translateY(2%) scale(.99) rotateY(6deg) rotateX(3deg)', offset: .88 }, { opacity: 1, transform: 'none' }], 1650, w);
+  async classic({ w, prop, holder, later, scene }) { // чёрная коробка: свет из щели, крышка поднимается, карта всплывает в луче
+    const box = prop.querySelector('.cn-pbox'), lid = box.querySelector('.lid'), seam = box.querySelector('.seam'), beam = box.querySelector('.beam'), base = box.querySelector('.base');
+    box.classList.remove('idle'); Snd.play('riser', 2.2); Snd.play('rumble', 2.2);
+    A(seam, [{ opacity: 0, transform: 'scaleX(.2)' }, { opacity: 1, transform: 'scaleX(1)' }], { duration: 2000, easing: 'ease-in', fill: 'forwards' });
+    shake(box, 3.5, 2000, true);
+    for (let i = 0; i < 6; i++) later(() => { const c = ctr(seam); Scene.burst(c.x + (Math.random() - .5) * c.w * .8, c.y, { n: 4, colors: ['#dbe9ff', '#ffffff'], speed: 90, g: -30, dur: 1.2, size: .8 }); hap('light'); }, 500 + i * 250);
+    await w(2100);
+    const c = ctr(seam); Snd.play('whoosh', 1.4); Snd.play('boom'); hap('heavy'); flash('#dbe9ff', 900, .55);
+    A(lid, [{ transform: 'none', opacity: 1 }, { transform: 'translateY(-160%) rotateX(35deg) scale(1.05)', opacity: 0 }], { duration: 1300, fill: 'forwards', easing: 'cubic-bezier(.3,.1,.2,1)' });
+    A(seam, [{ opacity: 1 }, { opacity: 0 }], { duration: 400, fill: 'forwards' });
+    A(beam, [{ opacity: 0, transform: 'scaleY(0)' }, { opacity: 1, transform: 'scaleY(1)', offset: .4 }, { opacity: 0, transform: 'scaleY(1.1)' }], { duration: 2600, fill: 'forwards', easing: 'ease-out' });
+    Scene.rays(c.x, c.y, 'rgba(170,210,255,A)'); Scene.ring(c.x, c.y, 'rgba(190,220,255,.8)', Scene.W * .6);
+    Scene.burst(c.x, c.y, { n: 36, colors: ['#dbe9ff', '#ffffff', '#9cc4ff'], speed: 220, g: -40, dur: 2.2, size: .9, up: true });
+    later(() => A(base, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(30%)' }], { duration: 900, fill: 'forwards', easing: 'ease-in' }), 900);
+    await w(250);
+    await cineFly(holder, [{ opacity: 0, transform: 'translateY(26%) scale(.5) rotateX(70deg)' }, { opacity: 1, transform: 'translateY(-10%) scale(1.02) rotateX(-10deg) rotateY(-200deg)', offset: .7 },
+      { opacity: 1, transform: 'translateY(1%) rotateX(2deg) rotateY(-362deg)', offset: .9 }, { opacity: 1, transform: 'rotateY(-360deg)' }], 2100, w, 'cubic-bezier(.25,.7,.25,1)');
   },
   async gold({ w, prop, holder, later }) { // монета раскручивается, лопается — и золотой дождь
     const coin = prop.querySelector('.cn-coin'); coin.classList.remove('idle');
@@ -1503,9 +1544,9 @@ const CINE = {
     await w(1700);
     const c = ctr(coin); flash('#ffe7a8', 650); Snd.play('boom'); hap('heavy');
     A(coin, [{ opacity: 1, transform: 'translateY(-30%) scale(1.3)' }, { opacity: 0, transform: 'translateY(-30%) scale(0)' }], { duration: 220, fill: 'forwards' });
-    Scene.ring(c.x, c.y, '#ffd978'); Scene.burst(c.x, c.y, { kind: 'coin', n: 42, size: 3.6, speed: 700, g: 760, dur: 2 });
-    Scene.burst(c.x, c.y, { n: 90, colors: ['#fff3c4', '#f5c451', '#ffe39a'], speed: 540, g: 150 }); Scene.rain('coin', 2800, 2);
-    for (let i = 0; i < 14; i++) later(() => Snd.play('coin'), 250 + i * 170);
+    Scene.ring(c.x, c.y, '#ffd978'); Scene.burst(c.x, c.y, { kind: 'coin', n: 26, size: 3.8, speed: 680, g: 760, dur: 2 });
+    Scene.burst(c.x, c.y, { n: 60, colors: ['#fff3c4', '#f5c451'], speed: 500, g: 150 }); Scene.rain('coin', 2600, 1);
+    for (let i = 0; i < 9; i++) later(() => Snd.play('coin'), 250 + i * 240);
     Snd.play('whoosh', 1.3);
     await cineFly(holder, [{ opacity: 0, transform: 'translateY(-170%) rotateY(0deg) scale(.7)' }, { opacity: 1, transform: 'translateY(-60%) rotateY(900deg) scale(.85)', offset: .35 },
       { opacity: 1, transform: 'translateY(4%) rotateY(1780deg) scale(1.02)', offset: .85 }, { opacity: 1, transform: 'translateY(-2%) rotateY(1800deg) scale(1)', offset: .93 }, { opacity: 1, transform: 'rotateY(1800deg)' }], 2300, w, 'cubic-bezier(.15,.6,.25,1)');
@@ -1545,28 +1586,30 @@ const CINE = {
     await w(2900); flying = false; Scene.smokeFrom(null);
     Snd.play('thump'); Snd.play('boom'); hap('heavy'); shake(scene, 12, 320); crack(ctr(holder));
   },
-  async team({ w, prop, holder, later, scene }) { // чашка дрожит, пар, взрыв зёрен — карта вылетает из кофе
-    const cup = prop.querySelector('.cn-cup'); cup.classList.remove('idle');
-    Snd.play('rumble', 1.4); Snd.play('riser', 1.4); shake(cup, 8, 1400, true);
-    const src = () => { const c = ctr(cup); return { x: c.x - c.w * .08, y: c.y - c.h * .12 }; };
-    for (let i = 0; i < 13; i++) later(() => { const s = src(); Scene.smoke(s.x, s.y, 2, { c: '255,245,235', a: .32, size: .8 }); if (i % 3 === 0) Snd.play('pop'); }, i * 105);
-    await w(1400);
-    const s = src(); flash('#ffe2c4', 480, .85); Snd.play('boom'); hap('heavy'); shake(scene, 10, 400);
-    Scene.burst(s.x, s.y, { kind: 'bean', n: 50, size: 3.2, speed: 680, g: 820, up: true, dur: 2 }); Scene.smoke(s.x, s.y, 18, { c: '255,245,235', a: .35, spread: 2.6, size: 1.3 }); Scene.ring(s.x, s.y, '#ffc58a');
-    Scene.rays(s.x, s.y, 'rgba(255,190,130,A)');
-    A(cup, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(45%) scale(.8)' }], { duration: 700, fill: 'forwards', easing: 'ease-in' });
-    Snd.play('whoosh', 1);
-    await cineFly(holder, [{ opacity: 0, transform: 'translateY(34%) scale(.08) rotateX(70deg)', filter: 'blur(14px)' }, { opacity: 1, transform: 'translateY(-16%) scale(1.06) rotateX(-12deg)', filter: 'blur(0px)', offset: .7 },
-      { opacity: 1, transform: 'none', filter: 'blur(0px)' }], 1550, w);
+  async team({ w, prop, holder, later }) { // эспрессо льётся, крема растекается, пар — и карта проявляется из пара
+    const esp = prop.querySelector('.cn-esp'), stream = esp.querySelector('.stream'), pool = esp.querySelector('.pool'); esp.classList.remove('idle');
+    Snd.play('pour', 1.6); Snd.play('riser', 1.8);
+    A(stream, [{ transform: 'scaleY(.02)' }, { transform: 'scaleY(1)' }], { duration: 700, fill: 'forwards', easing: 'cubic-bezier(.5,0,.8,.5)' });
+    A(pool, [{ transform: 'scale(.28)' }, { transform: 'scale(1)' }], { duration: 1600, delay: 500, fill: 'forwards', easing: 'cubic-bezier(.2,.8,.3,1)' });
+    const src = () => { const c = ctr(pool); return { x: c.x, y: c.y }; };
+    for (let i = 0; i < 16; i++) later(() => { const s = src(); if (i % 4 === 0) Scene.ring(s.x, s.y, 'rgba(230,170,110,.5)', 80 + i * 6); Scene.smoke(s.x, s.y - 6, 2, { c: '255,240,225', a: .22, size: .9 }); }, 600 + i * 90);
+    await w(2000);
+    A(stream, [{ transform: 'scaleY(1)', opacity: 1 }, { transform: 'scaleY(1) translateY(60%)', opacity: 0 }], { duration: 500, fill: 'forwards', easing: 'ease-in' });
+    const s = src(); Snd.play('whoosh', 1.2); Snd.play('boom'); hap('heavy'); flash('#ffe2c4', 700, .45);
+    Scene.smoke(s.x, s.y - 10, 22, { c: '255,240,225', a: .3, spread: 2.2, size: 1.4 }); Scene.rays(s.x, s.y, 'rgba(255,200,150,A)');
+    Scene.burst(s.x, s.y, { n: 30, colors: ['#ffd9b0', '#fff3e6'], speed: 180, g: -40, dur: 2, up: true });
+    A(pool, [{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(1.4)' }], { duration: 1200, fill: 'forwards' });
+    await cineFly(holder, [{ opacity: 0, transform: 'translateY(22%) scale(.86) rotateX(28deg)', filter: 'blur(18px)' }, { opacity: 1, transform: 'translateY(-4%) scale(1.02) rotateX(-6deg)', filter: 'blur(2px)', offset: .7 },
+      { opacity: 1, transform: 'none', filter: 'blur(0px)' }], 1900, w, 'cubic-bezier(.25,.7,.25,1)');
   },
   async owner({ w, prop, holder, later, scene, front }) { // портал затягивает звёзды, молнии, тишина — взрыв, и карта с короной
     const pt = prop.querySelector('.cn-portal'), ring = pt.querySelector('.ring'); pt.classList.remove('idle');
-    const c0 = ctr(pt); Scene.stars(true); Scene.vortex(c0.x, c0.y, ['#ffd978', '#c49bff', '#7ff0dc', '#ffffff']);
+    const c0 = ctr(pt); Scene.stars(true); Scene.vortex(c0.x, c0.y, ['#ffd978', '#fff1c2', '#b98cff']);
     Snd.play('rumble', 3.1); Snd.play('riser', 3.1);
     A(pt, [{ transform: 'scale(1)' }, { transform: 'scale(1.35)' }], { duration: 3100, fill: 'forwards', easing: 'ease-in' });
     A(ring, [{ filter: 'drop-shadow(0 0 8px #ffd978) brightness(1)' }, { filter: 'drop-shadow(0 0 30px #ffd978) brightness(1.7)' }], { duration: 3100, fill: 'forwards' });
     shake(scene, 9, 3100, true);
-    [350, 800, 1150, 1500, 1800, 2100, 2350, 2560, 2760, 2920].forEach((t, i) => later(() => {
+    [500, 1200, 1800, 2350, 2750].forEach((t, i) => later(() => {
       const top = i % 2 === 0; Scene.bolt(top ? Scene.W * (.1 + Math.random() * .8) : c0.x + (Math.random() - .5) * 90, top ? 0 : Scene.H, c0.x + (Math.random() - .5) * 40, c0.y + (Math.random() - .5) * 30, i % 3 ? '#e8d9ff' : '#fff1c2');
       flash('#cbb6ff', 140, .28); Snd.play('thunder'); hap('light');
     }, t));
@@ -1574,9 +1617,8 @@ const CINE = {
     Scene.vortex(null); A(pt, [{ transform: 'scale(1.35)', opacity: 1 }, { transform: 'scale(0)', opacity: 0 }], { duration: 280, fill: 'forwards', easing: 'cubic-bezier(.7,0,1,.5)' });
     await w(520); // тишина перед взрывом
     Snd.play('boom'); later(() => Snd.play('boom'), 90); Snd.play('chord', 110); hap('heavy'); later(() => hap('heavy'), 170); flash('#ffffff', 950); shake(scene, 24, 720);
-    ['#ffd978', '#c49bff', '#7ff0dc'].forEach((col, i) => later(() => Scene.ring(c0.x, c0.y, col), i * 140));
-    Scene.burst(c0.x, c0.y, { n: 170, colors: ['#fff1c2', '#ffd978', '#f5c451', '#c49bff', '#7ff0dc'], speed: 950, g: 140, dur: 1.6 });
-    Scene.burst(c0.x, c0.y, { kind: 'confetti', n: 130, colors: ['#ffd978', '#f5c451', '#fff1c2', '#b8862e', '#c49bff'], speed: 820, g: 420, dur: 2.4 });
+    ['#ffd978', '#fff1c2', '#b98cff'].forEach((col, i) => later(() => Scene.ring(c0.x, c0.y, col), i * 160));
+    Scene.burst(c0.x, c0.y, { n: 130, colors: ['#fff1c2', '#ffd978', '#f5c451', '#b98cff'], speed: 900, g: 120, dur: 1.8 });
     Scene.rays(c0.x, c0.y, 'rgba(255,215,120,A)');
     Snd.play('whoosh', 1.6);
     await cineFly(holder, [{ opacity: 0, transform: 'translateZ(-1800px) rotateY(-1080deg) rotateX(35deg) scale(.5)' }, { opacity: 1, transform: 'translateZ(140px) rotateY(-12deg) rotateX(-8deg) scale(1.1)', offset: .65 },
@@ -1587,9 +1629,31 @@ const CINE = {
     cr.animate([{ transform: 'translate(-50%, -50%) translateY(-320%) scale(3) rotate(-25deg)', opacity: 0 }, { transform: 'translate(-50%, -50%) scale(1.6) rotate(8deg)', opacity: 1, offset: .45 },
       { transform: `translate(-50%, -50%) translate(${dx}px, ${dy}px) scale(.55) rotate(0deg)`, opacity: 1, offset: .85 }, { transform: `translate(-50%, -50%) translate(${dx}px, ${dy}px) scale(.3)`, opacity: 0 }], { duration: 1700, fill: 'forwards', easing: 'cubic-bezier(.3,.8,.3,1)' }).onfinish = () => cr.remove();
     later(() => { Snd.play('sparkle'); Scene.burst(lc.x, lc.y, { n: 50, colors: ['#fff1c2', '#ffd978'], speed: 300, g: 60 }); }, 1450);
-    for (let i = 0; i < 7; i++) later(() => { const x = Scene.W * (.12 + Math.random() * .76), y = Scene.H * (.08 + Math.random() * .25); Scene.burst(x, y, { n: 55, colors: [['#ffd978', '#fff1c2'], ['#c49bff', '#fff'], ['#7ff0dc', '#fff']][i % 3], speed: 320, g: 90, dur: 1.2 }); Snd.play('pop'); }, 700 + i * 420);
+    Scene.rain('coin', 1800, 1);
   },
 };
+
+// Свет: каждый кадр берём реальный поворот карты и считаем блик, затенение и тень на «полу».
+// Карта в полёте ловит свет как настоящий пластик, ребро и обратная сторона видны при повороте
+let lightRaf = 0;
+function cineLight(on) {
+  cancelAnimationFrame(lightRaf); lightRaf = 0;
+  if (!on || calm || !window.DOMMatrix) return;
+  const L = [-.35, -.55, .76], H = [-.18, -.3, .94]; // свет сверху слева и «половинный» вектор к зрителю
+  const step = () => {
+    lightRaf = requestAnimationFrame(step);
+    const h = $('rvCard'), f = h.querySelector('.wallet'), fl = $('cnFloor'); if (!f) return;
+    const cs = getComputedStyle(h);
+    let m; try { m = new DOMMatrix(cs.transform === 'none' ? undefined : cs.transform); } catch { return; }
+    let nx = m.m31, ny = m.m32, nz = m.m33; const len = Math.hypot(nx, ny, nz) || 1; nx /= len; ny /= len; nz /= len;
+    const diff = Math.max(0, nx * L[0] + ny * L[1] + nz * L[2]), spec = Math.pow(Math.max(0, nx * H[0] + ny * H[1] + nz * H[2]), 24);
+    f.style.setProperty('--gx', (50 - nx * 160).toFixed(1) + '%'); f.style.setProperty('--gy', (40 - ny * 160).toFixed(1) + '%');
+    f.style.setProperty('--ga', Math.min(1, .12 + spec * 1.1).toFixed(3)); f.style.setProperty('--sh', ((1 - diff) * .45).toFixed(3));
+    if (fl) { const r = h.getBoundingClientRect(), st = $('cnStage').getBoundingClientRect(), k = Math.max(.1, Math.min(1.4, r.width / st.width)), up = Math.max(0, (st.top + st.height / 2 - (r.top + r.height / 2)) / st.height);
+      fl.style.opacity = (Math.min(.85, k * .8) * (1 - Math.min(1, up * 1.6)) * +cs.opacity).toFixed(3); fl.style.transform = `scaleX(${k.toFixed(3)})`; }
+  };
+  step();
+}
 
 // Показать ролик. o: { kind, title, text, btn }
 function playCine(o) {
@@ -1607,8 +1671,15 @@ function playCine(o) {
   const holder = $('rvCard'), front = $('wallet').cloneNode(true);
   front.removeAttribute('id'); front.classList.remove('flip', 'live', 'tap'); front.querySelectorAll('[id]').forEach((x) => x.removeAttribute('id'));
   front.dataset.s = kind; const stl = front.querySelector('.w-status'); if (stl) stl.textContent = STATUSES[kind].name;
-  front.classList.add('bare'); holder.replaceChildren(front);
+  front.classList.add('bare');
+  // настоящая карта: обратная сторона, ребро толщиной 6px, лицевая; поверх — блик и тень, которые считает свет
+  const back = document.createElement('div'); back.className = 'cn-back'; back.innerHTML = '<i></i><b></b><span>SEVEN TIMES</span>';
+  const slabs = [1, 2, 3, 4, 5, 6].map((z) => { const d = document.createElement('div'); d.className = 'cn-slab'; d.style.transform = `translateZ(${-z}px)`; return d; });
+  front.insertAdjacentHTML('beforeend', '<span class="cn-shade"></span><span class="cn-glare"></span>');
+  holder.replaceChildren(back, ...slabs, front);
+  if (!$('cnFloor')) $('cnStage').insertAdjacentHTML('beforeend', '<div class="cn-floor" id="cnFloor"></div>');
   if (rvStop) { rvStop(); rvStop = null; }
+  cineLight(true);
   $('cnProp').innerHTML = CINE_PROPS[kind]; $('cnHint').textContent = CINE_HINT[kind];
   Scene.start(); ov.classList.add('open');
   if (calm) return cineDone(tok); // «уменьшение движения» — сразу готовая карта
@@ -1623,6 +1694,11 @@ function playCine(o) {
       Snd.play('thump'); hap('medium');
       const cv = front.querySelector('canvas'); if (cv && !rvStop) { rvStop = cardFx(cv, STATUSES[kind].fx); rvStop.burst(.5, .5, 1.6); }
       await w(cineText(kind, front, tok, later));
+      // финальный кадр для сторис: карта медленно поворачивается, по ней проходит свет
+      Snd.play('shimmer');
+      holder.animate([{ transform: 'rotateY(0deg) rotateX(0deg)' }, { transform: 'rotateY(-16deg) rotateX(6deg)', offset: .35 }, { transform: 'rotateY(12deg) rotateX(-4deg)', offset: .75 }, { transform: 'rotateY(0deg) rotateX(0deg)' }],
+        { duration: 2200, easing: 'ease-in-out' });
+      await w(2200);
       cineDone(tok);
     } catch (err) { if (err !== STOP) { console.error(err); cineDone(tok); } }
   };
@@ -1630,13 +1706,14 @@ function playCine(o) {
 // Итог ролика: карта на месте, номер и имя целиком, подпись и кнопки
 function cineDone(tok) {
   if (tok !== cineTok) return;
-  cineTok++; const ov = $('reveal'), front = $('rvCard').firstElementChild;
+  cineTok++; const ov = $('reveal'), front = $('rvCard').querySelector('.wallet');
   cineTimers.forEach((id) => { clearTimeout(id); clearInterval(id); }); cineTimers = [];
   ov.getAnimations?.({ subtree: true }).forEach((a) => { if (!(window.CSSAnimation && a instanceof CSSAnimation)) try { a.cancel(); } catch {} });
   cineTexts.forEach(([el, s]) => { el.textContent = s; }); cineTexts = [];
   if (front) { front.classList.remove('bare'); const cv = front.querySelector('canvas'); if (cv && !rvStop && !calm) rvStop = cardFx(cv, STATUSES[front.dataset.s]?.fx || 'waves'); if (calm) cv?.remove(); }
   Scene.matrix(false); Scene.vortex(null); Scene.smokeFrom(null);
   ov.classList.add('go', 'done');
+  requestAnimationFrame(() => requestAnimationFrame(() => cineLight(false))); // карта стоит — свет посчитан, дальше не тратим батарею
   haptic('success');
 }
 document.addEventListener('pointerdown', () => Snd.init(), { once: true, passive: true }); // звук готов заранее — с первого касания
@@ -1644,7 +1721,7 @@ $('rvAgain').onclick = (e) => { e.stopPropagation(); playCine(cineOpts); };
 $('rvOk').onclick = (e) => {
   e.stopPropagation(); cineTok++;
   $('reveal').classList.remove('open', 'done', 'go'); revealing = false;
-  setTimeout(() => { if (!revealing) { Scene.stop(); if (rvStop) { rvStop(); rvStop = null; } } }, 450);
+  setTimeout(() => { if (!revealing) { Scene.stop(); cineLight(false); if (rvStop) { rvStop(); rvStop = null; } } }, 450);
   enter($('guest'));
   if (pendingNotice) { const n = pendingNotice; pendingNotice = null; setTimeout(() => showNotice(n), 350); }
 };
