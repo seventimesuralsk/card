@@ -109,6 +109,8 @@
   .wallet .glow { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(360px circle at var(--mx) var(--my), rgba(255,255,255,.16), transparent 45%); mix-blend-mode: soft-light; transition: background-position .3s; }
   .wallet::after { content: ""; position: absolute; inset: -20%; pointer-events: none; background: linear-gradient(105deg, transparent 38%, rgba(255,255,255,.13) 48%, rgba(255,255,255,.02) 55%, transparent 62%); transform: translateX(-120%); animation: sheen 7s 1s var(--ease) infinite; }
   .wallet > * { position: relative; }
+  .w-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .w-logo { height: 46px; width: auto; opacity: .92; filter: drop-shadow(0 2px 6px rgba(0,0,0,.35)); }
   .w-brand { font-size: 15px; font-weight: 700; letter-spacing: .3em; }
   .w-sub { font-size: 12px; opacity: .6; letter-spacing: .08em; margin-top: 3px; }
   .w-foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
@@ -307,9 +309,12 @@
     <div class="msg" id="inviteMsg"></div>
 
     <div class="stage"><div class="wallet" id="wallet"><span class="glow"></span>
-      <div>
-        <div class="w-brand">SEVEN TIMES</div>
-        <div class="w-sub">Coffee &amp; Kitchen</div>
+      <div class="w-top">
+        <div>
+          <div class="w-brand">SEVEN TIMES</div>
+          <div class="w-sub">Coffee &amp; Kitchen</div>
+        </div>
+        <img class="w-logo" src="logo-mark.png" alt="">
       </div>
       <div class="w-foot">
         <div>
