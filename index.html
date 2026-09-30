@@ -463,7 +463,7 @@
       <div class="w-mid"><span class="chip" aria-hidden="true"><i></i><i></i><i></i></span><span class="w-state hidden" id="cardState"><span class="dot off"></span>Не активна</span></div>
       <div class="w-num" id="cardNo"></div>
       <div class="w-foot">
-        <div class="w-holder"><div class="w-label" id="cardNoLabel">Our Guest</div><div class="w-name" id="cardName"></div></div>
+        <div class="w-holder"><div class="w-label" id="cardNoLabel">Friend</div><div class="w-name" id="cardName"></div></div>
         <div class="w-label" style="text-align:right">Seven<br>Times</div>
       </div>
     </div></div>
@@ -939,7 +939,7 @@ function paintStatus(s) {
   const w = $('wallet'); w.dataset.s = s;
   $('cardStatus').textContent = STATUSES[s].name;
   // подпись под номером — как CARDHOLDER на банковской карте
-  $('cardNoLabel').textContent = { owner: 'Founder', team: 'Team Member', black: 'Inner Circle' }[s] || 'Our Guest';
+  $('cardNoLabel').textContent = { owner: 'Founder', team: 'Partner', black: 'Insider' }[s] || 'Friend';
   if (stopFx) stopFx();
   stopFx = cardFx($('fx'), STATUSES[s].fx, calm ? { still: true } : {});
   if (typeof refreshWalletBtn === 'function' && me) refreshWalletBtn();
