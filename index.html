@@ -50,6 +50,24 @@
   .item:last-child { border-bottom: 0; }
   .report { font-size: 14px; white-space: pre-line; }
   .link { background: none; border: 0; color: var(--muted); text-decoration: underline; font-weight: 400; font-size: 13px; padding: 8px; margin-top: 16px; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; margin-left: 4px; border: 1px solid var(--line); color: var(--muted); }
+  .tag.on { border-color: var(--ok); color: var(--ok); }
+  .tag.off { border-color: var(--bad); color: var(--bad); }
+  details.box > summary { cursor: pointer; list-style: none; font-weight: 700; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
+  details.box > summary::-webkit-details-marker { display: none; }
+  details.box > summary::after { content: '▾'; color: var(--muted); }
+  details.box[open] > summary::after { content: '▴'; }
+  details.box > summary + * { margin-top: 12px; }
+  .switch { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .switch:last-child { border-bottom: 0; }
+  .switch input { width: auto; margin: 0; transform: scale(1.3); }
+  .grp { border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin-bottom: 10px; }
+  .grp.dis { opacity: .55; }
+  .btns { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .btns button.small { margin: 0; }
+  .seg { display: flex; gap: 6px; margin-top: 6px; } .seg button { margin: 0; padding: 10px; font-size: 14px; }
+  .log { font-size: 13px; } .log .item { align-items: flex-start; } .log time { color: var(--muted); white-space: nowrap; font-size: 12px; }
+  .codebox { font: 600 15px/1.4 ui-monospace, Menlo, monospace; background: var(--bg); border: 1px dashed var(--gold); border-radius: 12px; padding: 12px; word-break: break-all; margin-top: 10px; text-align: center; letter-spacing: .1em; }
 </style>
 </head>
 <body>
@@ -65,6 +83,7 @@
 
   <!-- ═════ КАРТА ГОСТЯ ═════ -->
   <section id="guest" class="hidden">
+    <div class="msg" id="inviteMsg"></div>
     <div class="box hidden" id="phoneBox">
       <h2>Подтверди номер телефона</h2>
       <div class="muted">Одно нажатие — и мы сможем восстановить карту, если сменишь телефон.</div>
@@ -84,15 +103,15 @@
       <div class="stamps" id="stamps"></div>
       <div class="muted" id="stampsText"></div>
       <div id="rewards" style="margin-top:8px"></div>
-      <button id="scanReceipt">📷 Сканировать чек</button>
+      <button id="scanReceipt" class="hidden">📷 Сканировать чек</button>
       <div class="muted" id="rules" style="margin-top:8px"></div>
       <div class="msg" id="scanMsg"></div>
     </div>
 
-    <div class="box hidden" id="familyBox">
-      <span class="pill">Семейная карта</span>
-      <div class="big" id="famDiscount"></div>
-      <div class="muted" id="famInfo"></div>
+    <div class="box hidden" id="discBox">
+      <span class="pill" id="discGroup"></span>
+      <div class="big" id="discPercent"></div>
+      <div class="muted" id="discInfo"></div>
     </div>
 
     <div class="box hidden" id="couponsBox">
@@ -100,35 +119,35 @@
       <div id="coupons"></div>
     </div>
 
-    <button class="link" id="iamCashier">Я кассир Seven Times</button>
-    <div class="box hidden" id="joinBox">
-      <h2>Стать кассиром</h2>
-      <label>Код приглашения</label><input id="joinCode" autocapitalize="characters">
-      <label>Точка</label><select id="joinBranch"></select>
-      <button id="joinBtn">Отправить заявку</button>
-      <div class="msg" id="joinMsg"></div>
-    </div>
+    <details class="box" id="codeEnter">
+      <summary>У меня есть код приглашения</summary>
+      <div>
+        <input id="invCodeIn" placeholder="Код от администратора" autocapitalize="characters">
+        <button id="invCodeBtn">Активировать</button>
+        <div class="msg" id="invCodeMsg"></div>
+      </div>
+    </details>
   </section>
 
   <!-- ═════ КАССА ═════ -->
   <section id="kassa" class="hidden">
     <div class="box">
-      <button id="scanGuest">📷 Сканировать карту гостя</button>
-      <p class="muted" style="margin:12px 0 0">Или вручную (номер карты и 6 цифр под QR):</p>
-      <div class="row"><input id="mCard" placeholder="ABC123" maxlength="6" autocapitalize="characters"><input id="mCode" placeholder="000000" inputmode="numeric" maxlength="6"></div>
-      <button class="ghost" id="findManual">Найти</button>
+      <button id="scanGuest">📷 Сканировать QR гостя</button>
+      <p class="muted" style="margin:10px 0 0">Только скан. Нет QR на телефоне гостя — нет штампа, скидки и купона.</p>
       <div class="msg" id="kMsg"></div>
     </div>
     <div class="box hidden" id="gBox">
       <h2 id="gName"></h2>
       <div class="muted" id="gInfo"></div>
+      <div class="msg" id="gToday"></div>
       <div id="gRegular">
         <div id="gRewards" style="margin-top:8px"></div>
+        <button id="bStamp">+1 штамп за покупку</button>
         <button id="bRedeem" class="hidden">Выдать бесплатный кофе</button>
       </div>
-      <div id="gFamily" class="hidden">
-        <input id="fSum" type="number" inputmode="numeric" placeholder="Сумма чека, ₸">
-        <button id="bFamily">Применить семейную скидку</button>
+      <div id="gDisc" class="hidden">
+        <input id="dSum" type="number" inputmode="numeric" placeholder="Сумма чека, ₸">
+        <button id="bDisc">Применить скидку</button>
       </div>
       <div id="gCoupons" class="hidden">
         <select id="couponSel"></select>
@@ -140,55 +159,118 @@
 
   <!-- ═════ АДМИН ═════ -->
   <section id="admin" class="hidden">
-    <div class="box"><h2>Отчёт за 7 дней</h2><div class="report" id="report">…</div></div>
+    <details class="box" open>
+      <summary>📊 Отчёт за 7 дней</summary>
+      <div class="report" id="report">…</div>
+    </details>
 
-    <div class="box"><h2>Кассиры</h2><div id="cashiers" class="muted">…</div></div>
-
-    <div class="box">
-      <h2>Рассылка всем гостям</h2>
-      <textarea id="pushText" rows="3" maxlength="500" placeholder="Сегодня до 17:00 два капучино по цене одного ☕"></textarea>
-      <button id="pushBtn">Отправить</button>
-      <div class="msg" id="pushMsg"></div>
-    </div>
-
-    <div class="box">
-      <h2>Купон всем</h2>
-      <div class="row">
-        <div><label>Название</label><input id="cTitle" placeholder="Десерт"></div>
-        <div><label>Скидка %</label><input id="cDisc" type="number" value="20"></div>
-        <div><label>Дней</label><input id="cDays" type="number" value="7"></div>
+    <details class="box" id="logBox">
+      <summary>📜 Журнал: все действия</summary>
+      <div>
+        <div class="row">
+          <select id="logCashier"><option value="">Все кассиры</option></select>
+          <select id="logType">
+            <option value="">Все действия</option><option value="stamp">Штампы</option><option value="redeem">Бесплатный кофе</option>
+            <option value="discount_use">Скидки</option><option value="coupon_use">Купоны</option><option value="lookup">Сканы карт</option>
+            <option value="rejected">Отказы</option><option value="person_added">Выданные скидки</option><option value="cashier_added">Новые кассиры</option>
+          </select>
+        </div>
+        <button class="ghost" id="logBtn">Обновить</button>
+        <div class="log" id="logList"></div>
       </div>
-      <button id="couponBtn">Выпустить и разослать</button>
-      <div class="msg" id="couponMsg"></div>
-    </div>
+    </details>
 
-    <div class="box">
-      <h2>Семейные карты</h2>
-      <div id="famList" class="muted"></div>
-      <div class="row">
-        <div><label>Телефон</label><input id="aPhone" type="tel" placeholder="+7 701 000 00 01"></div>
-        <div><label>Имя</label><input id="aName" placeholder="Айгуль"></div>
+    <details class="box">
+      <summary>🧾 Кассиры</summary>
+      <div>
+        <div id="cashiers" class="muted">…</div>
+        <h2 style="margin-top:16px">Добавить кассира</h2>
+        <div class="muted">Кассир сканирует QR камерой телефона <b>при тебе</b>. Один QR — один кассир, после скана сгорает.</div>
+        <label>Точка</label><select id="invBranch"></select>
+        <button id="invBtn">Создать QR</button>
+        <div id="invBox" class="hidden" style="text-align:center">
+          <div class="qrwrap"><div id="invQr"></div></div>
+          <div class="muted" id="invInfo">Ждёт сканирования…</div>
+          <button class="ghost" id="invCancel">Отменить QR</button>
+        </div>
+        <div class="msg" id="invMsg"></div>
       </div>
-      <div class="row">
-        <div><label>Скидка %</label><input id="aDisc" type="number" value="20"></div>
-        <div><label>Раз/нед</label><input id="aLimit" type="number" value="3"></div>
-        <div><label>Макс ₸</label><input id="aMax" type="number" value="5000"></div>
-      </div>
-      <button id="famBtn">Добавить</button>
-      <div class="msg" id="famMsg"></div>
-    </div>
+    </details>
 
-    <div class="box">
-      <h2>Найти карту</h2>
-      <div class="row"><input id="q" placeholder="телефон, имя или номер карты"><button id="qBtn" style="margin-top:6px;flex:0 0 90px">Найти</button></div>
-      <div id="found"></div>
-    </div>
+    <details class="box">
+      <summary>👤 Знакомые и сотрудники</summary>
+      <div>
+        <div class="muted">Скидку получают только по твоему приглашению. Скидка привязана к Telegram человека — передать её нельзя. На кассе: один QR — одна операция в день.</div>
+
+        <h2 style="margin-top:14px">Пригласить</h2>
+        <label>Кто это?</label>
+        <div class="seg"><button id="catFriend">Знакомый</button><button id="catStaff" class="ghost">Сотрудник</button></div>
+        <div id="pctWrap"><label>Скидка знакомому, %</label><input id="pPercent" type="number" inputmode="numeric" placeholder="Сколько скажет хозяин"></div>
+        <div id="staffNote" class="muted hidden" style="margin-top:8px"></div>
+        <label>Пометка (кто это)</label><input id="pNote" placeholder="напр. друг хозяина, бариста Самал">
+        <div class="row">
+          <button id="pQrBtn">Показать QR</button>
+          <button id="pCodeBtn" class="ghost">Код на 24 ч</button>
+        </div>
+        <div id="pQrBox" class="hidden" style="text-align:center">
+          <div class="qrwrap"><div id="pQr"></div></div>
+          <div class="muted" id="pQrInfo"></div>
+          <button class="ghost" id="pQrCancel">Отменить QR</button>
+        </div>
+        <div id="pCodeBox" class="hidden">
+          <div class="muted" id="pCodeInfo"></div>
+          <div class="codebox" id="pCodeText"></div>
+          <button id="pCodeCopy">Скопировать приглашение</button>
+        </div>
+        <div class="msg" id="pMsg"></div>
+
+        <div id="pInvites"></div>
+        <h2 style="margin-top:16px">Список</h2>
+        <div id="people" class="muted">…</div>
+      </div>
+    </details>
+
+    <details class="box">
+      <summary>🎁 Купоны</summary>
+      <div>
+        <div id="couponList" class="muted"></div>
+        <div class="row">
+          <div><label>Название</label><input id="cTitle" placeholder="Десерт"></div>
+          <div><label>Скидка %</label><input id="cDisc" type="number" value="20"></div>
+          <div><label>Дней</label><input id="cDays" type="number" value="7"></div>
+        </div>
+        <button id="couponBtn">Выпустить и разослать всем</button>
+        <div class="msg" id="couponMsg"></div>
+      </div>
+    </details>
+
+    <details class="box">
+      <summary>📣 Рассылка всем гостям</summary>
+      <div>
+        <textarea id="pushText" rows="3" maxlength="500" placeholder="Сегодня до 17:00 два капучино по цене одного ☕"></textarea>
+        <button id="pushBtn">Отправить</button>
+        <div class="msg" id="pushMsg"></div>
+      </div>
+    </details>
+
+    <details class="box">
+      <summary>🔎 Найти / заблокировать карту</summary>
+      <div>
+        <div class="row"><input id="q" placeholder="телефон, имя или номер карты"><button id="qBtn" style="margin-top:6px;flex:0 0 90px">Найти</button></div>
+        <div id="found"></div>
+      </div>
+    </details>
+
+    <details class="box">
+      <summary>🔔 Уведомления мне</summary>
+      <div id="notify"></div>
+    </details>
   </section>
 </main>
 
 <script>
 // ⚙️ URL своего Apps Script (…/exec)
-const API_URL = 'https://script.google.com/macros/s/AKfycbwNW3mhluJeC1wbvWsfd2riVx5JiE3ZFAOpR0LPHJJvgOSostqkAtlMjYf39LqjHMpg/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzhU-5TgoeI1gLTFHHcLpIKERE1UZR7C_SN-skP2aAeb66JlyimlLtYVLYAiG5CeNmyIg/exec';
 
 const tg = window.Telegram?.WebApp;
 tg?.ready(); tg?.expand();
@@ -197,6 +279,8 @@ const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<
 const show = (el, text, ok) => { el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'err'); };
 const haptic = (t) => { try { tg?.HapticFeedback?.notificationOccurred(t); } catch {} };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const ask = (text) => new Promise((res) => (tg?.showConfirm ? tg.showConfirm(text, res) : res(confirm(text))));
+const alertMsg = (text) => (tg?.showAlert ? tg.showAlert(text) : alert(text));
 
 async function api(action, data = {}) {
   // text/plain — без CORS-предзапроса, Apps Script такое принимает
@@ -216,23 +300,25 @@ function scan(text) {
   });
 }
 
-// ── Карта гостя ──────────────────────────────
-let qrObj = null, codeTimer = null, me = null;
+// ══════════ Карта гостя ══════════
+let qrObj = null, codeTimer = null, me = null, lastQr = '';
 function renderCard(c) {
   $('guest').classList.remove('hidden');
   $('cardNo').textContent = c.id;
   $('phoneBox').classList.toggle('hidden', c.phoneVerified);
-  const fam = c.type === 'family';
-  $('stampsBox').classList.toggle('hidden', fam);
-  $('familyBox').classList.toggle('hidden', !fam);
-  if (fam) {
-    $('famDiscount').textContent = `−${c.family.discount}%`;
-    $('famInfo').textContent = `Макс ${c.family.max} ₸ на чек · использовано ${c.family.usedWeek} из ${c.family.weekLimit} за 7 дней. Покажи QR кассиру.`;
+  const d = c.discount;
+  $('stampsBox').classList.toggle('hidden', !!d);
+  $('discBox').classList.toggle('hidden', !d);
+  $('codeEnter').classList.toggle('hidden', !!d);
+  if (d) {
+    $('discGroup').textContent = d.group;
+    $('discPercent').textContent = `−${d.percent}%`;
+    $('discInfo').textContent = 'Покажи QR кассиру. Одна операция в день.';
   } else {
     $('stamps').innerHTML = Array.from({ length: c.stampsForReward }, (_, i) => `<div class="stamp ${i < c.stamps ? 'on' : ''}">${i < c.stamps ? '☕' : ''}</div>`).join('');
     $('stampsText').textContent = `${c.stamps} из ${c.stampsForReward}. Ещё ${c.stampsForReward - c.stamps} — и кофе бесплатно.`;
     $('rewards').innerHTML = c.rewards ? `<span class="pill">Бесплатный кофе: ${c.rewards} — покажи QR кассиру</span>` : '';
-    $('rules').textContent = `После оплаты отсканируй QR внизу чека. Штамп от ${c.minSum} ₸, один в день.`;
+    $('rules').textContent = me?.receiptMode ? `После оплаты отсканируй QR внизу чека. Штамп от ${c.minSum} ₸, один в день.` : 'Покажи QR кассиру при каждой покупке — он поставит штамп. Одна операция в день.';
   }
   $('couponsBox').classList.toggle('hidden', !c.coupons.length);
   $('coupons').innerHTML = c.coupons.map((x) => `<p style="margin:0 0 8px"><b>${esc(x.title)}</b> −${x.discount}%<br><span class="muted">до ${new Date(x.expires).toLocaleDateString('ru')} · покажи QR кассиру</span></p>`).join('');
@@ -243,13 +329,16 @@ async function refreshCode() {
   clearTimeout(codeTimer);
   try {
     const r = await api('code');
+    if (r.card) { const was = me?.card; me.card = r.card; renderCard(r.card);
+      if (was && (was.stamps !== r.card.stamps || was.rewards !== r.card.rewards)) haptic('success'); }
     $('code').textContent = r.code.replace(/(\d{3})(\d{3})/, '$1 $2');
     if (!qrObj) qrObj = new QRCode($('qr'), { text: r.qr, width: 400, height: 400, correctLevel: QRCode.CorrectLevel.M });
-    else qrObj.makeCode(r.qr);
+    else if (r.qr !== lastQr) qrObj.makeCode(r.qr);
+    lastQr = r.qr;
     const bar = $('timer');
     bar.style.transition = 'none'; bar.style.width = (r.secondsLeft / 30 * 100) + '%';
     requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.transition = `width ${r.secondsLeft}s linear`; bar.style.width = '0%'; }));
-    codeTimer = setTimeout(refreshCode, r.secondsLeft * 1000 + 300);
+    codeTimer = setTimeout(refreshCode, Math.min(r.secondsLeft * 1000 + 300, 10000)); // карта обновляется сама
   } catch { codeTimer = setTimeout(refreshCode, 5000); }
 }
 
@@ -277,35 +366,42 @@ $('phoneBtn').onclick = () => {
   });
 };
 
-// Заявка кассира
-$('iamCashier').onclick = () => { $('joinBox').classList.toggle('hidden'); };
-$('joinBtn').onclick = async () => {
-  try { const r = await api('kassaJoin', { code: $('joinCode').value, branch: $('joinBranch').value }); show($('joinMsg'), r.message + '. Как примут — появится вкладка «Касса».', true); }
-  catch (e) { show($('joinMsg'), e.message); }
+// Код приглашения (если ссылка не открылась)
+$('invCodeBtn').onclick = async () => {
+  try {
+    const r = await api('redeemCode', { code: $('invCodeIn').value });
+    haptic('success'); show($('invCodeMsg'), `✅ Готово! Твоя скидка «${r.invite.label}»: −${r.invite.percent}%`, true);
+    me.card = r.card; renderCard(r.card);
+  } catch (e) { haptic('error'); show($('invCodeMsg'), e.message); }
 };
 
-// ── Касса ────────────────────────────────────
+// ══════════ Касса ══════════
 let guest = null;
-function renderGuest(c) {
-  $('gBox').classList.remove('hidden'); $('gMsg').className = 'msg';
+function renderGuest(c, today, own) {
+  $('gBox').classList.remove('hidden'); $('gMsg').className = 'msg'; $('gToday').className = 'msg';
+  if (own) show($('gToday'), 'Это твоя карта — обслуживать себя нельзя');
+  else if (today) show($('gToday'), 'Сегодня по этой карте уже была операция. Следующая — завтра');
+  const lock = !!(today || own || c.blocked);
+  ['bStamp', 'bRedeem', 'bDisc', 'bCoupon'].forEach((id) => { $(id).disabled = lock; });
   $('gName').textContent = `${c.name} · ${c.id}`;
-  const fam = c.type === 'family';
-  $('gInfo').textContent = fam
-    ? `Семейная: −${c.family.discount}% (макс ${c.family.max} ₸), использовано ${c.family.usedWeek}/${c.family.weekLimit} за 7 дней`
+  const d = c.discount;
+  $('gInfo').textContent = d
+    ? `${d.group}: скидка −${d.percent}%`
     : `Штампы ${c.stamps}/${c.stampsForReward}`;
-  $('gRegular').classList.toggle('hidden', fam);
+  $('gRegular').classList.toggle('hidden', !!d);
   $('gRewards').innerHTML = c.rewards ? `<span class="pill">Бесплатный кофе: ${c.rewards}</span>` : '<span class="muted">Бесплатного кофе нет</span>';
-  $('bRedeem').classList.toggle('hidden', fam || !c.rewards);
-  $('gFamily').classList.toggle('hidden', !fam); $('fSum').value = '';
+  $('bRedeem').classList.toggle('hidden', !!d || !c.rewards);
+  $('bStamp').classList.toggle('hidden', !!d);
+  $('gDisc').classList.toggle('hidden', !d); $('dSum').value = '';
+  $('bDisc').textContent = d ? `Применить скидку «${d.group}»` : '';
   $('gCoupons').classList.toggle('hidden', !c.coupons.length);
   $('couponSel').innerHTML = c.coupons.map((x) => `<option value="${esc(x.id)}">${esc(x.title)} −${x.discount}%</option>`).join('');
 }
 async function lookup(g) {
-  try { guest = g; const r = await api('lookup', g); $('kMsg').className = 'msg'; renderGuest(r.card); haptic('success'); }
+  try { guest = g; const r = await api('lookup', g); $('kMsg').className = 'msg'; renderGuest(r.card, r.usedToday, r.own); haptic(r.usedToday || r.own ? 'warning' : 'success'); }
   catch (e) { guest = null; $('gBox').classList.add('hidden'); show($('kMsg'), e.message); haptic('error'); }
 }
 $('scanGuest').onclick = async () => { try { lookup({ qr: await scan('Наведи на QR с карты гостя') }); } catch (e) { if (e.message) show($('kMsg'), e.message); } };
-$('findManual').onclick = () => lookup({ cardId: $('mCard').value.trim().toUpperCase(), code: $('mCode').value.replace(/\D/g, '') });
 
 async function act(action, extra, btn) {
   btn.disabled = true;
@@ -313,71 +409,228 @@ async function act(action, extra, btn) {
     const r = await api(action, { ...guest, ...extra });
     haptic('success');
     show($('gMsg'), (r.discount !== undefined ? `Скидка ${r.discount} ₸, к оплате ${r.toPay} ₸. ` : '') + r.note, true);
-    $('bRedeem').classList.add('hidden');
+    ['bStamp', 'bRedeem', 'bDisc', 'bCoupon'].forEach((id) => { $(id).disabled = true; }); // QR сгорел — операция одна
+    guest = null;
+    return;
   } catch (e) { haptic('error'); show($('gMsg'), e.message); }
   btn.disabled = false;
 }
+$('bStamp').onclick = () => act('stamp', {}, $('bStamp'));
 $('bRedeem').onclick = () => act('redeem', {}, $('bRedeem'));
-$('bFamily').onclick = () => act('family', { sum: $('fSum').value }, $('bFamily'));
+$('bDisc').onclick = () => act('discount', { sum: $('dSum').value }, $('bDisc'));
 $('bCoupon').onclick = () => act('coupon', { couponId: $('couponSel').value }, $('bCoupon'));
 
-// ── Админ ────────────────────────────────────
+// ══════════ Админ ══════════
+const fmtTime = (ts) => new Date(ts).toLocaleString('ru', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+let AD = null;
+const NOTIFY_LABELS = { discount: 'Каждая скидка (семья, сотрудники, группы)', redeem: 'Каждый бесплатный кофе', coupon: 'Каждый использованный купон', cashier: 'Кассиры: новый / заблокирован', guest: 'Каждый новый гость' };
+
 async function loadAdmin() {
   try {
-    const d = await api('adminData');
-    $('report').innerHTML = d.report; // текст собран на сервере, имена экранированы
-    $('cashiers').innerHTML = d.cashiers.length ? d.cashiers.map((k) => `<div class="item"><span>${esc(k.name)}<br><span class="muted">${esc(k.branch)} · ${k.status === 'active' ? 'работает' : k.status === 'pending' ? '⏳ ждёт подтверждения' : 'отключён'}</span></span>
-      <span>${k.status !== 'active' ? `<button class="small" data-k="${k.tgId}" data-s="active">Принять</button>` : ''}${k.status !== 'off' ? `<button class="small ghost" data-k="${k.tgId}" data-s="off">${k.status === 'pending' ? 'Отклонить' : 'Отключить'}</button>` : ''}</span></div>`).join('')
-      : 'Кассиров нет. Кассир открывает карту → «Я кассир Seven Times» → вводит код приглашения.';
-    $('famList').innerHTML = d.family.map((f) => `<div class="item"><span>${esc(f.name)} · +${esc(f.phone)}<br><span class="muted">−${f.discount}%, ${f.weekLimit} раз/нед, до ${f.max} ₸</span></span><button class="small ghost" data-f="${esc(f.phone)}">Убрать</button></div>`).join('');
-    $('joinBranch').innerHTML = d.branches.map((b) => `<option>${esc(b)}</option>`).join('');
+    AD = await api('adminData');
+    $('report').innerHTML = AD.report; // текст собран на сервере, имена экранированы
+
+    // кассиры
+    $('cashiers').innerHTML = AD.cashiers.length ? AD.cashiers.map((k) => `<div class="item"><span>${esc(k.name)}<br><span class="muted">${esc(k.branch)}</span>
+      <span class="tag ${k.status === 'active' ? 'on' : 'off'}">${k.status === 'active' ? 'работает' : 'заблокирован'}</span></span>
+      <button class="small ${k.status === 'active' ? 'ghost' : ''}" data-k="${k.tgId}" data-s="${k.status === 'active' ? 'off' : 'active'}">${k.status === 'active' ? 'Заблокировать' : 'Разблокировать'}</button></div>`).join('')
+      : 'Кассиров пока нет';
+    $('invBranch').innerHTML = AD.branches.map((b) => `<option>${esc(b)}</option>`).join('');
+
+    // знакомые и сотрудники
+    $('staffNote').textContent = `Сотрудникам скидка ставится автоматически: ${AD.staffPercent}%`;
+    $('pInvites').innerHTML = AD.invites.length ? '<h2 style="margin-top:16px">Коды ждут активации</h2>' + AD.invites.map((i) => `<div class="item"><span>${i.label} −${i.percent}% ${i.note ? '· ' + esc(i.note) : ''}<br><span class="muted">код ${i.code} · до ${fmtTime(i.expires)}</span></span><button class="small ghost" data-icancel="${i.code}">Отменить</button></div>`).join('') : '';
+    const byCat = (c) => AD.people.filter((p) => p.category === c);
+    const personRow = (p) => `<div class="item"><span>${esc(p.name)} ${p.note ? `<span class="muted">· ${esc(p.note)}</span>` : ''} ${p.blocked ? '<span class="tag off">заблокирован</span>' : ''}<br>
+      <span class="muted">−${p.percent}% · ${p.usedWeek} раз за 7 дн. · пригласил ${esc(p.addedBy || '—')}</span></span>
+      <span class="btns">${p.category === 'friend' ? `<button class="small ghost" data-ppct="${p.tgId}" data-cur="${p.percent}">%</button>` : ''}
+      <button class="small ${p.blocked ? '' : 'ghost'}" data-pblock="${p.tgId}" data-v="${p.blocked ? 0 : 1}">${p.blocked ? 'Разблок.' : 'Блок'}</button>
+      <button class="small ghost" data-pdel="${p.tgId}">✕</button></span></div>`;
+    $('people').innerHTML = (byCat('staff').length ? `<p style="margin:0 0 4px"><b>Сотрудники</b></p>${byCat('staff').map(personRow).join('')}` : '')
+      + (byCat('friend').length ? `<p style="margin:12px 0 4px"><b>Знакомые</b></p>${byCat('friend').map(personRow).join('')}` : '')
+      || 'Пока никого. Пригласи через QR или код.';
+
+    // купоны
+    $('couponList').innerHTML = AD.coupons.length ? AD.coupons.map((c) => `<div class="item"><span><b>${esc(c.title)}</b> −${c.discount}%<br><span class="muted">до ${new Date(c.expires).toLocaleDateString('ru')} · использовали ${c.used}</span></span>
+      <button class="small ghost" data-coff="${esc(c.id)}">Отключить</button></div>`).join('') : '<p class="muted" style="margin-top:0">Активных купонов нет</p>';
+
+    // уведомления
+    $('notify').innerHTML = Object.keys(NOTIFY_LABELS).map((k) => `<label class="switch"><span>${NOTIFY_LABELS[k]}</span><input type="checkbox" data-n="${k}" ${AD.notify[k] ? 'checked' : ''}></label>`).join('')
+      + '<p class="muted">Подозрительные действия (повтор чека, накрутка, ошибки) приходят всегда.</p>';
   } catch (e) { $('report').textContent = e.message; }
 }
+
+async function adminAct(action, data, okMsg) {
+  try { const r = await api(action, data); haptic('success'); if (okMsg !== false && r.message) alertMsg(r.message); }
+  catch (e) { haptic('error'); alertMsg(e.message); }
+  await loadAdmin();
+}
+
+// кассиры
 $('cashiers').onclick = async (e) => {
   const b = e.target.closest('button[data-k]'); if (!b) return;
-  b.disabled = true; try { await api('adminCashier', { tgId: b.dataset.k, status: b.dataset.s }); haptic('success'); } catch (err) { tg?.showAlert?.(err.message); }
-  loadAdmin();
+  if (b.dataset.s === 'off' && !(await ask('Заблокировать кассира? Вкладка «Касса» у него сразу пропадёт.'))) return;
+  adminAct('adminCashier', { tgId: b.dataset.k, status: b.dataset.s }, false);
 };
-$('famList').onclick = async (e) => {
-  const b = e.target.closest('button[data-f]'); if (!b) return;
-  if (!confirm('Убрать из семейных?')) return;
-  try { await api('adminFamilyRemove', { phone: b.dataset.f }); } catch (err) { tg?.showAlert?.(err.message); }
-  loadAdmin();
+
+// одноразовый QR кассира: сгорает после скана
+let invQr = null, invCode = null, invPoll = null;
+function stopInvite() { clearInterval(invPoll); invCode = null; $('invBox').classList.add('hidden'); $('invBtn').classList.remove('hidden'); }
+$('invBtn').onclick = async () => {
+  $('invBtn').disabled = true; $('invMsg').className = 'msg';
+  try {
+    const r = await api('adminInvite', { branch: $('invBranch').value });
+    invCode = r.code;
+    $('invBox').classList.remove('hidden'); $('invBtn').classList.add('hidden');
+    if (!invQr) invQr = new QRCode($('invQr'), { text: r.link, width: 400, height: 400, correctLevel: QRCode.CorrectLevel.M });
+    else invQr.makeCode(r.link);
+    $('invInfo').textContent = `${r.branch} · ждёт сканирования…`;
+    clearInterval(invPoll);
+    invPoll = setInterval(async () => {
+      try {
+        const s = await api('adminInviteStatus', { code: invCode });
+        if (s.status === 'used') { stopInvite(); haptic('success'); show($('invMsg'), `✅ ${s.usedName} добавлен кассиром. QR сгорел.`, true); loadAdmin(); }
+        else if (s.status !== 'new') { stopInvite(); show($('invMsg'), 'QR отменён'); }
+      } catch {}
+    }, 2500);
+  } catch (e) { alertMsg(e.message); }
+  $('invBtn').disabled = false;
 };
+$('invCancel').onclick = async () => { const c = invCode; stopInvite(); try { await api('adminInviteCancel', { code: c }); show($('invMsg'), 'QR отменён', true); } catch {} };
+
+// знакомые и сотрудники
+let pCat = 'friend', pQr = null, pQrCode = null, pQrPoll = null, pCodeText = '';
+function setCat(c) {
+  pCat = c;
+  $('catFriend').classList.toggle('ghost', c !== 'friend'); $('catStaff').classList.toggle('ghost', c !== 'staff');
+  $('pctWrap').classList.toggle('hidden', c !== 'friend'); $('staffNote').classList.toggle('hidden', c !== 'staff');
+}
+$('catFriend').onclick = () => setCat('friend');
+$('catStaff').onclick = () => setCat('staff');
+const inviteData = (kind) => ({ kind, category: pCat, percent: $('pPercent').value, note: $('pNote').value });
+function stopPersonQr() { clearInterval(pQrPoll); pQrCode = null; $('pQrBox').classList.add('hidden'); }
+
+$('pQrBtn').onclick = async () => {
+  $('pMsg').className = 'msg'; $('pCodeBox').classList.add('hidden');
+  try {
+    const r = await api('adminPersonInvite', inviteData('qr'));
+    pQrCode = r.code; $('pQrBox').classList.remove('hidden');
+    if (!pQr) pQr = new QRCode($('pQr'), { text: r.link, width: 400, height: 400, correctLevel: QRCode.CorrectLevel.M });
+    else pQr.makeCode(r.link);
+    $('pQrInfo').textContent = `${r.category === 'staff' ? 'Сотрудник' : 'Знакомый'} −${r.percent}% · пусть отсканирует камерой телефона`;
+    clearInterval(pQrPoll);
+    pQrPoll = setInterval(async () => {
+      try {
+        const st = await api('adminPersonInviteStatus', { code: pQrCode });
+        if (st.status === 'used') { stopPersonQr(); haptic('success'); show($('pMsg'), `✅ ${st.usedName} получил скидку. QR сгорел.`, true); loadAdmin(); }
+        else if (st.status !== 'new') { stopPersonQr(); show($('pMsg'), 'QR отменён'); }
+      } catch {}
+    }, 2500);
+  } catch (e) { show($('pMsg'), e.message); }
+};
+$('pQrCancel').onclick = async () => { const c = pQrCode; stopPersonQr(); try { await api('adminPersonInviteCancel', { code: c }); show($('pMsg'), 'QR отменён', true); } catch {} };
+
+$('pCodeBtn').onclick = async () => {
+  $('pMsg').className = 'msg'; stopPersonQr();
+  try {
+    const r = await api('adminPersonInvite', inviteData('code'));
+    pCodeText = `Seven Times: персональная скидка −${r.percent}% для тебя. Открой ссылку в Telegram (действует 24 часа, только для тебя):\n${r.link}\n\nЕсли ссылка не открылась — открой карту Seven Times и введи код: ${r.code}`;
+    $('pCodeBox').classList.remove('hidden');
+    $('pCodeInfo').textContent = `${r.category === 'staff' ? 'Сотрудник' : 'Знакомый'} −${r.percent}% · до ${fmtTime(r.expires)} · один человек`;
+    $('pCodeText').textContent = r.code;
+    loadAdmin();
+  } catch (e) { show($('pMsg'), e.message); }
+};
+$('pCodeCopy').onclick = async () => {
+  try { await navigator.clipboard.writeText(pCodeText); alertMsg('Скопировано. Отправь человеку лично.'); }
+  catch { alertMsg(pCodeText); }
+};
+
+$('pInvites').onclick = async (e) => {
+  const b = e.target.closest('button[data-icancel]'); if (!b) return;
+  if (await ask('Отменить приглашение?')) adminAct('adminPersonInviteCancel', { code: b.dataset.icancel });
+};
+$('people').onclick = async (e) => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.pblock) adminAct('adminPersonUpdate', { tgId: t.dataset.pblock, blocked: t.dataset.v === '1' });
+  else if (t.dataset.pdel) { if (await ask('Удалить скидку у человека?')) adminAct('adminPersonRemove', { tgId: t.dataset.pdel }); }
+  else if (t.dataset.ppct) { const v = prompt('Новая скидка, %', t.dataset.cur); if (v) adminAct('adminPersonUpdate', { tgId: t.dataset.ppct, percent: v }); }
+};
+
+// журнал всех действий
+function logLine(e) {
+  const m = e.meta || {};
+  const parts = [];
+  if (e.guest) parts.push(`${esc(e.guest)} · ${e.card}`);
+  if (e.type === 'discount_use') parts.push(`${m.category === 'staff' ? 'сотрудник' : 'знакомый'} −${m.percent}% · чек ${m.sum} ₸ → скидка ${e.amount} ₸`);
+  if (e.type === 'rejected') parts.push(esc(m.reason === 'bad_code' ? 'старый или чужой QR' : m.reason || ''));
+  if (e.type === 'person_added') parts.push(`${esc(m.name)} · ${m.category === 'staff' ? 'сотрудник' : 'знакомый'} −${m.percent}% · через ${m.via === 'qr' ? 'QR' : 'код'}, пригласил ${esc(m.by)}`);
+  if (e.type === 'admin_invite') parts.push(`${m.category === 'staff' ? 'сотрудник' : 'знакомый'} ${m.percent ? '−' + m.percent + '%' : ''} · ${m.kind === 'qr' ? 'QR' : 'код 24 ч'} ${m.note ? '· ' + esc(m.note) : ''}`);
+  if (e.type === 'admin_person') parts.push(`${esc(m.who)} · ${m.removed ? 'удалён' : 'blocked' in m ? (m.blocked ? 'заблокирован' : 'разблокирован') : 'скидка ' + m.percent + '%'}`);
+  if (e.type === 'admin_cashier') parts.push(m.status === 'active' ? 'разблокирован' : 'заблокирован');
+  if (e.type === 'push') parts.push(esc((m.text || '').slice(0, 60)));
+  const who = [e.cashier && `${e.type.startsWith('admin') ? '' : 'кассир '}${esc(e.cashier)}`, e.branch && esc(e.branch)].filter(Boolean).join(' · ');
+  return `<div class="item"><span><b>${e.label}</b><br>${parts.join('<br>')}${who ? `<br><span class="muted">${who}</span>` : ''}</span><time>${fmtTime(e.ts)}</time></div>`;
+}
+async function loadLog() {
+  try {
+    const cur = $('logCashier').value;
+    const r = await api('adminLog', { cashier: cur, type: $('logType').value, limit: 150 });
+    const names = [...new Set(r.cashiers)];
+    $('logCashier').innerHTML = '<option value="">Все кассиры</option>' + names.map((n) => `<option ${n === cur ? 'selected' : ''}>${esc(n)}</option>`).join('');
+    $('logList').innerHTML = r.events.length ? r.events.map(logLine).join('') : '<p class="muted">Пока пусто</p>';
+  } catch (e) { $('logList').textContent = e.message; }
+}
+$('logBtn').onclick = loadLog;
+$('logCashier').onchange = loadLog;
+$('logType').onchange = loadLog;
+$('logBox').addEventListener('toggle', () => { if ($('logBox').open) loadLog(); });
+
+// купоны
+$('couponList').onclick = async (e) => {
+  const b = e.target.closest('button[data-coff]'); if (!b) return;
+  if (await ask('Отключить купон? У гостей он сразу исчезнет.')) adminAct('adminCouponOff', { id: b.dataset.coff });
+};
+$('couponBtn').onclick = async () => {
+  if (!(await ask('Выпустить купон и разослать всем гостям?'))) return;
+  $('couponBtn').disabled = true;
+  try { const r = await api('adminCoupon', { title: $('cTitle').value, discount: $('cDisc').value, days: $('cDays').value }); show($('couponMsg'), r.message, true); loadAdmin(); }
+  catch (e) { show($('couponMsg'), e.message); }
+  $('couponBtn').disabled = false;
+};
+
+// рассылка
 $('pushBtn').onclick = async () => {
   const text = $('pushText').value.trim(); if (!text) return;
-  if (!confirm('Отправить всем гостям?')) return;
+  if (!(await ask('Отправить всем гостям?'))) return;
   $('pushBtn').disabled = true; show($('pushMsg'), 'Отправляю… не закрывай карту', true);
   try { const r = await api('adminPush', { text }); show($('pushMsg'), r.message, true); $('pushText').value = ''; } catch (e) { show($('pushMsg'), e.message); }
   $('pushBtn').disabled = false;
 };
-$('couponBtn').onclick = async () => {
-  if (!confirm('Выпустить купон и разослать всем?')) return;
-  $('couponBtn').disabled = true;
-  try { const r = await api('adminCoupon', { title: $('cTitle').value, discount: $('cDisc').value, days: $('cDays').value }); show($('couponMsg'), r.message, true); } catch (e) { show($('couponMsg'), e.message); }
-  $('couponBtn').disabled = false;
-};
-$('famBtn').onclick = async () => {
-  try {
-    const r = await api('adminFamilyAdd', { phone: $('aPhone').value, name: $('aName').value, discount: $('aDisc').value, weekLimit: $('aLimit').value, max: $('aMax').value });
-    show($('famMsg'), r.message, true); $('aPhone').value = ''; $('aName').value = ''; loadAdmin();
-  } catch (e) { show($('famMsg'), e.message); }
-};
+
+// поиск и блокировка карт
 async function find() {
   try {
     const r = await api('adminFind', { q: $('q').value });
-    $('found').innerHTML = r.cards.length ? r.cards.map((c) => `<div class="item"><span>${esc(c.name)} · <b>${c.id}</b><br><span class="muted">${c.phone ? '+' + esc(c.phone) : 'номер не подтверждён'} · ${c.type === 'family' ? 'семья' : `${c.stamps} шт, ${c.rewards} ☕`} · ${c.visits} виз.</span></span>
-      <button class="small ghost" data-b="${c.id}" data-v="${c.blocked ? 0 : 1}">${c.blocked ? 'Разблок.' : 'Блок'}</button></div>`).join('') : '<p class="muted">Ничего не найдено</p>';
+    $('found').innerHTML = r.cards.length ? r.cards.map((c) => `<div class="item"><span>${esc(c.name)} · <b>${c.id}</b> ${c.blocked ? '<span class="tag off">блок</span>' : ''}<br><span class="muted">${c.phone ? '+' + esc(c.phone) : 'номер не подтверждён'} · ${c.group ? `скидка «${esc(c.group)}»` : `${c.stamps} шт, ${c.rewards} ☕`} · ${c.visits} виз.</span></span>
+      <button class="small ${c.blocked ? '' : 'ghost'}" data-b="${c.id}" data-v="${c.blocked ? 0 : 1}">${c.blocked ? 'Разблок.' : 'Блок'}</button></div>`).join('') : '<p class="muted">Ничего не найдено</p>';
   } catch (e) { $('found').textContent = e.message; }
 }
 $('qBtn').onclick = find;
 $('found').onclick = async (e) => {
   const b = e.target.closest('button[data-b]'); if (!b) return;
-  try { await api('adminBlock', { cardId: b.dataset.b, blocked: b.dataset.v === '1' }); } catch (err) { tg?.showAlert?.(err.message); }
+  try { await api('adminBlock', { cardId: b.dataset.b, blocked: b.dataset.v === '1' }); haptic('success'); } catch (err) { alertMsg(err.message); }
   find();
 };
 
-// ── Вкладки ──────────────────────────────────
+// уведомления
+$('notify').onchange = async (e) => {
+  const cb = e.target.closest('input[data-n]'); if (!cb) return;
+  try { await api('adminNotify', { settings: { [cb.dataset.n]: cb.checked } }); haptic('success'); }
+  catch (err) { cb.checked = !cb.checked; alertMsg(err.message); }
+};
+
+// ══════════ Вкладки ══════════
 function tab(which) {
   ['card', 'kassa', 'admin'].forEach((t) => {
     $(t === 'card' ? 'guest' : t).classList.toggle('hidden', which !== t);
@@ -389,20 +642,19 @@ $('tabCard').onclick = () => tab('card');
 $('tabKassa').onclick = () => tab('kassa');
 $('tabAdmin').onclick = () => tab('admin');
 
-const DEFAULT_BRANCHES = ['Самал 70/3', 'Скоробогатова 65/1', 'Абулхаир Хана 177'];
 async function load() {
   try {
     me = await api('me');
     $('hello').textContent = me.cashier ? `${me.cashier.name} · ${me.cashier.branch}` : `Привет, ${me.card.name}!`;
+    $('scanReceipt').classList.toggle('hidden', !me.receiptMode);
     renderCard(me.card);
     if (!qrObj) refreshCode();
-    const staff = me.cashier || me.admin;
-    $('tabs').classList.toggle('hidden', !staff);
+    $('tabs').classList.toggle('hidden', !(me.cashier || me.admin));
     $('tabKassa').classList.toggle('hidden', !me.cashier);
     $('tabAdmin').classList.toggle('hidden', !me.admin);
-    $('iamCashier').classList.toggle('hidden', !!me.cashier);
-    if (me.cashierPending) { $('iamCashier').textContent = '⏳ Заявка кассира ждёт подтверждения'; }
-    if (!$('joinBranch').options.length) $('joinBranch').innerHTML = DEFAULT_BRANCHES.map((b) => `<option>${b}</option>`).join('');
+    if (me.invite?.joined) { haptic('success'); tab('kassa'); show($('kMsg'), `✅ Ты кассир Seven Times (${me.invite.branch}). Сканируй QR с карты гостя.`, true); }
+    else if (me.invite?.joinedPerson) { haptic('success'); show($('inviteMsg'), `🎁 Тебе открыта скидка «${me.invite.label}»: −${me.invite.percent}%. Показывай QR кассиру.`, true); }
+    else if (me.invite?.error) show($('inviteMsg'), me.invite.error);
   } catch (e) { $('hello').textContent = e.message; }
 }
 
