@@ -335,6 +335,35 @@
   @keyframes fly { 0% { opacity: 0; transform: translate(-50%, 0) scale(.4); } 15% { opacity: .9; } 100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), -150px) scale(1) rotate(var(--rot)); } }
   @keyframes slide-in { from { opacity: 0; transform: translateX(var(--from)); } to { opacity: 1; transform: none; } }
   @keyframes pop-back { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
+  /* ── «выпуск карты»: 3D-переворот после подтверждения номера ── */
+  .reveal { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
+    background: radial-gradient(120% 80% at 50% 35%, rgba(40,40,44,.92), rgba(0,0,0,.96)); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); opacity: 0; pointer-events: none; transition: opacity .4s var(--ease); }
+  .reveal.open { opacity: 1; pointer-events: auto; }
+  .rv-stage { perspective: 1100px; width: min(100%, 400px); position: relative; }
+  .rv-card { position: relative; aspect-ratio: 1.586; transform-style: preserve-3d; }
+  .reveal.open .rv-card { animation: rv-in 1.7s cubic-bezier(.2,.85,.25,1) both; }
+  @keyframes rv-in {
+    0% { opacity: 0; transform: translateY(80px) translateZ(-600px) rotateX(40deg) rotateY(-200deg) scale(.45); }
+    30% { opacity: 1; }
+    62% { transform: translateY(-6px) translateZ(60px) rotateX(-8deg) rotateY(14deg) scale(1.05); }
+    80% { transform: rotateX(3deg) rotateY(-5deg) scale(.99); }
+    100% { transform: none; } }
+  .rv-card > * { position: absolute; inset: 0; -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+  .rv-card .wallet { transform: none !important; min-height: 0; cursor: default; box-shadow: 0 40px 70px -30px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.06) inset; }
+  .rv-back { transform: rotateY(180deg); border-radius: 22px; overflow: hidden; background: linear-gradient(135deg, #3a3a3c, #121214 70%); box-shadow: 0 30px 60px -30px rgba(0,0,0,.8); }
+  .rv-back i { position: absolute; left: 0; right: 0; top: 16%; height: 19%; background: #050506; }
+  .rv-back b { position: absolute; left: 22px; right: 90px; top: 46%; height: 14%; border-radius: 4px; background: repeating-linear-gradient(90deg, #e9e6dc 0 6px, #d9d5c8 6px 12px); }
+  .rv-back span { position: absolute; right: 22px; bottom: 18px; color: #fff; opacity: .55; font-size: 12px; font-weight: 700; letter-spacing: .3em; }
+  .rv-spark { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; border-radius: 50%; background: #f3d98f; box-shadow: 0 0 10px #f3d98f; opacity: 0; pointer-events: none; }
+  .reveal.open .rv-spark { animation: rv-spark 1.3s var(--ease) both; }
+  @keyframes rv-spark { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.3); } 20% { opacity: 1; } 100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1); } }
+  .rv-check { width: 58px; height: 58px; margin: 30px auto 12px; }
+  .rv-title { color: #fff; font-size: 30px; font-weight: 700; letter-spacing: -.03em; margin: 0; text-align: center; }
+  .rv-text { color: rgba(255,255,255,.72); font-size: 16px; line-height: 1.4; margin: 8px 12px 0; text-align: center; max-width: 340px; }
+  .reveal .btn { max-width: 360px; margin-top: 24px; background: #fff; color: #000; }
+  .reveal.open .rv-after > * { animation: rise .6s var(--ease) both; animation-delay: 1.35s; }
+  .reveal.open .rv-after > *:nth-child(2) { animation-delay: 1.45s; } .reveal.open .rv-after > *:nth-child(3) { animation-delay: 1.55s; } .reveal.open .rv-after > *:nth-child(4) { animation-delay: 1.7s; }
+  .rv-after { display: flex; flex-direction: column; align-items: center; width: 100%; }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 </head>
@@ -621,6 +650,15 @@
 </main>
 
 <!-- нижние листы -->
+<div class="reveal" id="reveal" role="dialog" aria-modal="true" aria-label="Карта создана">
+  <div class="rv-stage"><div class="rv-card" id="rvCard"></div></div>
+  <div class="rv-after">
+    <svg class="chk rv-check" viewBox="0 0 52 52"><circle class="c" cx="26" cy="26" r="24"/><path class="p" d="M16 27l7 7 14-15"/></svg>
+    <p class="rv-title">Поздравляем!</p>
+    <p class="rv-text">Ваш номер подтверждён, карта успешно создана</p>
+    <button class="btn big" id="rvOk">Открыть карту</button>
+  </div>
+</div>
 <div class="scrim" id="scrim"></div>
 <div class="sheet" id="congrats">
   <div class="grab"></div>
@@ -939,6 +977,7 @@ function renderCard(c) {
   $('visitsList').innerHTML = hist.length
     ? hist.map((v) => `<div class="vrow"><span>${new Date(v.ts).toLocaleDateString('ru', { day: 'numeric', month: 'long', weekday: 'short' })}</span><span>${esc(v.branch)}</span></div>`).join('')
     : '<div class="muted">Визитов пока нет. Покажите QR кассиру при покупке — визит засчитается.</div>';
+  maybeReveal(c, ok && !blocked);
   welcomeCountdown(c.welcome, ok && !blocked);
   showNotice(c.notice);
 }
@@ -961,9 +1000,51 @@ function welcomeCountdown(w, show) {
   };
   paint(); welTimer = setInterval(paint, 30000);
 }
+// «Выпуск карты»: один раз — сразу после подтверждения номера (или при первом открытии, если номер подтвердили в боте)
+let lastOk, revealing = false, pendingNotice = null, revealTimer = 0;
+function maybeReveal(c, ok) {
+  const key = 'revealed_' + (c.id || ''), was = lastOk;
+  lastOk = ok;
+  if (!ok || revealing || !c.id) return;
+  let seen = false; try { seen = !!localStorage.getItem(key); } catch {}
+  if (seen) return;
+  const firstTime = was === false || (c.notice && c.notice.kind === 'welcome');
+  if (!firstTime) return;
+  try { localStorage.setItem(key, '1'); } catch {}
+  revealCard();
+}
+function revealCard() {
+  revealing = true;
+  const holder = $('rvCard');
+  const front = $('wallet').cloneNode(true); // лицевая сторона — точная копия карты гостя (цвет, номер, имя)
+  front.removeAttribute('id'); front.classList.remove('flip', 'live');
+  front.querySelectorAll('canvas').forEach((x) => x.remove());
+  front.querySelectorAll('[id]').forEach((x) => x.removeAttribute('id'));
+  const back = document.createElement('div'); back.className = 'rv-back'; back.innerHTML = '<i></i><b></b><span>SEVEN TIMES</span>';
+  holder.replaceChildren(back, front);
+  holder.parentElement.querySelectorAll('.rv-spark').forEach((x) => x.remove());
+  for (let i = 0; i < 18; i++) { // золотые искры после переворота
+    const sp = document.createElement('span'); sp.className = 'rv-spark';
+    const a = (i / 18) * 6.283, r = 140 + Math.random() * 90;
+    sp.style.setProperty('--dx', Math.cos(a) * r + 'px'); sp.style.setProperty('--dy', Math.sin(a) * r * 0.7 + 'px');
+    sp.style.animationDelay = (1 + Math.random() * 0.25) + 's';
+    holder.parentElement.appendChild(sp);
+  }
+  // номер «печатается» цифра за цифрой, пока карта разворачивается
+  const num = front.querySelector('.w-num'), full = num ? num.textContent : '';
+  if (num) { num.textContent = ''; let i = 0; clearInterval(revealTimer); setTimeout(() => { revealTimer = setInterval(() => { num.textContent = full.slice(0, ++i); if (i % 4 === 0) tick(); if (i >= full.length) clearInterval(revealTimer); }, 42); }, 900); }
+  const ov = $('reveal'); ov.classList.remove('open'); void ov.offsetWidth; ov.classList.add('open');
+  setTimeout(() => haptic('success'), 1100);
+}
+$('rvOk').onclick = () => {
+  $('reveal').classList.remove('open'); revealing = false; clearInterval(revealTimer);
+  enter($('guest'));
+  if (pendingNotice) { const n = pendingNotice; pendingNotice = null; setTimeout(() => showNotice(n), 350); }
+};
 const seenNotice = new Set(); // карта обновляется раз в 30 с — поздравление показываем один раз даже без localStorage
 function showNotice(n) {
   if (!n || !n.ts) return;
+  if (revealing) { pendingNotice = n; return; } // сначала «карта создана», потом поздравление со скидкой
   const key = 'notice_' + n.ts;
   if (seenNotice.has(key)) return; seenNotice.add(key);
   try { if (localStorage.getItem(key)) return; localStorage.setItem(key, '1'); } catch {}
