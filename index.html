@@ -911,7 +911,7 @@ function renderCard(c) {
   // Мои визиты: только сколько и когда. Сколько осталось до скидки — знают только админы
   const hist = Array.isArray(c.history) ? c.history : [];
   $('visitsBox').classList.toggle('hidden', !ok || blocked);
-  $('visitsCnt').textContent = Number(c.visits) || hist.length || '';
+  $('visitsCnt').textContent = hist.length || '';
   $('visitsList').innerHTML = hist.length
     ? hist.map((v) => `<div class="vrow"><span>${new Date(v.ts).toLocaleDateString('ru', { day: 'numeric', month: 'long', weekday: 'short' })}</span><span>${esc(v.branch)}</span></div>`).join('')
     : '<div class="muted">Визитов пока нет. Покажите QR кассиру при покупке — визит засчитается.</div>';
@@ -941,7 +941,10 @@ async function refreshCode() {
   let next;
   try {
     const r = await api('code');
-    if (r.card && me) { me.card = r.card; saveMe(me); renderCard(r.card); }
+    if (r.card && me) {
+      if (r.card.history === undefined) r.card.history = me.card?.history; // обновление QR приходит без истории визитов — держим прошлую
+      me.card = r.card; saveMe(me); renderCard(r.card);
+    }
     setCode(r.code);
     if (!qrObj) qrObj = await makeQr($('qr'), r.qr);
     else if (r.qr !== lastQr) { const w = $('qrWrap'), obj = qrObj; w.classList.add('swap'); setTimeout(() => { obj.makeCode(r.qr); w.classList.remove('swap'); }, 180); }
@@ -1402,7 +1405,7 @@ async function find() {
   try {
     const r = await api('adminFind', { q: $('q').value });
     $('found').classList.remove('hidden');
-    $('found').innerHTML = r.cards.length ? r.cards.map((c) => `<div class="li ${c.blocked ? 'dis' : ''}"><span class="grow">${esc(c.name)} · <b>${esc(c.id)}</b>${c.blocked ? '<span class="tag off">заблокирована</span>' : ''}<span class="sub">${c.phone ? '+' + esc(c.phone) : 'номер не подтверждён'} · ${c.group ? esc(c.group) : 'без скидки'} · визитов ${esc(c.visits)}</span><span class="sub">за 90 дней: ${esc(c.v90 ?? 0)}${c.left ? ` · до ${esc(c.next)}%: ещё ${esc(c.left)}` : ''}</span></span>
+    $('found').innerHTML = r.cards.length ? r.cards.map((c) => `<div class="li ${c.blocked ? 'dis' : ''}"><span class="grow">${esc(c.name)} · <b>${esc(c.id)}</b>${c.blocked ? '<span class="tag off">заблокирована</span>' : ''}<span class="sub">${c.phone ? '+' + esc(c.phone) : 'номер не подтверждён'} · ${c.group ? esc(c.group) : 'без скидки'} </span><span class="sub">визитов за 90 дней: ${esc(c.v90 ?? 0)}${c.left ? ` · до ${esc(c.next)}%: ещё ${esc(c.left)}` : ''}</span></span>
       <button class="pill ${c.blocked ? '' : 'red'}" data-b="${esc(c.id)}" data-v="${c.blocked ? 0 : 1}">${c.blocked ? 'Вернуть' : 'Заблокировать'}</button></div>`).join('') : '<div class="empty">Ничего не найдено</div>';
     enter($('found'));
   } catch (e) { $('found').classList.remove('hidden'); $('found').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
@@ -1454,7 +1457,7 @@ function saveMe(m) {
   const c = m.card;
   const slim = { cashier: m.cashier ? { name: m.cashier.name, branch: m.cashier.branch } : null, admin: !!m.admin, wallet: !!m.wallet, walletApple: !!m.walletApple, adminNeedsPhone: !!m.adminNeedsPhone,
     card: { name: c.name, id: c.id, phoneVerified: !!c.phoneVerified, blocked: !!c.blocked, invited: !!c.invited, wallet: c.wallet || null, coupons: Array.isArray(c.coupons) ? c.coupons : [],
-      visits: Number(c.visits) || 0, history: Array.isArray(c.history) ? c.history : [] } };
+      history: Array.isArray(c.history) ? c.history : [] } };
   try { localStorage.setItem(CACHE, JSON.stringify(slim)); } catch {}
 }
 function readMe() {
