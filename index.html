@@ -496,6 +496,7 @@
       <div class="list" data-perm="admins">
         <button class="li" data-go="pNotify"><span class="grow">Уведомления</span><span class="chev"></span></button>
       </div>
+      <div class="note" id="verLine" style="text-align:center;margin-top:18px"></div>
     </div>
 
     <!-- отчёт -->
@@ -677,6 +678,8 @@
 
 <script>
 // URL своего Apps Script (…/exec)
+// Версия карты — показывается в админке рядом с версией сервера
+const APP_VERSION = 'v10';
 const API_URL = 'https://script.google.com/macros/s/AKfycbxbUlG8xsT1o7R_yza6WFF3miQKWyc8-AtLuJ1RDgP8I9K_v3sj5FTi2Fk8QrzZ69DXCw/exec';
 
 const tg = window.Telegram?.WebApp;
@@ -1262,6 +1265,7 @@ async function loadAdmin() {
     if (seq !== adminSeq) return;
     AD = d;
     renderStats(AD.stats);
+    $('verLine').textContent = `Карта ${APP_VERSION} · сервер ${String(AD.version || 'старый').split(' ')[0]}`;
 
     // счётчики на главной
     const activeCash = AD.cashiers.filter((k) => k.status === 'active').length;
