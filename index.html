@@ -4,10 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
 <title>Seven Times</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<!-- соединение с Apps Script открываем заранее: первый запрос карты не ждёт DNS и TLS -->
+<link rel="preconnect" href="https://script.google.com" crossorigin>
+<link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<!-- qrcodejs 1.0.0 (тот же файл, что на cdnjs): со своего домена, не блокирует отрисовку -->
+<script src="qrcode.min.js" defer></script>
+<!-- шрифт не блокирует первую отрисовку: пока грузится, текст системным шрифтом -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
   :root {
     --bg: #f5f5f7; --surface: #ffffff; --fill: #ececf0; --fill-2: #e3e3e8;
@@ -141,6 +147,10 @@
   .qrwrap.swap { opacity: .2; transform: scale(.96); filter: blur(2px); }
   .qrcard .qrwrap { box-shadow: 0 0 0 1px var(--sep), 0 12px 30px -16px rgba(0,0,0,.25); }
   .qrwrap img, .qrwrap canvas { width: 100% !important; height: auto !important; display: block; }
+  .qrwrap > div { aspect-ratio: 1; } /* место под QR занято сразу — ничего не прыгает */
+  #qr:empty { border-radius: 6px; background: linear-gradient(90deg, #f0f0f2 25%, #e4e4e8 50%, #f0f0f2 75%); background-size: 200% 100%; animation: shimmer 1.3s infinite linear; }
+  .qrwrap.stale { opacity: .15; filter: blur(3px); } /* код истёк, новый ещё не пришёл — старый не сканируется */
+  .qrwrap.stale + .code { opacity: .3; }
   .code { font-size: 32px; font-weight: 700; margin: 18px 0 2px; font-variant-numeric: tabular-nums; display: flex; justify-content: center; gap: 4px; height: 40px; overflow: hidden; }
   .code .dg { display: inline-block; width: .66em; text-align: center; }
   .code .dg.roll { animation: roll .5s var(--spring) both; }
@@ -277,6 +287,7 @@
   /* ── скелет загрузки ── */
   .skel { border-radius: 22px; height: 200px; margin-bottom: 14px; background: linear-gradient(90deg, var(--fill) 25%, var(--fill-2) 50%, var(--fill) 75%); background-size: 200% 100%; animation: shimmer 1.3s infinite linear; }
   .skel.s2 { height: 300px; border-radius: var(--r); }
+  .stats .skel { height: 84px; margin: 0; border-radius: 18px; }
 
   /* ── анимации ── */
   .enter > * { animation: rise .55s var(--ease) both; }
@@ -322,6 +333,7 @@
   </nav>
 
   <div id="loader"><div class="skel"></div><div class="skel s2"></div></div>
+  <div class="card hidden" id="failBox" style="text-align:center"><div class="muted" id="failText"></div><button class="btn" id="failBtn">Повторить</button></div>
 
   <!-- ═════ КАРТА ГОСТЯ ═════ -->
   <section id="guest" class="hidden">
@@ -333,7 +345,7 @@
           <div class="w-brand">SEVEN TIMES</div>
           <div class="w-sub">Coffee &amp; Kitchen</div>
         </div>
-        <img class="w-logo" src="logo-tile.png" alt="Seven Times">
+        <img class="w-logo" src="logo-card.png" width="54" height="54" decoding="async" alt="Seven Times">
       </div>
       <div class="w-foot">
         <div>
@@ -361,6 +373,7 @@
       <div class="bar"><i id="timer"></i></div>
       <div class="muted">Покажите QR кассиру при оплате</div>
       <div class="fine" style="margin-top:4px">Код обновляется каждые 30 секунд, скриншот не сработает</div>
+      <div class="fine hidden" id="qrErr" style="margin-top:8px;color:var(--red)"></div>
     </div>
 
     <button class="wbtn hidden" id="walletBtn"><span class="wmark"><i></i><i></i><i></i></span><svg class="wok" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span id="walletTxt">Добавить в Google Wallet</span></button>
@@ -603,14 +616,17 @@ const tg = window.Telegram?.WebApp;
 let curTab = 'card', walletKind = '', me = null;
 tg?.ready(); tg?.expand();
 const $ = (id) => document.getElementById(id);
-const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const show = (el, text, ok) => { el.textContent = text; el.className = 'msg'; void el.offsetWidth; el.className = 'msg ' + (ok === 'warn' ? 'warn' : ok ? 'ok' : 'err'); };
 const hide = (el) => { el.className = 'msg'; };
 const haptic = (t) => { try { tg?.HapticFeedback?.notificationOccurred(t); } catch {} };
 const tick = () => { try { tg?.HapticFeedback?.selectionChanged(); } catch {} };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const ask = (text) => new Promise((res) => (tg?.showConfirm ? tg.showConfirm(text, res) : res(confirm(text))));
-const alertMsg = (text) => (tg?.showAlert ? tg.showAlert(text) : alert(text));
+// попапы Telegram: текст до 256 символов, второй попап поверх открытого бросает ошибку — не роняем код
+const tgPopups = () => !!(tg?.showAlert && tg.isVersionAtLeast?.('6.2'));
+const clip = (s) => { s = String(s ?? ''); return s.length > 250 ? s.slice(0, 249) + '…' : s; };
+const ask = (text) => new Promise((res) => { if (!tgPopups()) return res(confirm(text)); try { tg.showConfirm(clip(text), (ok) => res(!!ok)); } catch { res(false); } });
+const alertMsg = (text) => { if (!tgPopups()) return alert(text); try { tg.showAlert(clip(text)); } catch {} };
 const money = (n) => Number(n || 0).toLocaleString('ru-RU');
 const enter = (el) => { el.classList.remove('enter'); void el.offsetWidth; el.classList.add('enter'); };
 
@@ -628,11 +644,9 @@ function cardFx(cv, kind, opts) {
   opts = opts || {};
   const ctx = cv.getContext('2d');
   const dpr = opts.dpr || Math.min(window.devicePixelRatio || 1, 2);
-  let W = 0, H = 0, parts = [], raf = 0, t0 = performance.now(), dead = false;
+  let W = 0, H = 0, k = 1, parts = [], raf = 0, dead = false, seen = true, last = 0;
+  const t0 = performance.now();
   const R = (a, b) => a + Math.random() * (b - a);
-  const size = () => { const r = cv.getBoundingClientRect(); W = r.width; H = r.height; cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); };
-  size();
-  const k = W / 360; // масштаб частиц к ширине карты
   const spawn = (fresh) => {
     const p = { x: R(-20, W + 20), y: fresh ? R(-H, H) : R(-40, -10) };
     if (kind === 'rain') Object.assign(p, { len: R(10, 22) * k, v: R(420, 620) * k, a: R(.18, .45), w: R(.8, 1.4) });
@@ -643,15 +657,12 @@ function cardFx(cv, kind, opts) {
     return p;
   };
   const N = { rain: 80, winter: 70, autumn: 16, spring: 24, sun: 26 }[kind] || 0;
-  for (let i = 0; i < N; i++) parts.push(spawn(true));
   const leaf = (p) => { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillStyle = p.c; ctx.globalAlpha = .9;
     ctx.beginPath(); ctx.moveTo(0, -p.s); ctx.quadraticCurveTo(p.s * .9, 0, 0, p.s); ctx.quadraticCurveTo(-p.s * .9, 0, 0, -p.s); ctx.fill();
     ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = .8; ctx.beginPath(); ctx.moveTo(0, -p.s * .8); ctx.lineTo(0, p.s * .8); ctx.stroke(); ctx.restore(); };
   const petal = (p) => { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillStyle = p.c; ctx.globalAlpha = .85;
     ctx.beginPath(); ctx.ellipse(0, 0, p.s, p.s * .55, 0, 0, 6.283); ctx.fill(); ctx.restore(); };
-  let last = performance.now();
-  const frame = (now) => {
-    if (dead) return;
+  const draw = (now) => {
     const dt = Math.min(.05, (now - last) / 1000); last = now; const t = (now - t0) / 1000;
     ctx.clearRect(0, 0, W, H);
     if (kind === 'sun') {
@@ -673,13 +684,32 @@ function cardFx(cv, kind, opts) {
       const out = kind === 'sun' ? p.y < -10 : p.y > H + 30 || p.x < -40;
       if (out) parts[i] = spawn(false);
     }
-    if (!opts.still) raf = requestAnimationFrame(frame);
   };
-  if (opts.warm) { for (let i = 0; i < opts.warm; i++) { last -= 33; frame(performance.now()); } }
-  raf = requestAnimationFrame(frame);
-  const onVis = () => { if (document.hidden) cancelAnimationFrame(raf); else { last = performance.now(); raf = requestAnimationFrame(frame); } };
+  // Анимация крутится только когда карту видно: вкладка «Касса»/«Админ», свёрнутый Telegram, карта за экраном — стоп
+  const frame = (now) => { raf = 0; if (dead || !W) return; draw(now); if (!opts.still) go(); };
+  const go = () => { if (!raf && !dead && W && seen && !document.hidden) { last = last || performance.now(); raf = requestAnimationFrame(frame); } };
+  const halt = () => { if (raf) cancelAnimationFrame(raf); raf = 0; last = 0; };
+  // Размер берём из раскладки (offsetWidth), а не getBoundingClientRect: тот врёт посреди переворота карты и при display:none
+  const measure = () => {
+    const w = cv.offsetWidth, h = cv.offsetHeight;
+    if (!w || !h) return halt(); // карта скрыта — ждём, пока покажут
+    if (w !== W || h !== H) {
+      W = w; H = h; k = W / 360; // масштаб частиц к ширине карты
+      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      parts = []; for (let i = 0; i < N; i++) parts.push(spawn(true));
+      if (opts.warm) { last = performance.now() - 33 * opts.warm; for (let i = 0; i < opts.warm; i++) draw(last + 33); } // «прогрев»: статичный кадр как в середине анимации
+      else if (opts.still) draw(performance.now());
+    }
+    go();
+  };
+  const ro = window.ResizeObserver ? new ResizeObserver(measure) : null;
+  const io = window.IntersectionObserver ? new IntersectionObserver((es) => { seen = es[es.length - 1].isIntersecting; if (seen) measure(); else halt(); }) : null;
+  ro?.observe(cv); io?.observe(cv);
+  if (!ro) window.addEventListener('resize', measure);
+  measure();
+  const onVis = () => { if (document.hidden) halt(); else go(); };
   document.addEventListener('visibilitychange', onVis);
-  return () => { dead = true; cancelAnimationFrame(raf); document.removeEventListener('visibilitychange', onVis); ctx.clearRect(0, 0, W, H); };
+  return () => { dead = true; halt(); ro?.disconnect(); io?.disconnect(); window.removeEventListener('resize', measure); document.removeEventListener('visibilitychange', onVis); ctx.clearRect(0, 0, W, H); };
 }
 
 // Тема карты — секрет: нажал на карту, она переворачивается в следующую. Хранится в Telegram (CloudStorage)
@@ -726,7 +756,7 @@ $('wallet').addEventListener('click', () => {
   w.addEventListener('pointerleave', reset); w.addEventListener('pointerup', reset); w.addEventListener('pointercancel', reset);
   let last = 0;
   window.addEventListener('deviceorientation', (e) => {
-    if (e.gamma == null || Date.now() - last < 40) return; last = Date.now();
+    if (e.gamma == null || document.hidden || curTab !== 'card' || Date.now() - last < 40) return; last = Date.now(); // карту не видно — не пересчитываем стили зря
     const px = Math.max(0, Math.min(1, .5 + e.gamma / 60)), py = Math.max(0, Math.min(1, .5 + (e.beta - 45) / 80));
     set(px, py);
   });
@@ -734,9 +764,27 @@ $('wallet').addEventListener('click', () => {
 
 // цифры кода «перекатываются» при смене
 function setCode(str) {
+  str = String(str ?? ''); // сервер может прислать число — split у числа нет
   const el = $('code'), old = el.dataset.v || '';
+  if (str === old) return;
   el.dataset.v = str;
-  el.innerHTML = str.split('').map((ch, i) => (i === 3 ? '<span class="gap"></span>' : '') + `<span class="dg ${old[i] !== ch ? 'roll' : ''}" style="animation-delay:${i * 45}ms">${ch}</span>`).join('');
+  el.innerHTML = str.split('').map((ch, i) => (i === 3 ? '<span class="gap"></span>' : '') + `<span class="dg ${old[i] !== ch ? 'roll' : ''}" style="animation-delay:${i * 45}ms">${esc(ch)}</span>`).join('');
+}
+// qrcode.min.js грузится с defer: ждём его, если ответ сервера пришёл раньше
+const qrReady = new Promise((res) => (document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', res, { once: true }) : res()));
+async function makeQr(el, text, prev) {
+  await qrReady;
+  if (!window.QRCode) throw new Error('Не загрузился модуль QR. Закройте карту и откройте заново.');
+  if (prev) { prev.makeCode(text); return prev; }
+  return new QRCode(el, { text, width: 400, height: 400, correctLevel: QRCode.CorrectLevel.M });
+}
+// опрос статуса: следующий запрос — только после ответа предыдущего (Apps Script отвечает по 1–3 с,
+// setInterval их наслаивал), в свёрнутом Telegram сервер не дёргаем
+function every(ms, fn) {
+  let on = true, t = 0;
+  const run = async () => { if (!on) return; if (!document.hidden) { try { await fn(); } catch {} } if (on) t = setTimeout(run, ms); };
+  t = setTimeout(run, ms);
+  return () => { on = false; clearTimeout(t); };
 }
 const checkSvg = (cls = '') => `<svg class="chk ${cls}" viewBox="0 0 52 52"><circle class="c" cx="26" cy="26" r="24"/><path class="p" d="M16 27l7 7 14-15"/></svg>`;
 function countTo(el, to, suffix = '', prefix = '', dur = 800) {
@@ -745,21 +793,39 @@ function countTo(el, to, suffix = '', prefix = '', dur = 800) {
   requestAnimationFrame(step);
 }
 
+// Чтения можно безопасно повторить: при обрыве сети, зависании или HTML-ошибке Apps Script пробуем ещё раз.
+// Действия (скидка, рассылка, выдача прав) не повторяем никогда — иначе двойная скидка или двойная рассылка.
+const READS = new Set(['me', 'code', 'adminData', 'adminLog', 'adminFind', 'adminInviteStatus', 'adminPersonInviteStatus', 'adminAdminInviteStatus']);
+const NET_ERR = 'Сервер не отвечает. Проверьте интернет и попробуйте ещё раз.';
 async function api(action, data = {}) {
+  const read = READS.has(action), tries = read ? 3 : 1;
   // text/plain — без CORS-предзапроса, Apps Script такое принимает
-  const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ action, initData: tg?.initData || '', ...data }) });
-  const j = await r.json();
-  if (!j.ok) { const err = new Error(j.error || 'Ошибка'); err.data = j; throw err; }
-  return j;
+  const body = JSON.stringify({ action, initData: tg?.initData || '', ...data });
+  for (let i = 1; ; i++) {
+    const ctl = read && window.AbortController ? new AbortController() : null;
+    const timer = ctl ? setTimeout(() => ctl.abort(), 20000) : 0; // зависший запрос не держит экран вечно
+    let j;
+    try {
+      const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body, signal: ctl?.signal });
+      j = await r.json(); // при сбое Apps Script отдаёт HTML — это тоже ошибка связи
+    } catch {
+      if (i < tries) { await sleep(600 * i); continue; }
+      throw new Error(NET_ERR);
+    } finally { clearTimeout(timer); }
+    if (!j || !j.ok) { const err = new Error((j && j.error) || 'Ошибка'); err.data = j; throw err; }
+    return j;
+  }
 }
 
 function scan(text) {
   return new Promise((resolve, reject) => {
     if (!tg?.showScanQrPopup || !tg.isVersionAtLeast?.('6.4')) return reject(new Error('Обновите Telegram — нужен встроенный сканер QR'));
     let done = false;
-    tg.showScanQrPopup({ text }, (value) => { done = true; resolve(value); return true; });
-    tg.onEvent('scanQrPopupClosed', function h() { tg.offEvent('scanQrPopupClosed', h); if (!done) reject(new Error('')); });
+    const off = () => { try { tg.offEvent('scanQrPopupClosed', onClose); } catch {} };
+    const onClose = () => { off(); if (!done) reject(new Error('')); };
+    tg.onEvent('scanQrPopupClosed', onClose);
+    try { tg.showScanQrPopup({ text }, (value) => { if (done) return true; done = true; off(); resolve(value); return true; }); }
+    catch { off(); reject(new Error('')); } // двойной тап: сканер уже открыт — второй молча игнорируем
   });
 }
 
@@ -770,7 +836,9 @@ function segMove(seg) {
   ind.style.width = b.offsetWidth + 'px';
   ind.style.transform = `translateX(${b.offsetLeft - 3}px)`;
 }
-window.addEventListener('resize', () => document.querySelectorAll('.seg').forEach(segMove));
+const segAll = () => document.querySelectorAll('.seg').forEach(segMove);
+window.addEventListener('resize', segAll);
+try { document.fonts?.addEventListener?.('loadingdone', segAll); } catch {} // Inter догрузился — ширина кнопок изменилась, ползунок подгоняем
 
 // нижние листы
 function openSheet(id) { $('scrim').classList.add('open'); $(id).classList.add('open'); }
@@ -801,64 +869,89 @@ function askNumber(title, value) {
 }
 $('dlgYes').onclick = () => { const v = $('dlgIn').value; closeSheets(); if (dlgRes) dlgRes(v); dlgRes = null; };
 $('dlgNo').onclick = () => { closeSheets(); if (dlgRes) dlgRes(null); dlgRes = null; };
+$('dlgIn').onkeydown = (e) => { if (e.key === 'Enter') $('dlgYes').click(); };
 
 // ══════════ Карта гостя ══════════
-let qrObj = null, codeTimer = null, lastQr = '';
+let qrObj = null, codeTimer = 0, codeBusy = false, codeOn = false, codeFails = 0, codeExp = 0, staleTimer = 0, lastQr = '';
 function renderCard(c) {
   if (curTab === 'card') $('guest').classList.remove('hidden');
-  const ok = !!c.phoneVerified;
+  const ok = !!c.phoneVerified, blocked = !!c.blocked; // !!: toggle(x, undefined) не ставит, а ПЕРЕКЛЮЧАЕТ класс — QR мигал бы
   $('cardName').textContent = c.name || 'Гость';
-  $('cardNo').textContent = ok ? c.id : '';
+  $('cardNo').textContent = ok ? (c.id ?? '') : '';
   $('cardNoLabel').classList.toggle('hidden', !ok);
-  $('cardState').classList.toggle('hidden', ok && !c.blocked);
-  if (c.blocked) $('cardState').innerHTML = '<span class="dot off"></span>Заблокирована';
+  $('cardState').classList.toggle('hidden', ok && !blocked);
+  $('cardState').innerHTML = `<span class="dot off"></span>${blocked ? 'Заблокирована' : 'Не активна'}`;
   $('phoneBox').classList.toggle('hidden', ok);
-  $('qrBox').classList.toggle('hidden', !ok || c.blocked);
+  $('qrBox').classList.toggle('hidden', !ok || blocked);
   const t = ok ? c.today : null; // скидку гость видит только после того, как кассир её применил
   $('discBox').classList.toggle('hidden', !t);
   const q = new URLSearchParams(location.search), plat = q.get('platform') || tg?.platform || '';
   walletKind = /ios|macos/.test(plat) ? (me?.walletApple ? 'apple' : '') : /android/.test(plat) ? (me?.wallet ? 'google' : '') : '';
-  $('walletBtn').classList.toggle('hidden', !(ok && !c.blocked && walletKind));
+  $('walletBtn').classList.toggle('hidden', !(ok && !blocked && walletKind));
   refreshWalletBtn();
   $('codeEnter').classList.toggle('hidden', !ok || !!c.invited || !!(me && (me.cashier || me.admin))); // уже со скидкой, кассир или админ — код не нужен
   if (t) {
     $('discPercent').textContent = `−${t.percent}%`;
-    $('discInfo').textContent = `${t.amount ? '−' + money(t.amount) + ' ₸ · ' : ''}${t.branch} · ${new Date(t.ts).toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' })}`;
+    $('discInfo').textContent = `${t.amount ? '−' + money(t.amount) + ' ₸ · ' : ''}${t.branch || ''} · ${new Date(t.ts).toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' })}`;
   }
-  const hasC = ok && c.coupons.length > 0;
-  $('couponsBox').classList.toggle('hidden', !hasC); $('couponsCap').classList.toggle('hidden', !hasC);
-  $('coupons').innerHTML = c.coupons.map((x) => `<div class="li"><span class="grow"><b>${esc(x.title)}</b><span class="sub">до ${new Date(x.expires).toLocaleDateString('ru')} · покажите QR кассиру</span></span><span class="val">−${x.discount}%</span></div>`).join('');
+  const coupons = ok && Array.isArray(c.coupons) ? c.coupons : [];
+  $('couponsBox').classList.toggle('hidden', !coupons.length); $('couponsCap').classList.toggle('hidden', !coupons.length);
+  $('coupons').innerHTML = coupons.map((x) => `<div class="li"><span class="grow"><b>${esc(x.title)}</b><span class="sub">до ${new Date(x.expires).toLocaleDateString('ru')} · покажите QR кассиру</span></span><span class="val">−${esc(x.discount)}%</span></div>`).join('');
 }
 
+// QR обновляется сам. Один запрос за раз (раньше два цикла могли крутиться параллельно),
+// в фоне пауза, при возврате — сразу свежий код: истёкший QR на кассе = отказ и «подозрительная» запись в журнале
+function startCode() { if (!codeOn) { codeOn = true; refreshCode(); } }
+function stopCode() { codeOn = false; clearTimeout(codeTimer); codeTimer = 0; }
 async function refreshCode() {
-  clearTimeout(codeTimer);
+  clearTimeout(codeTimer); codeTimer = 0;
+  if (!codeOn || codeBusy || document.hidden) return;
+  codeBusy = true;
+  let next;
   try {
     const r = await api('code');
-    if (r.card) { me.card = r.card; renderCard(r.card); }
+    if (r.card && me) { me.card = r.card; saveMe(me); renderCard(r.card); }
     setCode(r.code);
-    if (!qrObj) qrObj = new QRCode($('qr'), { text: r.qr, width: 400, height: 400, correctLevel: QRCode.CorrectLevel.M });
-    else if (r.qr !== lastQr) { $('qrWrap').classList.add('swap'); setTimeout(() => { qrObj.makeCode(r.qr); $('qrWrap').classList.remove('swap'); }, 180); }
-    lastQr = r.qr;
+    if (!qrObj) qrObj = await makeQr($('qr'), r.qr);
+    else if (r.qr !== lastQr) { const w = $('qrWrap'), obj = qrObj; w.classList.add('swap'); setTimeout(() => { obj.makeCode(r.qr); w.classList.remove('swap'); }, 180); }
+    lastQr = r.qr; codeFails = 0;
+    const left = Math.max(1, Number(r.secondsLeft) || 30);
+    codeExp = Date.now() + left * 1000;
+    $('qrWrap').classList.remove('stale'); $('qrErr').classList.add('hidden');
+    clearTimeout(staleTimer); staleTimer = setTimeout(() => $('qrWrap').classList.add('stale'), left * 1000);
     const bar = $('timer');
-    bar.style.transition = 'none'; bar.style.width = (r.secondsLeft / 30 * 100) + '%';
-    requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.transition = `width ${r.secondsLeft}s linear`; bar.style.width = '0%'; }));
-    codeTimer = setTimeout(refreshCode, Math.min(r.secondsLeft * 1000 + 300, 10000)); // карта обновляется сама
-  } catch { codeTimer = setTimeout(refreshCode, 5000); }
+    bar.style.transition = 'none'; bar.style.width = Math.min(100, left / 30 * 100) + '%';
+    requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.transition = `width ${left}s linear`; bar.style.width = '0%'; }));
+    next = Math.min(left * 1000 + 300, 10000); // карта обновляется сама
+  } catch (e) {
+    codeFails++;
+    if (!lastQr || Date.now() > codeExp) { $('qrErr').textContent = e.message === NET_ERR ? 'Сервер не отвечает — пробуем ещё раз' : e.message; $('qrErr').classList.remove('hidden'); }
+    next = Math.min(5000 * 2 ** (codeFails - 1), 30000); // 5 → 10 → 20 → 30 с, сервер не долбим
+  } finally { codeBusy = false; }
+  if (codeOn && !document.hidden) codeTimer = setTimeout(refreshCode, next);
 }
+function wakeCode() {
+  if (!codeOn || document.hidden) return;
+  if (codeExp && Date.now() > codeExp) $('qrWrap').classList.add('stale');
+  refreshCode();
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) { clearTimeout(codeTimer); codeTimer = 0; } else wakeCode(); });
+tg?.onEvent?.('activated', wakeCode); // Telegram развернули из свёрнутого режима
 
 // Номер: Telegram показывает «Поделиться номером», контакт уходит боту, а мы сразу просим скрипт его забрать
 $('phoneBtn').onclick = () => {
   if (!tg?.requestContact || !tg.isVersionAtLeast?.('6.9')) return show($('phoneMsg'), 'Обновите Telegram или напишите боту /start');
-  tg.requestContact(async (sent) => {
+  const onSent = async (sent) => {
     if (!sent) return show($('phoneMsg'), 'Без номера карта не активируется. Нажмите ещё раз, когда будете готовы.', 'warn');
     $('phoneBtn').disabled = true; $('phoneBtn').textContent = 'Проверяем номер';
     for (let i = 0; i < 6; i++) {
-      try { await api('poll'); const r = await api('me'); if (r.card.phoneVerified) { haptic('success'); hide($('phoneMsg')); return load(); } } catch {}
+      try { await api('poll'); const r = await api('me'); if (r.card?.phoneVerified) { haptic('success'); hide($('phoneMsg')); $('phoneBtn').disabled = false; $('phoneBtn').textContent = 'Подтвердить номер'; return load(r); } } catch {}
       await sleep(1500);
     }
     $('phoneBtn').disabled = false; $('phoneBtn').textContent = 'Подтвердить номер';
     show($('phoneMsg'), 'Номер отправлен. Подтверждение придёт в течение минуты — откройте карту заново.', 'warn');
-  });
+  };
+  try { tg.requestContact(onSent); } catch { /* окно уже открыто — второе нажатие игнорируем */ }
 };
 
 // Google Wallet: карта-ярлык, внутри кнопка «Открыть карту» → сюда, к живому QR
@@ -941,7 +1034,7 @@ function closePage() {
   curPage = null; window.scrollTo(0, 0);
   try { tg?.BackButton?.hide(); } catch {}
 }
-tg?.BackButton?.onClick?.(closePage);
+tg?.BackButton?.onClick?.(() => { if (document.querySelector('.sheet.open')) return $('scrim').onclick(); closePage(); }); // «Назад» сначала закрывает открытый лист
 document.addEventListener('click', (e) => {
   const g = e.target.closest('[data-go]'); if (g) return openPage(g.dataset.go);
   if (e.target.closest('[data-back]')) closePage();
@@ -977,9 +1070,14 @@ function renderStats(s) {
     <div class="note">Количество скидок каждого кассира должно совпадать со скидками в r_keeper за те же дни.</div>`;
 }
 
+let adminSeq = 0;
 async function loadAdmin() {
+  const seq = ++adminSeq; // быстрые переходы: рисуем только самый свежий ответ, старый не перетирает новый
+  if (!AD) $('stats').innerHTML = '<div class="skel"></div>'.repeat(4);
   try {
-    AD = await api('adminData');
+    const d = await api('adminData');
+    if (seq !== adminSeq) return;
+    AD = d;
     renderStats(AD.stats);
 
     // счётчики на главной
@@ -991,26 +1089,26 @@ async function loadAdmin() {
 
     // кассиры
     $('cashiers').innerHTML = AD.cashiers.length ? AD.cashiers.map((k) => `<div class="li ${k.status === 'active' ? '' : 'dis'}"><span class="grow">${esc(k.name)}${k.status === 'active' ? '' : '<span class="tag off">заблокирован</span>'}<span class="sub">${esc(k.branch)}</span></span>
-      ${can('cashiers') ? `<button class="pill ${k.status === 'active' ? 'red' : ''}" data-k="${k.tgId}" data-s="${k.status === 'active' ? 'off' : 'active'}">${k.status === 'active' ? 'Заблокировать' : 'Вернуть'}</button>` : ''}</div>`).join('')
+      ${can('cashiers') ? `<button class="pill ${k.status === 'active' ? 'red' : ''}" data-k="${esc(k.tgId)}" data-s="${k.status === 'active' ? 'off' : 'active'}">${k.status === 'active' ? 'Заблокировать' : 'Вернуть'}</button>` : ''}</div>`).join('')
       : '<div class="empty">Кассиров пока нет</div>';
     const curBranch = $('invBranch').value;
     $('invBranch').innerHTML = AD.branches.map((b) => `<option ${b === curBranch ? 'selected' : ''}>${esc(b)}</option>`).join('');
 
     // скидки людям
     $('staffNote').textContent = `Сотрудникам скидка ставится автоматически: ${AD.staffPercent}%`;
-    $('pInvites').innerHTML = AD.invites.length ? '<div class="caps">Коды ждут активации</div><div class="list">' + AD.invites.map((i) => `<div class="li"><span class="grow">${esc(i.label)} −${i.percent}%${i.note ? ' · ' + esc(i.note) : ''}<span class="sub">код ${esc(i.code)} · до ${fmtTime(i.expires)}</span></span>${can('people') ? `<button class="pill red" data-icancel="${esc(i.code)}">Отменить</button>` : ''}</div>`).join('') + '</div>' : '';
+    $('pInvites').innerHTML = AD.invites.length ? '<div class="caps">Коды ждут активации</div><div class="list">' + AD.invites.map((i) => `<div class="li"><span class="grow">${esc(i.label)} −${esc(i.percent)}%${i.note ? ' · ' + esc(i.note) : ''}<span class="sub">код ${esc(i.code)} · до ${fmtTime(i.expires)}</span></span>${can('people') ? `<button class="pill red" data-icancel="${esc(i.code)}">Отменить</button>` : ''}</div>`).join('') + '</div>' : '';
     const personRow = (p) => `<div class="li stack ${p.blocked ? 'dis' : ''}"><span class="grow">${esc(p.name)}${p.blocked ? '<span class="tag off">заблокирован</span>' : ''}
-      <span class="sub">−${p.percent}%${p.note ? ' · ' + esc(p.note) : ''} · ${p.usedWeek} раз за неделю</span></span>
-      ${can('people') ? `<span class="acts">${p.category !== 'staff' ? `<button class="pill" data-ppct="${p.tgId}" data-cur="${p.percent}">Изменить %</button>` : ''}
-      <button class="pill" data-pblock="${p.tgId}" data-v="${p.blocked ? 0 : 1}">${p.blocked ? 'Вернуть' : 'Пауза'}</button>
-      <button class="pill red" data-pdel="${p.tgId}">Удалить</button></span>` : ''}</div>`;
+      <span class="sub">−${esc(p.percent)}%${p.note ? ' · ' + esc(p.note) : ''} · ${esc(p.usedWeek)} раз за неделю</span></span>
+      ${can('people') ? `<span class="acts">${p.category !== 'staff' ? `<button class="pill" data-ppct="${esc(p.tgId)}" data-cur="${esc(p.percent)}">Изменить %</button>` : ''}
+      <button class="pill" data-pblock="${esc(p.tgId)}" data-v="${p.blocked ? 0 : 1}">${p.blocked ? 'Вернуть' : 'Пауза'}</button>
+      <button class="pill red" data-pdel="${esc(p.tgId)}">Удалить</button></span>` : ''}</div>`;
     $('people').innerHTML = ['regular', 'friend', 'staff'].map((c) => {
       const list = AD.people.filter((p) => p.category === c);
       return list.length ? `<div class="caps">${CAT[c]} · ${list.length}</div><div class="list">${list.map(personRow).join('')}</div>` : '';
     }).join('') || '<div class="note" style="text-align:center">Пока никого. Выдайте скидку через QR.</div>';
 
     // купоны
-    $('couponList').innerHTML = AD.coupons.length ? AD.coupons.map((c) => `<div class="li"><span class="grow"><b>${esc(c.title)}</b> −${c.discount}%<span class="sub">до ${new Date(c.expires).toLocaleDateString('ru')} · использовали ${c.used}</span></span>
+    $('couponList').innerHTML = AD.coupons.length ? AD.coupons.map((c) => `<div class="li"><span class="grow"><b>${esc(c.title)}</b> −${esc(c.discount)}%<span class="sub">до ${new Date(c.expires).toLocaleDateString('ru')} · использовали ${esc(c.used)}</span></span>
       ${can('coupons') ? `<button class="pill red" data-coff="${esc(c.id)}">Отключить</button>` : ''}</div>`).join('') : '<div class="empty">Активных купонов нет</div>';
 
     // уведомления
@@ -1024,14 +1122,14 @@ async function loadAdmin() {
       return `<div class="list">
         <div class="li ${a.status !== 'active' ? 'dis' : ''}"><span class="grow"><b>${esc(a.name)}</b>${a.super ? '<span class="tag on">главный</span>' : a.status !== 'active' ? '<span class="tag off">заблокирован</span>' : ''}
           <span class="sub">${permsText(a)}${a.addedBy ? ' · добавил ' + esc(a.addedBy) : ''}</span></span>
-          ${editable ? `<button class="pill ${a.status === 'active' ? 'red' : ''}" data-ablock="${a.tgId}" data-v="${a.status === 'active' ? 'off' : 'active'}">${a.status === 'active' ? 'Заблокировать' : 'Вернуть'}</button>` : ''}</div>
-        ${editable ? Object.keys(L).map((p) => `<label class="sw"><span>${L[p]}</span><input type="checkbox" data-aperm="${a.tgId}" value="${p}" ${a.perms.indexOf(p) >= 0 ? 'checked' : ''}></label>`).join('')
-          + `<label class="sw"><span>Получает уведомления</span><input type="checkbox" data-anotify="${a.tgId}" ${a.notify ? 'checked' : ''}></label>` : ''}
+          ${editable ? `<button class="pill ${a.status === 'active' ? 'red' : ''}" data-ablock="${esc(a.tgId)}" data-v="${a.status === 'active' ? 'off' : 'active'}">${a.status === 'active' ? 'Заблокировать' : 'Вернуть'}</button>` : ''}</div>
+        ${editable ? Object.keys(L).map((p) => `<label class="sw"><span>${esc(L[p])}</span><input type="checkbox" data-aperm="${esc(a.tgId)}" value="${esc(p)}" ${a.perms.indexOf(p) >= 0 ? 'checked' : ''}></label>`).join('')
+          + `<label class="sw"><span>Получает уведомления</span><input type="checkbox" data-anotify="${esc(a.tgId)}" ${a.notify ? 'checked' : ''}></label>` : ''}
       </div>`;
     }).join('');
-    if (!$('newPerms').innerHTML) $('newPerms').innerHTML = Object.keys(L).map((p) => `<label class="sw"><span>${L[p]}</span><input type="checkbox" data-np value="${p}"></label>`).join('');
+    if (!$('newPerms').innerHTML) $('newPerms').innerHTML = Object.keys(L).map((p) => `<label class="sw"><span>${esc(L[p])}</span><input type="checkbox" data-np value="${esc(p)}"></label>`).join('');
     applyPerms();
-  } catch (e) { $('stats').innerHTML = `<div class="msg err" style="grid-column:1/-1">${esc(e.message)}</div>`; }
+  } catch (e) { if (seq === adminSeq && !AD) $('stats').innerHTML = `<div class="msg err" style="grid-column:1/-1">${esc(e.message)}</div>`; else if (seq === adminSeq) alertMsg(e.message); }
 }
 
 async function adminAct(action, data, okMsg) {
@@ -1048,32 +1146,29 @@ $('cashiers').onclick = async (e) => {
 };
 
 // одноразовый QR кассира: сгорает после скана
-let invQr = null, invCode = null, invPoll = null;
-function stopInvite() { clearInterval(invPoll); invCode = null; $('invBox').classList.add('hidden'); $('invBtn').classList.remove('hidden'); }
+let invQr = null, invCode = null, invStop = null;
+function stopInvite() { invStop?.(); invStop = null; invCode = null; $('invBox').classList.add('hidden'); $('invBtn').classList.remove('hidden'); }
 $('invBtn').onclick = async () => {
   $('invBtn').disabled = true; hide($('invMsg'));
   try {
     const r = await api('adminInvite', { branch: $('invBranch').value });
-    invCode = r.code;
+    const code = r.code; invStop?.(); invCode = code;
+    invQr = await makeQr($('invQr'), r.link, invQr);
     $('invBox').classList.remove('hidden'); enter($('invBox')); $('invBtn').classList.add('hidden');
-    if (!invQr) invQr = new QRCode($('invQr'), { text: r.link, width: 400, height: 400, correctLevel: QRCode.CorrectLevel.M });
-    else invQr.makeCode(r.link);
     $('invInfo').textContent = `${r.branch} · ждёт сканирования`;
-    clearInterval(invPoll);
-    invPoll = setInterval(async () => {
-      try {
-        const s = await api('adminInviteStatus', { code: invCode });
-        if (s.status === 'used') { stopInvite(); haptic('success'); show($('invMsg'), `${s.usedName} добавлен кассиром. QR сгорел.`, true); loadAdmin(); }
-        else if (s.status !== 'new') { stopInvite(); show($('invMsg'), 'QR отменён'); }
-      } catch {}
-    }, 2500);
+    invStop = every(2500, async () => {
+      const s = await api('adminInviteStatus', { code });
+      if (code !== invCode) return; // ответ по старому QR — новый не трогаем
+      if (s.status === 'used') { stopInvite(); haptic('success'); show($('invMsg'), `${s.usedName} добавлен кассиром. QR сгорел.`, true); loadAdmin(); }
+      else if (s.status !== 'new') { stopInvite(); show($('invMsg'), 'QR отменён'); }
+    });
   } catch (e) { alertMsg(e.message); }
   $('invBtn').disabled = false;
 };
-$('invCancel').onclick = async () => { const c = invCode; stopInvite(); try { await api('adminInviteCancel', { code: c }); show($('invMsg'), 'QR отменён', true); } catch {} };
+$('invCancel').onclick = async () => { const c = invCode; if (!c) return; stopInvite(); try { await api('adminInviteCancel', { code: c }); show($('invMsg'), 'QR отменён', true); } catch (e) { show($('invMsg'), e.message); } };
 
 // скидки людям
-let pCat = 'regular', pQr = null, pQrCode = null, pQrPoll = null, pCodeText = '';
+let pCat = 'regular', pQr = null, pQrCode = null, pQrStop = null, pCodeText = '';
 function setCat(c) {
   pCat = c; tick();
   [['catRegular', 'regular'], ['catFriend', 'friend'], ['catStaff', 'staff']].forEach(([id, k]) => $(id).classList.toggle('active', c === k));
@@ -1087,30 +1182,29 @@ $('catFriend').onclick = () => setCat('friend');
 $('catStaff').onclick = () => setCat('staff');
 setCat('regular');
 const inviteData = (kind) => ({ kind, category: pCat, percent: $('pPercent').value, note: $('pNote').value });
-function stopPersonQr() { clearInterval(pQrPoll); pQrCode = null; $('pQrBox').classList.add('hidden'); }
+function stopPersonQr() { pQrStop?.(); pQrStop = null; pQrCode = null; $('pQrBox').classList.add('hidden'); }
 
 $('pQrBtn').onclick = async () => {
-  hide($('pMsg')); $('pCodeBox').classList.add('hidden');
+  hide($('pMsg')); $('pCodeBox').classList.add('hidden'); $('pQrBtn').disabled = true;
   try {
     const r = await api('adminPersonInvite', inviteData('qr'));
-    pQrCode = r.code; $('pQrBox').classList.remove('hidden'); enter($('pQrBox'));
-    if (!pQr) pQr = new QRCode($('pQr'), { text: r.link, width: 400, height: 400, correctLevel: QRCode.CorrectLevel.M });
-    else pQr.makeCode(r.link);
-    $('pQrInfo').textContent = `${CAT1[r.category]} · −${r.percent}% · пусть отсканирует камерой телефона`;
-    clearInterval(pQrPoll);
-    pQrPoll = setInterval(async () => {
-      try {
-        const st = await api('adminPersonInviteStatus', { code: pQrCode });
-        if (st.status === 'used') { stopPersonQr(); haptic('success'); show($('pMsg'), `${st.usedName} получил скидку. QR сгорел.`, true); $('pPercent').value = ''; $('pNote').value = ''; loadAdmin(); }
-        else if (st.status !== 'new') { stopPersonQr(); show($('pMsg'), 'QR отменён'); }
-      } catch {}
-    }, 2500);
+    const code = r.code; pQrStop?.(); pQrCode = code;
+    pQr = await makeQr($('pQr'), r.link, pQr);
+    $('pQrBox').classList.remove('hidden'); enter($('pQrBox'));
+    $('pQrInfo').textContent = `${CAT1[r.category] || ''} · −${r.percent}% · пусть отсканирует камерой телефона`;
+    pQrStop = every(2500, async () => {
+      const st = await api('adminPersonInviteStatus', { code });
+      if (code !== pQrCode) return;
+      if (st.status === 'used') { stopPersonQr(); haptic('success'); show($('pMsg'), `${st.usedName} получил скидку. QR сгорел.`, true); $('pPercent').value = ''; $('pNote').value = ''; loadAdmin(); }
+      else if (st.status !== 'new') { stopPersonQr(); show($('pMsg'), 'QR отменён'); }
+    });
   } catch (e) { show($('pMsg'), e.message); }
+  $('pQrBtn').disabled = false;
 };
-$('pQrCancel').onclick = async () => { const c = pQrCode; stopPersonQr(); try { await api('adminPersonInviteCancel', { code: c }); show($('pMsg'), 'QR отменён', true); } catch {} };
+$('pQrCancel').onclick = async () => { const c = pQrCode; if (!c) return; stopPersonQr(); try { await api('adminPersonInviteCancel', { code: c }); show($('pMsg'), 'QR отменён', true); } catch (e) { show($('pMsg'), e.message); } };
 
 $('pCodeBtn').onclick = async () => {
-  hide($('pMsg')); stopPersonQr();
+  hide($('pMsg')); stopPersonQr(); $('pCodeBtn').disabled = true;
   try {
     const r = await api('adminPersonInvite', inviteData('code'));
     pCodeText = `Seven Times: персональная скидка ${r.percent}% для вас. Откройте ссылку в Telegram (действует 24 часа, только для вас):\n${r.link}\n\nЕсли ссылка не открылась — откройте карту Seven Times и введите код: ${r.code}`;
@@ -1119,10 +1213,20 @@ $('pCodeBtn').onclick = async () => {
     $('pCodeText').textContent = r.code;
     loadAdmin();
   } catch (e) { show($('pMsg'), e.message); }
+  $('pCodeBtn').disabled = false;
 };
+// clipboard API в WebView Telegram бывает запрещён — тогда старый способ, а если и он не сработал, показываем текст для ручного копирования
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch {}
+  try {
+    const ta = document.createElement('textarea'); ta.value = text; ta.readOnly = true; ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+    document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, text.length);
+    const ok = document.execCommand('copy'); ta.remove(); return ok;
+  } catch { return false; }
+}
 $('pCodeCopy').onclick = async () => {
-  try { await navigator.clipboard.writeText(pCodeText); haptic('success'); alertMsg('Скопировано. Отправьте человеку лично.'); }
-  catch { alertMsg(pCodeText); }
+  if (await copyText(pCodeText)) { haptic('success'); alertMsg('Скопировано. Отправьте человеку лично.'); }
+  else show($('pMsg'), 'Не удалось скопировать. Зажмите текст, выделите и отправьте:\n\n' + pCodeText, 'warn');
 };
 
 $('pInvites').onclick = async (e) => {
@@ -1137,50 +1241,54 @@ $('people').onclick = async (e) => {
 };
 
 // админы
-let admQr = null, admCode = null, admPoll = null;
-function stopAdmQr() { clearInterval(admPoll); admCode = null; $('admQrBox').classList.add('hidden'); $('admQrBtn').classList.remove('hidden'); }
+let admQr = null, admCode = null, admStop = null;
+function stopAdmQr() { admStop?.(); admStop = null; admCode = null; $('admQrBox').classList.add('hidden'); $('admQrBtn').classList.remove('hidden'); }
 $('admQrBtn').onclick = async () => {
   hide($('admMsg'));
   const perms = [...document.querySelectorAll('input[data-np]:checked')].map((x) => x.value);
   if (!perms.length && !(await ask('Всё выключено: админ сможет только смотреть отчёт и журнал. Создать QR?'))) return;
+  $('admQrBtn').disabled = true;
   try {
     const r = await api('adminAdminInvite', { perms });
-    admCode = r.code; $('admQrBox').classList.remove('hidden'); enter($('admQrBox')); $('admQrBtn').classList.add('hidden');
-    if (!admQr) admQr = new QRCode($('admQr'), { text: r.link, width: 400, height: 400, correctLevel: QRCode.CorrectLevel.M });
-    else admQr.makeCode(r.link);
-    clearInterval(admPoll);
-    admPoll = setInterval(async () => {
-      try {
-        const st = await api('adminAdminInviteStatus', { code: admCode });
-        if (st.status === 'used') { stopAdmQr(); haptic('success'); show($('admMsg'), `${st.usedName} стал админом. Админка откроется, когда он подтвердит номер.`, true); document.querySelectorAll('input[data-np]').forEach((x) => { x.checked = false; }); loadAdmin(); }
-        else if (st.status !== 'new') { stopAdmQr(); show($('admMsg'), 'QR отменён'); }
-      } catch {}
-    }, 2500);
+    const code = r.code; admStop?.(); admCode = code;
+    admQr = await makeQr($('admQr'), r.link, admQr);
+    $('admQrBox').classList.remove('hidden'); enter($('admQrBox')); $('admQrBtn').classList.add('hidden');
+    admStop = every(2500, async () => {
+      const st = await api('adminAdminInviteStatus', { code });
+      if (code !== admCode) return;
+      if (st.status === 'used') { stopAdmQr(); haptic('success'); show($('admMsg'), `${st.usedName} стал админом. Админка откроется, когда он подтвердит номер.`, true); document.querySelectorAll('input[data-np]').forEach((x) => { x.checked = false; }); loadAdmin(); }
+      else if (st.status !== 'new') { stopAdmQr(); show($('admMsg'), 'QR отменён'); }
+    });
   } catch (e) { show($('admMsg'), e.message); }
+  $('admQrBtn').disabled = false;
 };
-$('admQrCancel').onclick = async () => { const c = admCode; stopAdmQr(); try { await api('adminAdminInviteCancel', { code: c }); show($('admMsg'), 'QR отменён', true); } catch {} };
+$('admQrCancel').onclick = async () => { const c = admCode; if (!c) return; stopAdmQr(); try { await api('adminAdminInviteCancel', { code: c }); show($('admMsg'), 'QR отменён', true); } catch (e) { show($('admMsg'), e.message); } };
 $('admins').onclick = async (e) => {
   const b = e.target.closest('button[data-ablock]'); if (!b) return;
   if (b.dataset.v === 'off' && !(await ask('Заблокировать админа? Админка у него сразу пропадёт.'))) return;
   adminAct('adminAdminUpdate', { tgId: b.dataset.ablock, status: b.dataset.v }, false);
 };
-$('admins').onchange = async (e) => {
-  const cb = e.target;
-  try {
-    if (cb.dataset.aperm) {
-      const id = cb.dataset.aperm;
-      const perms = [...document.querySelectorAll(`input[data-aperm="${id}"]:checked`)].map((x) => x.value);
-      await api('adminAdminUpdate', { tgId: id, perms });
-    } else if (cb.dataset.anotify) await api('adminAdminUpdate', { tgId: cb.dataset.anotify, notify: cb.checked });
-    tick();
-  } catch (err) { cb.checked = !cb.checked; alertMsg(err.message); }
+// переключатели прав уходят строго по очереди: иначе два быстрых тапа приходят на сервер в обратном порядке и права перетираются
+let admQueue = Promise.resolve();
+$('admins').onchange = (e) => {
+  const cb = e.target; if (!cb.dataset.aperm && !cb.dataset.anotify) return;
+  admQueue = admQueue.then(async () => {
+    try {
+      if (cb.dataset.aperm) {
+        const id = cb.dataset.aperm;
+        const perms = [...document.querySelectorAll(`input[data-aperm="${CSS.escape(id)}"]:checked`)].map((x) => x.value);
+        await api('adminAdminUpdate', { tgId: id, perms });
+      } else await api('adminAdminUpdate', { tgId: cb.dataset.anotify, notify: cb.checked });
+      tick();
+    } catch (err) { cb.checked = !cb.checked; alertMsg(err.message); }
+  });
 };
 
 // журнал всех действий
 function logLine(e) {
   const m = e.meta || {};
   const parts = [];
-  if (e.guest) parts.push(`${esc(e.guest)} · ${e.card}`);
+  if (e.guest) parts.push(`${esc(e.guest)} · ${esc(e.card)}`);
   const catName = (c) => ({ regular: 'постоянный гость', staff: 'сотрудник', friend: 'знакомый' })[c] || c;
   if (e.type === 'discount_use') parts.push(`${catName(m.category)} −${m.percent}%${m.sum ? ` · чек ${money(m.sum)} ₸` : ''}`);
   if (e.type === 'rejected') parts.push(esc(m.reason === 'bad_code' ? 'старый или чужой QR' : m.reason || ''));
@@ -1195,15 +1303,18 @@ function logLine(e) {
   const bad = e.type === 'rejected';
   return `<div class="li"><span class="grow"><b style="${bad ? 'color:var(--red)' : ''}">${esc(e.label)}</b>${parts.map((p) => `<span class="sub">${p}</span>`).join('')}${who ? `<span class="sub" style="color:var(--text-3)">${who}</span>` : ''}</span><time>${fmtTime(e.ts)}</time></div>`;
 }
+let logSeq = 0;
 async function loadLog() {
+  const seq = ++logSeq;
   try {
     const cur = $('logCashier').value;
     const r = await api('adminLog', { cashier: cur, type: $('logType').value, limit: 150 });
+    if (seq !== logSeq) return; // фильтр успели поменять — этот ответ уже не нужен
     const names = [...new Set(r.cashiers)];
     $('logCashier').innerHTML = '<option value="">Все кассиры</option>' + names.map((n) => `<option ${n === cur ? 'selected' : ''}>${esc(n)}</option>`).join('');
     $('logList').innerHTML = r.events.length ? r.events.map(logLine).join('') : '<div class="empty">Пока пусто</div>';
     enter($('logList'));
-  } catch (e) { $('logList').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+  } catch (e) { if (seq === logSeq) $('logList').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }
 $('logBtn').onclick = () => { tick(); loadLog(); };
 $('logCashier').onchange = loadLog;
@@ -1233,13 +1344,13 @@ $('pushBtn').onclick = async () => {
 
 // поиск и блокировка карт
 async function find() {
-  if (!$('q').value.trim()) return;
+  if (!$('q').value.trim() || $('qBtn').disabled) return; // Enter при идущем поиске не плодит запросы
   $('qBtn').disabled = true;
   try {
     const r = await api('adminFind', { q: $('q').value });
     $('found').classList.remove('hidden');
-    $('found').innerHTML = r.cards.length ? r.cards.map((c) => `<div class="li ${c.blocked ? 'dis' : ''}"><span class="grow">${esc(c.name)} · <b>${c.id}</b>${c.blocked ? '<span class="tag off">заблокирована</span>' : ''}<span class="sub">${c.phone ? '+' + esc(c.phone) : 'номер не подтверждён'} · ${c.group ? esc(c.group) : 'без скидки'} · визитов ${c.visits}</span></span>
-      <button class="pill ${c.blocked ? '' : 'red'}" data-b="${c.id}" data-v="${c.blocked ? 0 : 1}">${c.blocked ? 'Вернуть' : 'Заблокировать'}</button></div>`).join('') : '<div class="empty">Ничего не найдено</div>';
+    $('found').innerHTML = r.cards.length ? r.cards.map((c) => `<div class="li ${c.blocked ? 'dis' : ''}"><span class="grow">${esc(c.name)} · <b>${esc(c.id)}</b>${c.blocked ? '<span class="tag off">заблокирована</span>' : ''}<span class="sub">${c.phone ? '+' + esc(c.phone) : 'номер не подтверждён'} · ${c.group ? esc(c.group) : 'без скидки'} · визитов ${esc(c.visits)}</span></span>
+      <button class="pill ${c.blocked ? '' : 'red'}" data-b="${esc(c.id)}" data-v="${c.blocked ? 0 : 1}">${c.blocked ? 'Вернуть' : 'Заблокировать'}</button></div>`).join('') : '<div class="empty">Ничего не найдено</div>';
     enter($('found'));
   } catch (e) { $('found').classList.remove('hidden'); $('found').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
   $('qBtn').disabled = false;
@@ -1280,22 +1391,50 @@ $('tabCard').onclick = () => tab('card');
 $('tabKassa').onclick = () => tab('kassa');
 $('tabAdmin').onclick = () => tab('admin');
 
-let firstLoad = true;
-async function load() {
+// Кэш карты: при повторном открытии карта на экране сразу, свежие данные догружаются следом.
+// Храним только то, что нужно для отрисовки; ключ — id пользователя (на одном телефоне бывает несколько аккаунтов Telegram)
+const uid = tg?.initDataUnsafe?.user?.id;
+const CACHE = uid ? 'st_me_v1_' + uid : '';
+function saveMe(m) {
+  if (!CACHE || !m?.card) return;
+  const c = m.card;
+  const slim = { cashier: m.cashier ? { name: m.cashier.name, branch: m.cashier.branch } : null, admin: !!m.admin, wallet: !!m.wallet, walletApple: !!m.walletApple, adminNeedsPhone: !!m.adminNeedsPhone,
+    card: { name: c.name, id: c.id, phoneVerified: !!c.phoneVerified, blocked: !!c.blocked, invited: !!c.invited, wallet: c.wallet || null, coupons: Array.isArray(c.coupons) ? c.coupons : [] } };
+  try { localStorage.setItem(CACHE, JSON.stringify(slim)); } catch {}
+}
+function readMe() {
+  if (!CACHE) return null;
   try {
-    me = await api('me');
-    $('loader').classList.add('hidden');
-    $('hello').textContent = me.cashier ? me.cashier.name : `Здравствуйте, ${me.card.name}`;
-    if (me.cashier) $('hello').insertAdjacentHTML('beforeend', `<div class="muted" style="font-size:15px;font-weight:400;letter-spacing:0">${esc(me.cashier.branch)}</div>`);
-    renderCard(me.card);
-    if (firstLoad) enter($('guest'));
-    if (me.card.phoneVerified && !codeTimer) refreshCode(); // QR только после подтверждения номера
-    const multi = !!(me.cashier || me.admin);
-    $('tabs').classList.toggle('hidden', !multi);
-    $('tabKassa').classList.toggle('hidden', !me.cashier);
-    $('tabAdmin').classList.toggle('hidden', !me.admin);
-    if (multi) requestAnimationFrame(() => segMove($('tabs')));
-    if (me.adminNeedsPhone) $('phoneText').textContent = 'Подтвердите номер — откроются карта, QR и админ-панель.';
+    const m = JSON.parse(localStorage.getItem(CACHE) || 'null');
+    if (!m?.card) return null;
+    m.card.coupons = (m.card.coupons || []).filter((x) => new Date(x.expires) > Date.now()); // истёкшие купоны из кэша не показываем
+    return m;
+  } catch { return null; }
+}
+
+let painted = false;
+function renderMe() {
+  $('loader').classList.add('hidden'); $('failBox').classList.add('hidden');
+  $('hello').textContent = me.cashier ? me.cashier.name : `Здравствуйте, ${me.card.name || 'гость'}`;
+  if (me.cashier) $('hello').insertAdjacentHTML('beforeend', `<div class="muted" style="font-size:15px;font-weight:400;letter-spacing:0">${esc(me.cashier.branch)}</div>`);
+  if (me.adminNeedsPhone) $('phoneText').textContent = 'Подтвердите номер — откроются карта, QR и админ-панель.';
+  renderCard(me.card);
+  if (!painted) { enter($('guest')); painted = true; }
+  const multi = !!(me.cashier || me.admin);
+  $('tabs').classList.toggle('hidden', !multi);
+  $('tabKassa').classList.toggle('hidden', !me.cashier);
+  $('tabAdmin').classList.toggle('hidden', !me.admin);
+  if ((curTab === 'kassa' && !me.cashier) || (curTab === 'admin' && !me.admin)) tab('card'); // права сняли — вкладка закрывается
+  if (multi) requestAnimationFrame(() => segMove($('tabs')));
+}
+
+let firstLoad = true, loadTry = 0;
+async function load(pre) {
+  try {
+    me = pre || await api('me');
+    loadTry = 0; saveMe(me);
+    renderMe();
+    if (me.card.phoneVerified) startCode(); else stopCode(); // QR только после подтверждения номера
     if (firstLoad) {
       const inv = me.invite;
       if (inv?.joined) { haptic('success'); tab('kassa'); kassaResult(`<div class="msg ok" style="display:block">Вы кассир Seven Times, ${esc(inv.branch)}. Сканируйте QR с карты гостя.</div>`); }
@@ -1308,11 +1447,22 @@ async function load() {
       else if (inv?.error) show($('inviteMsg'), inv.error);
     }
     firstLoad = false;
-  } catch (e) { $('loader').classList.add('hidden'); $('hello').textContent = e.message; }
+  } catch (e) {
+    if (painted) { if (++loadTry <= 4) setTimeout(load, 3000 * loadTry); return; } // карта уже на экране из кэша — тихо пробуем ещё
+    $('loader').classList.add('hidden');
+    $('hello').textContent = 'Карта не загрузилась';
+    $('failText').textContent = e.message; $('failBox').classList.remove('hidden');
+  }
 }
+$('failBtn').onclick = () => { $('failBox').classList.add('hidden'); $('loader').classList.remove('hidden'); $('hello').innerHTML = '&nbsp;'; load(); };
 
 if (!tg?.initData) { $('loader').classList.add('hidden'); $('hello').textContent = 'Откройте карту через бота Seven Times в Telegram'; }
 else {
+  const cached = readMe();
+  if (cached) {
+    me = cached; renderMe();
+    if (me.card.phoneVerified && !me.card.blocked) startCode(); // код просим сразу, параллельно с профилем: QR на экране на целый запрос раньше
+  }
   load();
   api('poll').catch(() => {}); // заодно забираем сообщения, которые ждут у бота
 }
