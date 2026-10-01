@@ -1025,7 +1025,14 @@ function paintStatus(s) {
 }
 // Нажал на карту — фирменная анимация своего статуса: волна, золотая монета, голограмма, неон, пар, у Owner — всё сразу
 let tapBusy = 0;
+let previewAt = 0;
 $('wallet').addEventListener('click', (e) => {
+  // главный админ: каждое нажатие на свою карту — ролик следующего статуса по кругу (посмотреть, что видят гости)
+  if (cardStatus === 'owner' && typeof playCine === 'function') {
+    const all = Object.keys(STATUSES), k = all[previewAt++ % all.length];
+    tick(); playCine({ kind: k, title: 'Просмотр: ' + STATUSES[k].name, text: `Ролик ${all.indexOf(k) + 1} из ${all.length}. Нажмите на свою карту ещё раз — покажу следующий.`, btn: 'Закрыть' });
+    return;
+  }
   if (tapBusy || calm) return;
   const w = $('wallet'), r = w.getBoundingClientRect(), s = cardStatus || 'classic';
   const fx = r.width ? (e.clientX - r.left) / r.width : .5, fy = r.height ? (e.clientY - r.top) / r.height : .5;
@@ -1688,6 +1695,7 @@ function playCine(o) {
   const holder = $('rvCard'), front = $('wallet').cloneNode(true);
   front.removeAttribute('id'); front.classList.remove('flip', 'live', 'tap'); front.querySelectorAll('[id]').forEach((x) => x.removeAttribute('id'));
   front.dataset.s = kind; const stl = front.querySelector('.w-status'); if (stl) stl.textContent = STATUSES[kind].name;
+  const hl = front.querySelector('.w-holder .w-label'); if (hl) hl.textContent = { owner: 'Founder', team: 'Partner', black: 'Insider' }[kind] || 'Friend';
   front.classList.add('bare');
   // настоящая карта: обратная сторона, ребро толщиной 6px, лицевая; поверх — блик и тень, которые считает свет
   const back = document.createElement('div'); back.className = 'cn-back'; back.innerHTML = '<i></i><b></b><span>SEVEN TIMES</span>';
