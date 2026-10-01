@@ -399,6 +399,12 @@
   .reveal[data-k="team"] { background: radial-gradient(120% 80% at 50% 38%, #2a160a, #000 75%); }
   .reveal[data-k="owner"] { background: radial-gradient(120% 80% at 50% 38%, #1f1036, #030106 75%); }
   .cn-fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  /* ролик из Blender: стоит под картой так, что последний кадр совпадает с живой картой */
+  .cn-vid { position: fixed; left: 0; top: 0; width: 0; height: 0; object-fit: cover; background: #000; opacity: 0; pointer-events: none; transition: opacity .35s; }
+  .reveal.vid { background: #000; }
+  .reveal.vid .cn-vid { opacity: 1; }
+  .reveal.vid .cn-prop { display: none; }
+  .reveal.vid.vidout .cn-vid { opacity: 0; }
   .cn-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 4; }
   .cn-scene { position: relative; z-index: 2; width: min(100%, 400px); display: flex; flex-direction: column; align-items: center; }
   .rv-stage { perspective: 1100px; width: 100%; position: relative; }
@@ -790,6 +796,7 @@
 <!-- нижние листы -->
 <div class="reveal" id="reveal" role="dialog" aria-modal="true" aria-label="Карта создана">
   <canvas class="cn-fx" id="cnFx"></canvas>
+  <video class="cn-vid" id="cnVid" muted playsinline preload="none"></video>
   <div class="cn-flash" id="cnFlash"></div>
   <div class="cn-scene" id="cnScene">
     <div class="rv-stage" id="cnStage"><div class="cn-prop" id="cnProp"></div><div class="rv-card" id="rvCard"></div></div>
@@ -1303,6 +1310,7 @@ const Snd = (() => {
     tick(t) { noise(t, .012, 'highpass', 5000, 0, .1, .001, { send: .3 }); },
     sparkle(t) { for (let i = 0; i < 5; i++) bell(t + i * .06, 2600 + Math.random() * 2400, .025, .5); },
     shimmer(t) { noise(t, 1.4, 'bandpass', 5000, 9000, .06, .5, { q: 4, sweep: 1, send: 1.4 }); [0, 4, 7, 11].forEach((s, i) => bell(t + .15 + i * .15, 1318 * 2 ** (s / 12), .04, 1.6)); },
+    hiss(t, d) { d = d || 1.6; noise(t, d, 'highpass', 2500, 7000, .07, .25, { send: .8, sweep: .4 }); },
     pour(t, d) { d = d || 1.2; for (let i = 0; i < 10; i++) noise(t + i * d / 10, .09, 'bandpass', 500 + Math.random() * 700, 0, .09, .01, { q: 6, send: .5 }); noise(t, d, 'lowpass', 600, 300, .12, .15, { send: .4 }); },
   };
   // пока контекст «просыпается», звук встаёт в очередь
@@ -1639,6 +1647,31 @@ function cineLight(on) {
   step();
 }
 
+// Ролики, отрендеренные в Blender: есть файл — играет он (звук — из карты, точно по таймингу),
+// нет файла или он не начал играть за 2,5 с — играет ролик кодом. card — доля ширины кадра, которую карта занимает в финале
+const CINE_VIDEO = {
+  gold: { src: 'cine/gold', poster: 'cine/gold.jpg', card: .88,
+    cues: [[0, 'riser', 3.4], [.2, 'rumble', 3], [1, 'pour', 2.4], [2.3, 'hiss', 2], [4.2, 'shimmer'], [5.55, 'land']] },
+};
+function cineVideoPlace(v, holder, frac) {
+  const r = holder.getBoundingClientRect(), w = r.width / frac, h = w * 16 / 9;
+  Object.assign(v.style, { width: w + 'px', height: h + 'px', left: (r.left + r.width / 2 - w / 2) + 'px', top: (r.top + r.height / 2 - h / 2) + 'px' });
+}
+function cineVideo(vc, holder, tok, later) {
+  const v = $('cnVid');
+  return new Promise((res) => {
+    let started = false, done = false;
+    const end = (ok) => { if (done) return; done = true; clearTimeout(fail); v.onended = v.onerror = null; res(ok && tok === cineTok); };
+    const fail = setTimeout(() => { if (!started) { try { v.pause(); } catch {} end(false); } }, 2500);
+    v.onerror = () => end(false);
+    v.onended = () => end(true);
+    cineVideoPlace(v, holder, vc.card);
+    try { v.currentTime = 0; } catch {}
+    v.play().then(() => { started = true; clearTimeout(fail); (vc.cues || []).forEach(([t, n, a]) => later(() => { Snd.play(n, a); if (n === 'land') hap('heavy'); }, t * 1000)); })
+      .catch(() => end(false));
+  });
+}
+
 // Показать ролик. o: { kind, title, text, btn }
 function playCine(o) {
   o = o || {};
@@ -1665,7 +1698,16 @@ function playCine(o) {
   if (rvStop) { rvStop(); rvStop = null; }
   cineLight(true);
   $('cnProp').innerHTML = CINE_PROPS[kind]; $('cnHint').textContent = CINE_HINT[kind];
-  Scene.start(); ov.classList.add('open');
+  Scene.start(); ov.classList.add('open'); ov.classList.remove('vid', 'vidout');
+  const vc = CINE_VIDEO[kind], vid = $('cnVid');
+  if (vc && !calm) { // видео грузится, пока человек читает подсказку; первый кадр — светящаяся форма
+    const src = vc.src + (vid.canPlayType('video/mp4; codecs="avc1.42E01E"') ? '.mp4' : '.webm'); // iPhone и Android — mp4, остальным — webm
+    if (vid.getAttribute('src') !== src) { vid.src = src; vid.poster = vc.poster || ''; }
+    vid.onerror = () => { ov.classList.remove('vid'); $('cnHint').textContent = CINE_HINT[kind]; }; // файла нет — сразу показываем сцену кодом
+    $('cnHint').textContent = 'Нажмите, чтобы начать';
+    vid.preload = 'auto'; try { vid.load(); } catch {} ov.classList.add('vid');
+    requestAnimationFrame(() => cineVideoPlace(vid, holder, vc.card));
+  }
   if (calm) return cineDone(tok); // «уменьшение движения» — сразу готовая карта
   const later = (fn, ms) => { const id = setTimeout(() => { if (tok === cineTok) fn(); }, ms); cineTimers.push(id); };
   const w = (ms) => new Promise((res, rej) => { later(res, ms); setTimeout(() => { if (tok !== cineTok) rej(STOP); }, ms + 5); });
@@ -1674,7 +1716,11 @@ function playCine(o) {
     ov.classList.add('go'); Snd.init(); tick();
     const x = { w, later, holder, front, prop: $('cnProp'), scene: $('cnScene') };
     try {
-      await CINE[kind](x);
+      const vc = CINE_VIDEO[kind];
+      if (vc && await cineVideo(vc, holder, tok, later)) { // ролик из Blender доиграл — живая карта проявляется ровно поверх последнего кадра
+        holder.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, fill: 'forwards' });
+        later(() => ov.classList.add('vidout'), 320);
+      } else { ov.classList.remove('vid'); await CINE[kind](x); }
       Snd.play('thump'); hap('medium');
       const cv = front.querySelector('canvas'); if (cv && !rvStop) { rvStop = cardFx(cv, STATUSES[kind].fx); rvStop.burst(.5, .5, 1.6); }
       await w(cineText(kind, front, tok, later));
@@ -1704,7 +1750,7 @@ document.addEventListener('pointerdown', () => Snd.init(), { once: true, passive
 $('rvAgain').onclick = (e) => { e.stopPropagation(); playCine(cineOpts); };
 $('rvOk').onclick = (e) => {
   e.stopPropagation(); cineTok++;
-  $('reveal').classList.remove('open', 'done', 'go'); revealing = false;
+  $('reveal').classList.remove('open', 'done', 'go'); revealing = false; try { $('cnVid').pause(); } catch {}
   setTimeout(() => { if (!revealing) { Scene.stop(); cineLight(false); if (rvStop) { rvStop(); rvStop = null; } } }, 450);
   enter($('guest'));
   if (pendingNotice) { const n = pendingNotice; pendingNotice = null; setTimeout(() => showNotice(n), 350); }
