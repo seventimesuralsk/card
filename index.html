@@ -424,7 +424,7 @@
   .reveal.done .rv-after > *:nth-child(2) { animation-delay: .1s; } .reveal.done .rv-after > *:nth-child(3) { animation-delay: .22s; } .reveal.done .rv-after > *:nth-child(4) { animation-delay: .32s; }
   .rv-title { color: #fff; font-size: 30px; font-weight: 700; letter-spacing: -.03em; margin: 0; text-align: center; }
   .reveal.done[data-k="gold"] .rv-title, .reveal.done[data-k="owner"] .rv-title { background: linear-gradient(90deg, #d9a93f, #fff1c2 50%, #d9a93f); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shimmer 3s linear infinite, rise .6s var(--ease) both; }
-  .reveal.done[data-k="platinum"] .rv-title { background: linear-gradient(90deg, #ff9ce0, #9ce4ff, #d9ff9c, #ffe79c, #ff9ce0); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shimmer 3s linear infinite, rise .6s var(--ease) both; }
+  .reveal.done[data-k="platinum"] .rv-title { background: linear-gradient(90deg, #9aa1ab, #ffffff 50%, #9aa1ab); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shimmer 3s linear infinite, rise .6s var(--ease) both; }
   .rv-text { color: rgba(255,255,255,.72); font-size: 16px; line-height: 1.4; margin: 8px 12px 0; text-align: center; max-width: 340px; }
   .reveal .btn { max-width: 360px; margin-top: 24px; background: #fff; color: #000; }
   .cn-again { border: 0; background: none; color: rgba(255,255,255,.7); font-size: 15px; margin-top: 12px; padding: 8px 14px; }
@@ -1502,7 +1502,7 @@ function cineText(kind, front, tok, later) {
   const stAt = nameAt + ns.length * 38 + 250;
   A(st, [{ opacity: 0, transform: 'scale(3)', filter: 'blur(10px)' }, { opacity: 1, transform: 'scale(.9)', filter: 'blur(0px)', offset: .7 }, { opacity: 1, transform: 'none', filter: 'blur(0px)' }], { duration: 750, delay: stAt });
   later(() => {
-    const c = ctr(st || front); Scene.burst(c.x, c.y, { n: 40, colors: kind === 'gold' || kind === 'owner' ? ['#fff1c2', '#ffd978'] : kind === 'platinum' ? ['#ff9ce0', '#9ce4ff', '#d9ff9c'] : ['#fff', '#cfe0ff'], speed: 260, g: 80 });
+    const c = ctr(st || front); Scene.burst(c.x, c.y, { n: 40, colors: kind === 'gold' || kind === 'owner' ? ['#fff1c2', '#ffd978'] : kind === 'platinum' ? ['#ffffff', '#dfe3e8'] : ['#fff', '#cfe0ff'], speed: 260, g: 80 });
     Snd.play('chime', { classic: 880, gold: 1046, platinum: 1318, black: 659, team: 784, owner: 523 }[kind]); if (kind === 'owner' || kind === 'black') Snd.play('chord', kind === 'owner' ? 131 : 98);
   }, stAt + 450);
   return stAt + 1100;
@@ -1558,7 +1558,7 @@ const CINE = {
     for (const t of [450, 950, 1350]) later(() => { $('cnStage').animate([{ transform: 'translateX(-8px) skewX(-8deg)', filter: 'hue-rotate(90deg) brightness(1.6)' }, { transform: 'translateX(6px)', filter: 'none' }, { transform: 'none', filter: 'none' }], { duration: 150 }); Snd.play('tick'); hap('light'); }, t);
     await w(1700);
     const c = ctr(holder); flash('#d9fbff', 480, .85); Snd.play('pop'); hap('heavy');
-    Scene.ring(c.x, c.y, '#7dfcff'); Scene.burst(c.x, c.y, { n: 100, colors: ['#ff9ce0', '#9ce4ff', '#d9ff9c', '#ffe79c', '#fff'], speed: 580, g: 90 });
+    Scene.ring(c.x, c.y, '#7dfcff'); Scene.burst(c.x, c.y, { n: 70, colors: ['#ffffff', '#dfe3e8'], speed: 520, g: 90 });
     A(wire, [{ opacity: 1 }, { opacity: 0 }], { duration: 600, fill: 'forwards' }); A(beam, [{ opacity: 1 }, { opacity: 0 }], { duration: 800, fill: 'forwards' });
     later(() => Scene.matrix(false), 1400);
   },
