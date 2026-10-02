@@ -842,7 +842,7 @@
 <script>
 // URL своего Apps Script (…/exec)
 // Версия карты — показывается в админке рядом с версией сервера
-const APP_VERSION = 'v18';
+const APP_VERSION = 'v19';
 const API_URL = 'https://script.google.com/macros/s/AKfycbwCX9KKmbaaY3Vy8coCwtipc0kNXvCLgA7nmPMqGTkQq8ISY8DolGMdQSodyG4DvkR6qA/exec';
 
 const tg = window.Telegram?.WebApp;
@@ -1948,7 +1948,7 @@ async function loadKassaLog() {
     $('kLog').innerHTML = r.scans.length ? r.scans.map((x) => {
       const d = new Date(x.ts);
       const when = d.toDateString() === today ? d.toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' }) : fmtTime(x.ts);
-      const res = !x.ok ? '<span class="tag off">отказ</span>' : x.kind === 'again' ? '<span class="tag">повтор</span>' : x.percent ? `<span class="tag on">−${esc(x.percent)}%</span>` : '<span class="tag">визит</span>';
+      const res = !x.ok ? '<span class="tag off">отказ</span>' : x.kind === 'noact' ? `<span class="tag off">не активировал${x.percent ? ' −' + esc(x.percent) + '%' : ''}</span>` : x.kind === 'waiting' ? '<span class="tag warn">ждёт активации</span>' : x.kind === 'again' ? '<span class="tag">повтор</span>' : x.percent ? `<span class="tag on">−${esc(x.percent)}%</span>` : '<span class="tag">визит</span>';
       return `<div class="li"><span class="grow">${esc(x.name || 'Карта не найдена')} <span style="color:var(--text-3)">${esc(x.card)}</span>${res}${x.reason ? `<span class="sub">${esc(x.reason)}</span>` : ''}</span><time>${when}</time></div>`;
     }).join('') : '<div class="empty">Сканов пока нет</div>';
   } catch (e) { if (seq === kLogSeq) $('kLog').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
@@ -2001,6 +2001,8 @@ function renderStats(s) {
   const sm = $('susMsg');
   if (sus.length) { sm.textContent = 'Подозрительно много операций: ' + sus.map((k) => k.name).join(', ') + '. Сверьте с r_keeper.'; sm.style.display = 'block'; }
   else sm.style.display = 'none';
+  const na = s.cashiers.filter((k) => k.noact); // сканировали, но не нажали «Активировать» — видно сразу на главной админки
+  if (na.length) { sm.textContent = (sus.length ? sm.textContent + '\n' : '') + 'Сканировали, но не нажали «Активировать»: ' + na.map((k) => k.name + ' (' + k.noact + ')').join(', ') + '. Подробно — в отчёте и в боте.'; sm.className = 'msg warn'; sm.style.display = 'block'; }
 
   $('reportBody').innerHTML = `
     <div class="list">
@@ -2011,11 +2013,12 @@ function renderStats(s) {
       <div class="li"><span class="grow">Получили скидку за визиты</span><span class="val">${money(s.tierUps)}</span></div>
       <div class="li"><span class="grow">Купонов</span><span class="val">${money(s.coupons)}</span></div>
       <div class="li"><span class="grow">Отказов</span><span class="val">${money(s.rejected)}</span></div>
+      <div class="li"><span class="grow">Сканировали, но не активировали</span><span class="val" style="${s.noact ? 'color:var(--red)' : ''}">${money(s.noact || 0)}</span></div>
     </div>
     <div class="caps">Скидки по категориям</div>
     <div class="list">${s.groups.length ? s.groups.map((g) => `<div class="li"><span class="grow">${esc(g.name)}</span><span class="val">${g.n} раз</span></div>`).join('') : '<div class="empty">Скидок не было</div>'}</div>
     <div class="caps">Сверка с r_keeper по кассирам</div>
-    <div class="list">${s.cashiers.length ? s.cashiers.map((k) => `<div class="li"><span class="grow">${esc(k.name)}${k.sus ? '<span class="tag warn">проверить</span>' : ''}<span class="sub">${esc(k.branch)} · купонов ${k.coupon}</span></span><span class="val">${k.disc} скидок</span></div>`).join('') : '<div class="empty">Выдач не было</div>'}</div>
+    <div class="list">${s.cashiers.length ? s.cashiers.map((k) => `<div class="li"><span class="grow">${esc(k.name)}${k.sus ? '<span class="tag warn">проверить</span>' : ''}${k.noact ? `<span class="tag off">без активации: ${k.noact}</span>` : ''}<span class="sub">${esc(k.branch)} · купонов ${k.coupon}</span></span><span class="val">${k.disc} скидок</span></div>`).join('') : '<div class="empty">Выдач не было</div>'}</div>
     <div class="note">Количество скидок каждого кассира должно совпадать со скидками в r_keeper за те же дни.</div>`;
 }
 
