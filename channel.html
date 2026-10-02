@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Seven Times — канал</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root { color-scheme: light dark; }
+  html, body { margin: 0; height: 100%; background: #000; color: #fff; font: 600 16px/1.4 -apple-system, "SF Pro Text", system-ui, sans-serif; }
+  main { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px; text-align: center; box-sizing: border-box; }
+  .dot { width: 34px; height: 34px; border-radius: 50%; border: 3px solid rgba(255,255,255,.2); border-top-color: #fff; animation: s .8s linear infinite; }
+  @keyframes s { to { transform: rotate(360deg); } }
+  a { color: #000; background: #fff; text-decoration: none; padding: 14px 22px; border-radius: 14px; display: none; }
+</style>
+</head>
+<body>
+<main><div class="dot"></div><div>Открываем канал Seven Times…</div><a id="go">Перейти в канал</a></main>
+<script>
+// Кнопка «Канал» в боте: сразу открывает канал и закрывается. Имя канала приходит в ?c=
+(() => {
+  const q = new URLSearchParams(location.search), name = (q.get('c') || 'seventimesuralsk').replace(/[^A-Za-z0-9_]/g, '');
+  const url = 'https://t.me/' + name, tg = window.Telegram && window.Telegram.WebApp, a = document.getElementById('go');
+  a.href = url;
+  const show = () => { a.style.display = 'inline-block'; };
+  try { tg && tg.ready(); } catch (e) {}
+  try {
+    if (tg && tg.openTelegramLink) { tg.openTelegramLink(url); setTimeout(() => { try { tg.close(); } catch (e) { show(); } }, 400); }
+    else { location.href = url; }
+  } catch (e) { show(); }
+  setTimeout(show, 2500); // если что-то не сработало — кнопка руками
+  a.onclick = (e) => { if (tg && tg.openTelegramLink) { e.preventDefault(); tg.openTelegramLink(url); } };
+})();
+</script>
+</body>
+</html>
