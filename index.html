@@ -338,6 +338,10 @@
   .kspin { width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--sep); border-top-color: var(--text); margin: 0 auto 12px; animation: kspin .8s linear infinite; }
   @keyframes kspin { to { transform: rotate(360deg); } }
   .scanbtn:disabled { opacity: .55; }
+  /* шаг 1 кассы: скидка видна, но ещё не применена — кнопка «Активировать» */
+  .kres.preview .hero-num { color: var(--text); }
+  .kres .kapply { margin-top: 18px; width: 100%; }
+
   /* повторный скан за день: оранжевый — «уже применено», не новая скидка */
   .kres.again .hero-num { color: var(--orange); }
   .kres.again .grp { color: var(--orange); font-weight: 600; }
@@ -613,7 +617,7 @@
 
   <!-- ═════ КАССА ═════ -->
   <section id="kassa" class="hidden">
-    <button class="scanbtn" id="scanGuest"><span class="vf"><i></i><i></i><i></i><i></i><b></b></span><span>Сканировать QR гостя</span><span class="hint">Один скан — скидка применяется сразу</span></button>
+    <button class="scanbtn" id="scanGuest"><span class="vf"><i></i><i></i><i></i><i></i><b></b></span><span>Сканировать QR гостя</span><span class="hint">Скан покажет скидку — применится после «Активировать»</span></button>
     <div id="kRes"></div>
     <div class="caps">Мои сканы</div>
     <div class="list log" id="kLog"><div class="empty">Загрузка</div></div>
@@ -838,8 +842,8 @@
 <script>
 // URL своего Apps Script (…/exec)
 // Версия карты — показывается в админке рядом с версией сервера
-const APP_VERSION = 'v16';
-const API_URL = 'https://script.google.com/macros/s/AKfycbwCX9KKmbaaY3Vy8coCwtipc0kNXvCLgA7nmPMqGTkQq8ISY8DolGMdQSodyG4DvkR6qA/exec';
+const APP_VERSION = 'v19';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzQsoQUz2mIqG3RQs6UkvGRa0yP4IUnWXMQF4PNBehuetaGEPRGosJj-IXhSacSoNje7g/exec';
 
 const tg = window.Telegram?.WebApp;
 let curTab = 'card', walletKind = '', me = null;
@@ -1891,30 +1895,45 @@ $('invCodeBtn').onclick = async () => {
 
 // ══════════ Касса: один скан — одна операция, скидка применяется сразу ══════════
 function kassaResult(html) { const el = $('kRes'); el.innerHTML = html; enter(el); }
+// Итог операции на кассе: зелёный — применено сейчас, оранжевый — уже было сегодня, красный — отказ
+function kassaFinal(r) {
+  if (r.again) { // этот гость сегодня уже был: показываем, что уже применено, — без зелёной галочки, чтобы не провели второй раз
+    haptic('warning');
+    kassaResult(`<div class="card kres again"><div class="warn-ico">!</div><div class="who">${esc(r.name)}</div>${r.card ? `<div class="grp" style="color:var(--text-2);font-weight:400">Карта ${esc(r.card)}</div>` : ''}
+      <div class="hero-num">${r.percent ? '−' + esc(r.percent) + '%' : 'Визит'}</div><div class="grp">${esc(r.group)}</div></div>
+      <div class="msg warn" style="display:block">${esc(r.note)}</div>`);
+    return;
+  }
+  haptic('success');
+  const visitOnly = r.kind === 'visit' || !r.percent;
+  kassaResult(`<div class="card kres">${checkSvg('big')}<div class="who">${esc(r.name)}</div>${r.card ? `<div class="grp">Карта ${esc(r.card)}</div>` : ''}
+    <div class="hero-num" id="kPct">${visitOnly ? 'Визит' : '−0%'}</div><div class="grp">${esc(r.group)}</div></div>
+    <div class="msg ${visitOnly ? 'warn' : 'ok'}" style="display:block">${esc(r.note)}</div>`);
+  if (!visitOnly) countTo($('kPct'), r.percent, '%', '−', 700);
+}
+const kassaFail = (e) => { haptic('error'); kassaResult(`<div class="card kres bad"><div class="cross"></div>${e.data?.guest ? `<div class="who">${esc(e.data.guest)}</div>` : ''}<div class="grp" style="color:var(--red)">${esc(e.message)}</div></div>`); };
+// Шаг 2: кассир нажал «Активировать скидку» — только теперь скидка применяется и пишется в журнал
+async function kassaApply(token, btn) {
+  btn.disabled = true; btn.textContent = 'Применяем…';
+  try { kassaFinal(await api('scanApply', { token })); } catch (e) { kassaFail(e); }
+  loadKassaLog();
+}
 $('scanGuest').onclick = async () => {
   let qr;
   try { qr = await scan('Наведите на QR с карты гостя'); } catch (e) { if (e.message) kassaResult(`<div class="card kres bad"><div class="cross"></div><div class="grp">${esc(e.message)}</div></div>`); return; }
   $('scanGuest').disabled = true;
   kassaResult('<div class="card kres wait"><div class="kspin"></div><div class="grp">Проверяем карту…</div></div>');
   try {
-    const r = await api('scan', { qr });
-    if (r.again) { // этот гость сегодня уже был: показываем, что уже применено, — без зелёной галочки, чтобы не провели второй раз
-      haptic('warning');
-      kassaResult(`<div class="card kres again"><div class="warn-ico">!</div><div class="who">${esc(r.name)}</div>${r.card ? `<div class="grp" style="color:var(--text-2);font-weight:400">Карта ${esc(r.card)}</div>` : ''}
-        <div class="hero-num">${r.percent ? '−' + esc(r.percent) + '%' : 'Визит'}</div><div class="grp">${esc(r.group)}</div></div>
-        <div class="msg warn" style="display:block">${esc(r.note)}</div>`);
-      $('scanGuest').disabled = false; loadKassaLog(); return;
-    }
-    haptic('success');
-    const visitOnly = r.kind === 'visit' || !r.percent;
-    kassaResult(`<div class="card kres">${checkSvg('big')}<div class="who">${esc(r.name)}</div>${r.card ? `<div class="grp">Карта ${esc(r.card)}</div>` : ''}
-      <div class="hero-num" id="kPct">${visitOnly ? 'Визит' : '−0%'}</div><div class="grp">${esc(r.group)}</div></div>
-      <div class="msg ${visitOnly ? 'warn' : 'ok'}" style="display:block">${esc(r.note)}</div>`);
-    if (!visitOnly) countTo($('kPct'), r.percent, '%', '−', 700);
-  } catch (e) {
-    haptic('error');
-    kassaResult(`<div class="card kres bad"><div class="cross"></div>${e.data?.guest ? `<div class="who">${esc(e.data.guest)}</div>` : ''}<div class="grp" style="color:var(--red)">${esc(e.message)}</div></div>`);
-  }
+    const r = await api('scan', { qr, preview: true });
+    if (r.preview) { // шаг 1: показываем, что положено, — ничего ещё не записано
+      tick();
+      const pct = r.percent ? '−' + r.percent + '%' : '';
+      kassaResult(`<div class="card kres preview"><div class="who">${esc(r.name)}</div>${r.card ? `<div class="grp">Карта ${esc(r.card)}</div>` : ''}
+        <div class="hero-num">${pct ? esc(pct) : 'Без скидки'}</div><div class="grp">${esc(r.group)}</div>
+        <button class="btn big kapply" id="kApply">${pct ? 'Активировать скидку ' + esc(pct) : 'Засчитать визит'}</button></div>`);
+      $('kApply').onclick = () => kassaApply(r.token, $('kApply'));
+    } else kassaFinal(r); // повтор за день, день регистрации или старый сервер — сразу итог
+  } catch (e) { kassaFail(e); }
   $('scanGuest').disabled = false;
   loadKassaLog();
 };
@@ -1929,7 +1948,7 @@ async function loadKassaLog() {
     $('kLog').innerHTML = r.scans.length ? r.scans.map((x) => {
       const d = new Date(x.ts);
       const when = d.toDateString() === today ? d.toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' }) : fmtTime(x.ts);
-      const res = !x.ok ? '<span class="tag off">отказ</span>' : x.kind === 'again' ? '<span class="tag">повтор</span>' : x.percent ? `<span class="tag on">−${esc(x.percent)}%</span>` : '<span class="tag">визит</span>';
+      const res = !x.ok ? '<span class="tag off">отказ</span>' : x.kind === 'noact' ? `<span class="tag off">не активировал${x.percent ? ' −' + esc(x.percent) + '%' : ''}</span>` : x.kind === 'waiting' ? '<span class="tag warn">ждёт активации</span>' : x.kind === 'again' ? '<span class="tag">повтор</span>' : x.percent ? `<span class="tag on">−${esc(x.percent)}%</span>` : '<span class="tag">визит</span>';
       return `<div class="li"><span class="grow">${esc(x.name || 'Карта не найдена')} <span style="color:var(--text-3)">${esc(x.card)}</span>${res}${x.reason ? `<span class="sub">${esc(x.reason)}</span>` : ''}</span><time>${when}</time></div>`;
     }).join('') : '<div class="empty">Сканов пока нет</div>';
   } catch (e) { if (seq === kLogSeq) $('kLog').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
@@ -1982,6 +2001,8 @@ function renderStats(s) {
   const sm = $('susMsg');
   if (sus.length) { sm.textContent = 'Подозрительно много операций: ' + sus.map((k) => k.name).join(', ') + '. Сверьте с r_keeper.'; sm.style.display = 'block'; }
   else sm.style.display = 'none';
+  const na = s.cashiers.filter((k) => k.noact); // сканировали, но не нажали «Активировать» — видно сразу на главной админки
+  if (na.length) { sm.textContent = (sus.length ? sm.textContent + '\n' : '') + 'Сканировали, но не нажали «Активировать»: ' + na.map((k) => k.name + ' (' + k.noact + ')').join(', ') + '. Подробно — в отчёте и в боте.'; sm.className = 'msg warn'; sm.style.display = 'block'; }
 
   $('reportBody').innerHTML = `
     <div class="list">
@@ -1992,11 +2013,12 @@ function renderStats(s) {
       <div class="li"><span class="grow">Получили скидку за визиты</span><span class="val">${money(s.tierUps)}</span></div>
       <div class="li"><span class="grow">Купонов</span><span class="val">${money(s.coupons)}</span></div>
       <div class="li"><span class="grow">Отказов</span><span class="val">${money(s.rejected)}</span></div>
+      <div class="li"><span class="grow">Сканировали, но не активировали</span><span class="val" style="${s.noact ? 'color:var(--red)' : ''}">${money(s.noact || 0)}</span></div>
     </div>
     <div class="caps">Скидки по категориям</div>
     <div class="list">${s.groups.length ? s.groups.map((g) => `<div class="li"><span class="grow">${esc(g.name)}</span><span class="val">${g.n} раз</span></div>`).join('') : '<div class="empty">Скидок не было</div>'}</div>
     <div class="caps">Сверка с r_keeper по кассирам</div>
-    <div class="list">${s.cashiers.length ? s.cashiers.map((k) => `<div class="li"><span class="grow">${esc(k.name)}${k.sus ? '<span class="tag warn">проверить</span>' : ''}<span class="sub">${esc(k.branch)} · купонов ${k.coupon}</span></span><span class="val">${k.disc} скидок</span></div>`).join('') : '<div class="empty">Выдач не было</div>'}</div>
+    <div class="list">${s.cashiers.length ? s.cashiers.map((k) => `<div class="li"><span class="grow">${esc(k.name)}${k.sus ? '<span class="tag warn">проверить</span>' : ''}${k.noact ? `<span class="tag off">без активации: ${k.noact}</span>` : ''}<span class="sub">${esc(k.branch)} · купонов ${k.coupon}</span></span><span class="val">${k.disc} скидок</span></div>`).join('') : '<div class="empty">Выдач не было</div>'}</div>
     <div class="note">Количество скидок каждого кассира должно совпадать со скидками в r_keeper за те же дни.</div>`;
 }
 
