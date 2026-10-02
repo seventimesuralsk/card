@@ -333,6 +333,16 @@
   .kres.bad { animation: pop-in .5s var(--spring) both, shake .5s .1s both; }
   .kres .who { font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
   .kres .grp { color: var(--text-2); font-size: 15px; margin-top: 4px; }
+  /* пока сервер проверяет карту — видно, что идёт работа */
+  .kres.wait { animation: drop .3s var(--ease) both; }
+  .kspin { width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--sep); border-top-color: var(--text); margin: 0 auto 12px; animation: kspin .8s linear infinite; }
+  @keyframes kspin { to { transform: rotate(360deg); } }
+  .scanbtn:disabled { opacity: .55; }
+  /* повторный скан за день: оранжевый — «уже применено», не новая скидка */
+  .kres.again .hero-num { color: var(--orange); }
+  .kres.again .grp { color: var(--orange); font-weight: 600; }
+  .warn-ico { width: 44px; height: 44px; border-radius: 50%; margin: 0 auto 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800;
+    color: var(--orange); background: color-mix(in srgb, var(--orange) 15%, transparent); animation: pop-in .45s var(--spring) both; }
   .cross { width: 44px; height: 44px; border-radius: 50%; background: color-mix(in srgb, var(--red) 13%, transparent); position: relative; margin: 0 auto 14px; }
   .cross::before, .cross::after { content: ""; position: absolute; left: 13px; right: 13px; top: 21px; height: 3px; border-radius: 2px; background: var(--red); transform: rotate(45deg); animation: pop .45s var(--ease); }
   .cross::after { transform: rotate(-45deg); }
@@ -828,7 +838,7 @@
 <script>
 // URL своего Apps Script (…/exec)
 // Версия карты — показывается в админке рядом с версией сервера
-const APP_VERSION = 'v13';
+const APP_VERSION = 'v14';
 const API_URL = 'https://script.google.com/macros/s/AKfycbzErnY4bzsVGf7Jwat5lyvaiQjDzwaPZu2V9u2Aat40rBp8_ZRKGmNTnmx4P1oj14keug/exec';
 
 const tg = window.Telegram?.WebApp;
@@ -1199,7 +1209,7 @@ function renderCard(c) {
   $('codeEnter').classList.toggle('hidden', !ok || !!c.invited || !!(me && (me.cashier || me.admin))); // уже со скидкой, кассир или админ — код не нужен
   if (t) {
     $('discPercent').textContent = `−${t.percent}%`;
-    $('discInfo').textContent = `${t.amount ? '−' + money(t.amount) + ' ₸ · ' : ''}${t.branch || ''} · ${new Date(t.ts).toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' })}`;
+    $('discInfo').textContent = `${t.amount ? '−' + money(t.amount) + ' ₸ · ' : ''}${t.branch || ''} · ${new Date(t.ts).toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' })} · следующая скидка — завтра`;
   }
   const coupons = ok && Array.isArray(c.coupons) ? c.coupons : [];
   $('couponsBox').classList.toggle('hidden', !coupons.length); $('couponsCap').classList.toggle('hidden', !coupons.length);
@@ -1832,7 +1842,7 @@ tg?.onEvent?.('activated', wakeCode); // Telegram развернули из св
 
 // Номер: Telegram показывает «Поделиться номером», контакт уходит боту, а мы сразу просим скрипт его забрать
 $('phoneBtn').onclick = () => {
-  if (!tg?.requestContact || !tg.isVersionAtLeast?.('6.9')) return show($('phoneMsg'), 'Обновите Telegram или напишите боту /start');
+  if (!tg?.requestContact || !tg.isVersionAtLeast?.('6.9')) return show($('phoneMsg'), 'Обновите Telegram до последней версии — в этой нельзя подтвердить номер. После обновления откройте карту снова');
   const onSent = async (sent) => {
     if (!sent) return show($('phoneMsg'), 'Без номера карта не активируется. Нажмите ещё раз, когда будете готовы.', 'warn');
     $('phoneBtn').disabled = true; $('phoneBtn').textContent = 'Проверяем номер';
@@ -1885,8 +1895,16 @@ $('scanGuest').onclick = async () => {
   let qr;
   try { qr = await scan('Наведите на QR с карты гостя'); } catch (e) { if (e.message) kassaResult(`<div class="card kres bad"><div class="cross"></div><div class="grp">${esc(e.message)}</div></div>`); return; }
   $('scanGuest').disabled = true;
+  kassaResult('<div class="card kres wait"><div class="kspin"></div><div class="grp">Проверяем карту…</div></div>');
   try {
     const r = await api('scan', { qr });
+    if (r.again) { // этот гость сегодня уже был: показываем, что уже применено, — без зелёной галочки, чтобы не провели второй раз
+      haptic('warning');
+      kassaResult(`<div class="card kres again"><div class="warn-ico">!</div><div class="who">${esc(r.name)}</div>${r.card ? `<div class="grp" style="color:var(--text-2);font-weight:400">Карта ${esc(r.card)}</div>` : ''}
+        <div class="hero-num">${r.percent ? '−' + esc(r.percent) + '%' : 'Визит'}</div><div class="grp">${esc(r.group)}</div></div>
+        <div class="msg warn" style="display:block">${esc(r.note)}</div>`);
+      $('scanGuest').disabled = false; loadKassaLog(); return;
+    }
     haptic('success');
     const visitOnly = r.kind === 'visit' || !r.percent;
     kassaResult(`<div class="card kres">${checkSvg('big')}<div class="who">${esc(r.name)}</div>${r.card ? `<div class="grp">Карта ${esc(r.card)}</div>` : ''}
@@ -1911,7 +1929,7 @@ async function loadKassaLog() {
     $('kLog').innerHTML = r.scans.length ? r.scans.map((x) => {
       const d = new Date(x.ts);
       const when = d.toDateString() === today ? d.toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' }) : fmtTime(x.ts);
-      const res = !x.ok ? '<span class="tag off">отказ</span>' : x.percent ? `<span class="tag on">−${esc(x.percent)}%</span>` : '<span class="tag">визит</span>';
+      const res = !x.ok ? '<span class="tag off">отказ</span>' : x.kind === 'again' ? '<span class="tag">повтор</span>' : x.percent ? `<span class="tag on">−${esc(x.percent)}%</span>` : '<span class="tag">визит</span>';
       return `<div class="li"><span class="grow">${esc(x.name || 'Карта не найдена')} <span style="color:var(--text-3)">${esc(x.card)}</span>${res}${x.reason ? `<span class="sub">${esc(x.reason)}</span>` : ''}</span><time>${when}</time></div>`;
     }).join('') : '<div class="empty">Сканов пока нет</div>';
   } catch (e) { if (seq === kLogSeq) $('kLog').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
