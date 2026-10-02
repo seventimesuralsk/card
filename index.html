@@ -842,7 +842,7 @@
 <script>
 // URL своего Apps Script (…/exec)
 // Версия карты — показывается в админке рядом с версией сервера
-const APP_VERSION = 'v21';
+const APP_VERSION = 'v22';
 const API_URL = 'https://script.google.com/macros/s/AKfycbyg5WcVEE9Z8wUHMzgpMt711MQBEKJUsvAbOJ6hE1TTNCyMJM8bSc4ZIbHVP9S_sj7hbA/exec';
 
 const tg = window.Telegram?.WebApp;
@@ -1703,7 +1703,7 @@ function playCine(o) {
   ov.getAnimations?.({ subtree: true }).forEach((a) => { try { a.cancel(); } catch {} });
   ov.querySelectorAll('.cn-crack, .cn-crown').forEach((x) => x.remove());
   $('rvTitle').textContent = o.title || 'Поздравляем!';
-  $('rvText').textContent = o.text || 'Ваш номер подтверждён, карта успешно создана';
+  $('rvText').textContent = o.text || 'Ваша карта готова. Добро пожаловать в семью Seven Times ❤️';
   $('rvOk').textContent = o.btn || 'Открыть карту';
   ov.setAttribute('aria-label', o.title || 'Карта создана');
   const holder = $('rvCard'), front = $('wallet').cloneNode(true);
@@ -1790,7 +1790,18 @@ function showNotice(n) {
     const nm = STATUSES[n.status].name;
     if (me?.card) me.card.status = n.status; paintStatus(n.status);
     try { localStorage.setItem('card_status', n.status); } catch {}
-    playCine({ kind: n.status, title: 'Ваша карта теперь ' + nm, text: `Скидка ${n.percent}% — со следующего визита. Статус ${nm} остаётся с вами навсегда ✨`, btn: 'Отлично' });
+    playCine({ kind: n.status, title: 'Ваша карта теперь ' + nm, text: `Скидка ${n.percent}% — со следующего визита. Статус ${nm} — ваш навсегда. Спасибо, что вы с нами ❤️`, btn: 'Отлично' });
+  } else if (n.kind === 'family' && STATUSES[n.status]) { // стал своим: постоянный, знакомый (Black), сотрудник, кассир (Team)
+    const nm = STATUSES[n.status].name, pct = n.percent > 0 ? ` Скидка ${n.percent}% — всегда с вами.` : '';
+    if (me?.card) me.card.status = n.status; paintStatus(n.status);
+    try { localStorage.setItem('card_status', n.status); } catch {}
+    const say = {
+      staff: ['Добро пожаловать в команду', `Ваша карта теперь ${nm}.${pct} Seven Times — это одна семья, и теперь вы её часть ☕❤️`],
+      friend: ['Теперь вы — свой в Seven Times', `Ваша карта теперь ${nm}.${pct} Наши двери и наша семья всегда открыты для вас ❤️`],
+      regular: ['Добро пожаловать в семью Seven Times', `Ваша карта теперь ${nm}.${pct} Спасибо, что вы с нами — здесь вам всегда рады ❤️`],
+    }[n.category] || ['Добро пожаловать в семью Seven Times', `Ваша карта теперь ${nm}.${pct} Спасибо, что вы с нами ❤️`];
+    playCine({ kind: n.status, title: say[0], text: say[1], btn: 'Спасибо ❤️' });
+    return api('ackNotice', { ts: n.ts, kind: 'family', status: n.status }).catch(() => {});
   } else if (n.kind === 'welcome') congrats({ heart: true, title: 'Добро пожаловать!', pct: n.percent, text: 'Дарим вам скидку. Она действует со следующего дня 7 дней. Ваш Seven Times ❤️' });
   else congrats({ heart: true, title: 'Поздравляем!', pct: n.percent, text: 'Вы получили скидку. Спасибо, что остаётесь с нами. Ваш Seven Times ❤️' });
   api('ackNotice', { ts: n.ts }).catch(() => {});
@@ -1887,8 +1898,8 @@ $('invCodeBtn').onclick = async () => {
   try {
     const r = await api('redeemCode', { code: $('invCodeIn').value });
     haptic('success'); hide($('invCodeMsg')); $('codeEnter').open = false; $('invCodeIn').value = '';
-    congrats({ heart: false, title: 'Скидка подключена', pct: r.invite.percent, text: `«${r.invite.label}». Показывайте QR кассиру при оплате.` });
-    me.card = r.card; renderCard(r.card);
+    if (r.card?.notice?.kind !== 'family') congrats({ heart: false, title: 'Скидка подключена', pct: r.invite.percent, text: `«${r.invite.label}». Показывайте QR кассиру при оплате.` });
+    me.card = r.card; renderCard(r.card); // стал своим — вместо окошка ролик новой карты Black/Team
   } catch (e) { haptic('error'); show($('invCodeMsg'), e.message); }
   $('invCodeBtn').disabled = false;
 };
@@ -2399,7 +2410,8 @@ async function load(pre) {
       if (inv?.joined) { haptic('success'); tab('kassa'); kassaResult(`<div class="msg ok" style="display:block">Вы кассир Seven Times, ${esc(inv.branch)}. Сканируйте QR с карты гостя.</div>`); }
       else if (inv?.joinedPerson) {
         haptic('success');
-        if (inv.label === 'Постоянный гость') congrats({ heart: true, title: 'Поздравляем!', pct: inv.percent, text: 'Вы получили скидку. Спасибо, что остаётесь с нами. Показывайте QR кассиру при каждой покупке.' });
+        if (me.card?.notice?.kind === 'family') {} // ролик новой карты Black/Team уже идёт — окошко не нужно
+        else if (inv.label === 'Постоянный гость') congrats({ heart: true, title: 'Поздравляем!', pct: inv.percent, text: 'Вы получили скидку. Спасибо, что остаётесь с нами. Показывайте QR кассиру при каждой покупке.' });
         else congrats({ heart: false, title: 'Скидка подключена', pct: inv.percent, text: `«${inv.label}». Показывайте QR кассиру при оплате.` });
       }
       else if (inv?.joinedAdmin) { haptic('success'); show($('inviteMsg'), me.admin ? 'Вы админ Seven Times. Админка — во вкладке «Админ» сверху.' : 'Вы админ Seven Times. Подтвердите номер телефона — и откроется админка.', true); }
