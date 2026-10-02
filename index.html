@@ -341,7 +341,7 @@
   /* шаг 1 кассы: скидка видна, но ещё не применена — кнопка «Активировать» */
   .kres.preview .hero-num { color: var(--text); }
   .kres .kapply { margin-top: 18px; width: 100%; }
-  .kres .kcancel { border: 0; background: none; color: var(--text-2); font-size: 14px; margin-top: 10px; padding: 8px; }
+
   /* повторный скан за день: оранжевый — «уже применено», не новая скидка */
   .kres.again .hero-num { color: var(--orange); }
   .kres.again .grp { color: var(--orange); font-weight: 600; }
@@ -1914,7 +1914,7 @@ function kassaFinal(r) {
 const kassaFail = (e) => { haptic('error'); kassaResult(`<div class="card kres bad"><div class="cross"></div>${e.data?.guest ? `<div class="who">${esc(e.data.guest)}</div>` : ''}<div class="grp" style="color:var(--red)">${esc(e.message)}</div></div>`); };
 // Шаг 2: кассир нажал «Активировать скидку» — только теперь скидка применяется и пишется в журнал
 async function kassaApply(token, btn) {
-  btn.disabled = true; btn.textContent = 'Применяем…'; $('kCancel')?.classList.add('hidden');
+  btn.disabled = true; btn.textContent = 'Применяем…';
   try { kassaFinal(await api('scanApply', { token })); } catch (e) { kassaFail(e); }
   loadKassaLog();
 }
@@ -1930,10 +1930,8 @@ $('scanGuest').onclick = async () => {
       const pct = r.percent ? '−' + r.percent + '%' : '';
       kassaResult(`<div class="card kres preview"><div class="who">${esc(r.name)}</div>${r.card ? `<div class="grp">Карта ${esc(r.card)}</div>` : ''}
         <div class="hero-num">${pct ? esc(pct) : 'Без скидки'}</div><div class="grp">${esc(r.group)}</div>
-        <button class="btn big kapply" id="kApply">${pct ? 'Активировать скидку ' + esc(pct) : 'Засчитать визит'}</button>
-        <button class="kcancel" id="kCancel">Отмена — ничего не применять</button></div>`);
+        <button class="btn big kapply" id="kApply">${pct ? 'Активировать скидку ' + esc(pct) : 'Засчитать визит'}</button></div>`);
       $('kApply').onclick = () => kassaApply(r.token, $('kApply'));
-      $('kCancel').onclick = () => { tick(); kassaResult('<div class="card kres wait"><div class="grp">Отменено — скидка не применена</div></div>'); };
     } else kassaFinal(r); // повтор за день, день регистрации или старый сервер — сразу итог
   } catch (e) { kassaFail(e); }
   $('scanGuest').disabled = false;
