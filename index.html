@@ -554,6 +554,8 @@
   .gift .gft b { color: #fff; font-weight: 600; }
   .gift .gref { display: block; margin: 10px auto 0; padding: 4px 10px; border: 0; background: none; color: rgba(255,255,255,.72); font: inherit; font-size: 12.5px; text-decoration: underline; text-underline-offset: 3px; }
   .gift .gref:disabled { opacity: .6; }
+  .gift .gmenu { margin-top: 8px; padding: 9px 12px; border-radius: 14px; background: rgba(255,255,255,.12); font-size: 13px; line-height: 1.4; color: rgba(255,255,255,.92); }
+  .gift .gmenu b { color: #fff; font-weight: 600; }
   .kres .kgh { font-size: 26px; letter-spacing: -.02em; line-height: 1.15; margin: 12px 0 6px; }
   /* «ВЫДАЙ ПОДАРОК» — компактно: заметно, но вместе с подсказкой влезает в экран */
   .kres.give { display: flex; align-items: center; gap: 12px; padding: 12px 16px; text-align: left; background: var(--sysblue, #007AFF); color: #fff; } /* системный синий, как в Apple */
@@ -561,12 +563,20 @@
   .kres.give .kgv { font-size: 11px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; opacity: .85; }
   .kres.give .kgh { margin: 1px 0 0; font-size: 18px; font-weight: 700; letter-spacing: -.02em; line-height: 1.2; color: #fff; }
   .kres.give .gw { margin-top: 2px; font-size: 13px; opacity: .8; }
+  .kres.give .gm { margin-top: 3px; font-size: 15px; font-weight: 600; } /* главный приз: какие завтраки за 999 ₸ */
   .gift .glink { padding: 0; border: 0; background: none; color: #fff; font: inherit; font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
   .grules .gr-h { text-align: center; font-size: 19px; font-weight: 700; letter-spacing: -.02em; margin: 4px 0 0; }
   .grules .gr-s { text-align: center; font-size: 13px; color: var(--text-2); margin: 2px 0 12px; }
   .grules ol { margin: 0; padding: 0 2px 0 18px; font-size: 13px; line-height: 1.42; color: var(--text-2); }
   .grules li + li { margin-top: 6px; }
   .grules li b { color: var(--text); font-weight: 600; }
+  .kguide { max-height: 88vh; overflow-y: auto; -webkit-overflow-scrolling: touch; } /* нұсқаулық кассирге — длинная, прокручивается */
+  .kguide ul { margin: 0; padding: 0 2px 0 18px; font-size: 13px; line-height: 1.42; color: var(--text-2); }
+  .kguide .kg-sec { margin: 14px 0 6px; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--sysblue); }
+  .kguide .kg-p { margin: 8px 0 0; font-size: 13px; line-height: 1.45; color: var(--text-2); }
+  .kguide .kg-p b { color: var(--text); font-weight: 600; }
+  .kguide .kg-tg { margin: 14px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--fill); font-size: 13px; line-height: 1.45; }
+  .klink { display: block; margin: 12px auto 0; padding: 6px 10px; border: 0; background: none; color: var(--sysblue); font: inherit; font-size: 14px; font-weight: 600; }
   .grv { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; background: rgba(10,6,8,.55); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); opacity: 0; transition: opacity .5s var(--ease); padding: 24px; }
   .grv.on { opacity: 1; }
   .grv-in { position: relative; width: 100%; max-width: 360px; height: 460px; }
@@ -719,6 +729,7 @@
   <section id="kassa" class="hidden">
     <button class="scanbtn" id="scanGuest"><span class="vf"><i></i><i></i><i></i><i></i><b></b></span><span>Сканировать QR гостя</span><span class="hint">Скан покажет скидку — применится после «Активировать»</span></button>
     <div id="kRes"></div>
+    <button class="klink" id="kGuideBtn">📖 Нұсқаулық — таңғы асқа сыйлық</button>
     <div class="caps">Мои сканы</div>
     <div class="list log" id="kLog"><div class="empty">Загрузка</div></div>
   </section>
@@ -949,6 +960,41 @@
   <ol id="grList"></ol>
   <button class="btn big" id="grOk" style="margin-top:16px">Я ознакомлен</button>
 </div>
+<div class="sheet grules kguide" id="kGuide">
+  <div class="grab"></div>
+  <p class="gr-h">Таңғы асқа сыйлық</p>
+  <p class="gr-s">08:00–12:00 · 12:00-ден кейін бәрі жойылады</p>
+  <div class="kg-sec">Не істейсіз</div>
+  <ol>
+    <li>Қонақ <b>таңғы асқа</b> тапсырыс береді.</li>
+    <li>QR-кодын сканерлейсіз (12:00-ге дейін).</li>
+    <li>Көк тақта <b>«Выдать подарок»</b> шығады — сыйлықты бересіз. Болды! Батырма жоқ, визит өзі есептеледі.</li>
+  </ol>
+  <p class="kg-p">Чекті r_keeper-де таңғы аспен бірге өткізесіз. Бұл күні карта бойынша жеңілдік жасамайсыз.</p>
+  <p class="kg-p">📍 Абулхаир Хана 177 — 08:00-ден · Самал 70/3 — 11:00-ден · Скоробогатова — сыйлық жоқ.</p>
+  <div class="kg-sec">🍳 Бас жүлде</div>
+  <p class="kg-p">Көк тақтада <b>«Завтрак за 999 ₸»</b> шықса — қонақ <b>ағылшынша таңғы ас, түрікше таңғы ас немесе шакшуканы</b> таңдайды және 999 ₸ төлейді. 7 күн бойы күн сайын 12:00-ге дейін келе алады — касса өзі көрсетеді.</p>
+  <div class="kg-sec">Басқа жазу шықса</div>
+  <ul>
+    <li><b>«Подарок уже получен»</b> — бүгін берілген. Сол чек болса — өткізіңіз, жаңа чек — жеңілдіксіз.</li>
+    <li><b>«Подарок сгорел»</b>, <b>«закончились»</b>, <b>«не выдаются»</b> — сыйлық жоқ, экрандағы әдеттегі жеңілдік.</li>
+    <li>Көк тақта жоқ — қонақ сыйлық ашпаған, бәрі әдеттегідей.</li>
+  </ul>
+  <div class="kg-sec">Қонақ сұраса (кассир мен даяшы)</div>
+  <ul>
+    <li><b>Қалай аламын?</b> — Картада «Открыть подарок» (08:00–12:00), таңғы ас + QR кассаға.</li>
+    <li><b>Таңғы ассыз?</b> — Жоқ, тек таңғы аспен.</li>
+    <li><b>12:00-ден кейін?</b> — Жоқ, жойылады. Ертең таңертең — жаңасы.</li>
+    <li><b>Ауыстыруға бола ма?</b> — Жоқ, сыйлық кездейсоқ, ақшаға айырбасталмайды.</li>
+    <li><b>Жеңілдік пен сыйлық бірге?</b> — Жоқ, бір күнде біреуі ғана.</li>
+    <li><b>Жеңілдік керек</b> — сканерге дейін картада «Отказаться от подарка».</li>
+    <li><b>Сыйлықтар бітті?</b> — Күніне саны шектеулі, ертең ертерек келіңіз.</li>
+    <li><b>Бас жүлде?</b> — 09:00-ге дейін ашып, таңғы асқа келіңіз.</li>
+    <li><b>Карта жоқ?</b> — @seventimesuralsk каналында «Открыть карту».</li>
+  </ul>
+  <p class="kg-tg">Түсінбесеңіз: «Барлығы Telegram-да жазылған — @seventimesuralsk каналында» деңіз.</p>
+  <button class="btn big" id="kGuideOk" style="margin-top:14px">Түсінікті</button>
+</div>
 <div class="sheet" id="dlg">
   <div class="grab"></div>
   <p class="h" id="dlgTitle" style="text-align:center;margin-bottom:14px"></p>
@@ -959,7 +1005,7 @@
 <script>
 // URL своего Apps Script (…/exec)
 // Версия карты — показывается в админке рядом с версией сервера
-const APP_VERSION = 'v46';
+const APP_VERSION = 'v47';
 const API_URL = 'https://script.google.com/macros/s/AKfycbzaJzsvSfqN4bhHapu9uVzIam_Mm1zVQvXnX4SeglaUhWCcvBN1Ysa1vpuuLuj6ewwuog/exec';
 
 const tg = window.Telegram?.WebApp;
@@ -2047,6 +2093,9 @@ $('invCodeBtn').onclick = async () => {
 let giftSt = null, giftTimer = 0, giftBusy = false, giftShown = '';
 const hm = (h) => (h >= 24 ? '00' : h) + ':00'; // 24 — до полуночи
 const dayRu = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString('ru', { day: 'numeric', month: 'long' });
+const MENU999 = 'английский, турецкий или шакшука'; // завтраки за 999 ₸ — сервер v36 присылает свои (main.menu)
+const menu999 = (s) => esc((s && s.main && s.main.menu) || MENU999);
+const gmenu = (s) => `<div class="gmenu">🍳 Завтрак на выбор: <b>${menu999(s)}</b></div>`; // главный приз: какие завтраки за 999 ₸
 const nb = (t) => String(t).replace(/(\d) ₸/g, '$1&nbsp;₸'); // «999 ₸» не разрывается на две строки
 const dayLong = (t) => new Date(t).toLocaleDateString('ru', { day: 'numeric', month: 'long', timeZone: 'Asia/Oral' });
 const GIFT_NOTES = { 'Абулхаир Хана 177': 'с 8:00', 'Самал 70/3': 'с 11:00' }; // часы работы точек; сервер присылает свои (GIFT_NOTES)
@@ -2070,12 +2119,14 @@ function giftRulesList(s) {
     'Участник — владелец карты Seven Times с подтверждённым номером. Один подарок в день, вид подарка — случайный.',
     `Подарок открывается в карте с ${hm(s.open)} до ${hm(s.close)} и выдаётся <b>только к завтраку</b> по QR до ${bf}. Без скана до ${bf} подарок аннулируется.`,
     '<b>В один день — либо подарок, либо скидка по карте.</b> До скана от подарка можно отказаться.',
-    `Количество подарков ограничено.${mp ? ` Главный приз — завтраки за ${mp.price} ₸ в течение ${mp.days} дней: может выпасть при открытии подарка до ${hm(mp.before)}, действует раз в день до ${bf}.` : ''}`,
+    `Количество подарков ограничено.${mp ? ` Главный приз — завтраки за ${mp.price} ₸ в течение ${mp.days} дней (${esc(mp.menu || MENU999)} — на выбор): может выпасть при открытии подарка до ${hm(mp.before)}, действует раз в день до ${bf}.` : ''}`,
     'Подарок не обменивается на деньги и не передаётся. Организатор вправе изменить или завершить акцию, сообщив в @seventimesuralsk.',
   ];
 }
 function openGiftRules() { if (!giftSt) return; tick(); $('grList').innerHTML = giftRulesList(giftSt).filter(Boolean).map((x) => `<li>${nb(x)}</li>`).join(''); openSheet('giftRules'); }
 $('grOk').onclick = closeSheets;
+$('kGuideBtn').onclick = () => { tick(); openSheet('kGuide'); $('kGuide').scrollTop = 0; };
+$('kGuideOk').onclick = closeSheets;
 // Окно «Открыть подарок» [8:00, 12:00]: сервер присылает начало (до старта, до открытия, закрыто) или конец (открыто) — второе считаем сами
 function giftWin(s) {
   const len = ((s.close || 12) - (s.open || 8)) * 3600e3, o = s.opensAt || s.startsAt || (s.closesAt ? s.closesAt - len : 0);
@@ -2104,17 +2155,18 @@ function paintGift() {
   const cd = (label, to) => `<div class="cd"><i>${label}</i><b data-cd="${to || 0}">${fmtCd((to || 0) - gnow())}</b></div>`;
   const st = (cls, t) => `<div class="cd ${cls}"><b>${t}</b></div>`;
   const row = (e, t, sub, right) => `<div class="gpz"><span class="pe">${e}</span><div class="pt"><b>${nb(t)}</b>${sub ? `<span>${sub}</span>` : ''}</div>${right}</div>`;
-  const prz = (right) => row(esc(pz.e), esc(pz.title), esc(pz.sub), right);
-  let kick = 'Ваш подарок', body = '', full = true;
+  const big = pz && pz.k === 'b999'; // главный приз: меню — отдельной строкой ниже
+  const prz = (right) => row(esc(pz.e), esc(pz.title), big ? `${(s.main && s.main.days) || 7} дней · каждое утро до ${hm(giftBf(s))}` : esc(pz.sub), right);
+  let kick = big ? 'Главный приз' : 'Ваш подарок', body = '', full = true;
   if (p === 'soon') { kick = 'Подарки к завтраку'; body = row('🎁', 'С ' + dayRu(s.startDay), 'каждое утро — подарок', cd('до старта', s.startsAt)); }
   else if (p === 'before') body = row('🎁', 'Подарок к завтраку', `откроется в ${hm(s.open)}`, cd('до открытия', s.opensAt));
   else if (p === 'open') { const rc = realCd(s), w = giftWin(s); body = row('🎁', 'Подарок ждёт', s.test ? 'главный админ: открыть можно в любое время' : `открыть до ${hm(s.close)}`, rc ? cd(rc[0], rc[1]) : w ? cd('осталось', w[1]) : '') + '<button class="btn big gbtn" id="giftOpen">Открыть подарок</button>'; }
   else if (p === 'closed') body = row('🎁', 'Новый подарок', `завтра с ${hm(s.open)}`, cd('через', giftNext(s)));
   else if (p === 'soldout') body = row('🎁', 'Подарки на сегодня закончились', `завтра с ${hm(s.open)} — приходите пораньше`, cd('через', giftNext(s)));
   else if (p === 'pass') { const ps = s.pass || {}; kick = 'Главный приз'; // неделя завтраков за 999 ₸
-    body = row('🍳', `Завтраки за ${ps.price || 999} ₸`, `до ${dayLong(ps.until - 1)} · каждое утро до ${hm(giftBf(s))}`, ps.today ? st('ok', 'Сегодня ✓') : cd('неделя ещё', ps.until)) + retest(); }
+    body = row('🍳', `Завтраки за ${ps.price || 999} ₸`, `до ${dayLong(ps.until - 1)} · каждое утро до ${hm(giftBf(s))}`, ps.today ? st('ok', 'Сегодня ✓') : cd('неделя ещё', ps.until)) + gmenu(s) + retest(); }
   else if (p === 'got') body = prz(s.test && s.orderUntil && gnow() >= s.orderUntil ? '<div class="cd"><i>тест</i><b class="sm">не сгорает</b></div>' // главный админ после 12:00
-    : s.orderUntil ? cd(`завтрак до ${hm(giftBf(s))}`, s.orderUntil) : cd('осталось', s.useUntil)); // старый сервер — без orderUntil
+    : s.orderUntil ? cd(`завтрак до ${hm(giftBf(s))}`, s.orderUntil) : cd('осталось', s.useUntil)) + (pz && pz.k === 'b999' ? gmenu(s) : ''); // старый сервер — без orderUntil
   else if (p === 'used') { body = prz(st('ok', 'Получен ✓')) + retest(); full = false; }
   else if (p === 'refused') { body = prz(st('off', 'Отказ')) + retest(); full = false; } // сюда — только главный админ (тест)
   // сгорел / не действует — сам подарок не показываем: со скриншотом нечего показывать на кассе
@@ -2199,7 +2251,7 @@ function giftAnim(fast) {
   const fill = (s) => { const p = s.prize || {}, main = p.k === 'b999', mp = s.main || { price: 999, days: 7 };
     $('gE').textContent = p.e || '🎁'; $('gT').textContent = (p.title || '').replace(/(\d) ₸/g, '$1\u00a0₸'); $('gS').textContent = p.sub || '';
     $('gK').textContent = main ? 'ГЛАВНЫЙ ПРИЗ' : 'ВАШ ПОДАРОК';
-    $('gTerms').innerHTML = main ? `<b>${mp.days} дней — завтрак за ${mp.price} ₸ каждое утро</b><br>Сегодня покажите QR кассиру до ${hm(giftBf(s))} — и неделя начнётся<br>${s.branches.map(esc).join('<br>')}` : giftTermsHtml(s);
+    $('gTerms').innerHTML = main ? `<b>${mp.days} дней — завтрак за ${mp.price} ₸ каждое утро</b><br>Завтрак на выбор: ${esc(mp.menu || MENU999)}<br>Сегодня покажите QR кассиру до ${hm(giftBf(s))} — и неделя начнётся<br>${s.branches.map(esc).join('<br>')}` : giftTermsHtml(s);
     return main; };
   const hide = (done) => { ov.classList.remove('on'); setTimeout(() => { ov.classList.add('hidden'); if (done) done(); }, 450); };
   return {
@@ -2302,7 +2354,7 @@ function kassaFinal(r) {
     haptic('success');
     const t = String(r.gift?.title || '🎁 Подарок'), sp = t.indexOf(' '), em = sp > 0 ? t.slice(0, sp) : '🎁', name = sp > 0 ? t.slice(sp + 1) : t;
     const who = [r.name, r.card ? 'карта ' + r.card : '', r.visit ? 'визит засчитан' : ''].filter(Boolean).join(' · ');
-    kassaResult(`${placeHtml(r.place)}<div class="card kres give"><span class="ge">${esc(em)}</span><div><div class="kgv">${nb(esc(r.gift?.label || 'Выдать подарок'))}</div><div class="kgh">${nb(esc(name))}</div><div class="gw">${esc(who)}</div></div></div>`); // инструкция у кассиров есть — без лишнего текста
+    kassaResult(`${placeHtml(r.place)}<div class="card kres give"><span class="ge">${esc(em)}</span><div><div class="kgv">${nb(esc(r.gift?.label || 'Выдать подарок'))}</div><div class="kgh">${nb(esc(name))}</div>${r.gift?.k === 'b999' && r.gift.sub ? `<div class="gm">${esc(r.gift.sub)}</div>` : ''}<div class="gw">${esc(who)}</div></div></div>`); // инструкция у кассиров есть — без лишнего текста
     bindPlace(r.place); $('kRes').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); // на маленьком экране — сразу видно
     return;
   }
