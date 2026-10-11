@@ -256,6 +256,7 @@
   .vrow { display: flex; justify-content: space-between; gap: 12px; padding: 11px 0; font-size: 15px; border-top: 1px solid var(--sep); }
   .vrow:first-child { border-top: 0; padding-top: 2px; }
   .vrow span:last-child { color: var(--text-2); text-align: right; }
+  .vrow.ref span { color: var(--text-3); font-size: 14px; }
 
   /* ── списки как в Настройках iOS ── */
   .list { background: var(--surface); border-radius: var(--r); overflow: hidden; margin-bottom: 14px; box-shadow: var(--shadow); }
@@ -522,40 +523,32 @@
   .cn-crown { top: 50%; z-index: 4; pointer-events: none; }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 
-  /* ── подарок к завтраку ── */
-  .gift .gh { display: flex; align-items: center; gap: 14px; }
-  .gift .gi { width: 48px; height: 48px; border-radius: 15px; flex: none; display: grid; place-items: center; font-size: 24px; background: linear-gradient(140deg, #9a2a42, #5a0f20); box-shadow: 0 8px 18px rgba(109,21,40,.25); }
-  .gift .gt { font-size: 17px; font-weight: 700; letter-spacing: -.02em; line-height: 1.2; }
-  .gift .gs { color: var(--text-2); font-size: 14px; margin-top: 2px; }
-  .gift .gbtn { position: relative; overflow: hidden; background: linear-gradient(135deg, #8f2239, #5a0f20); color: #fff; }
+  /* ── подарок к завтраку: минимализм ── */
+  .gift { padding: 18px 18px 16px; }
+  .gift .gk { font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: #8f2239; }
+  .gift .gpz { margin-top: 10px; padding: 14px 14px 14px 16px; border-radius: 18px; display: flex; align-items: center; gap: 12px; background: color-mix(in srgb, #8f2239 7%, var(--surface)); }
+  .gift .gpz .pe { font-size: 34px; line-height: 1; flex: none; }
+  .gift .gpz .pt { flex: 1; min-width: 0; }
+  .gift .gpz .pt b { display: block; font-size: 17px; font-weight: 700; letter-spacing: -.02em; line-height: 1.2; }
+  .gift .gpz .pt span { display: block; margin-top: 2px; font-size: 13px; color: var(--text-2); }
+  .gift .cd { flex: none; text-align: right; }
+  .gift .cd i { display: block; font-style: normal; font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); }
+  .gift .cd b { display: block; margin-top: 1px; font-size: 21px; font-weight: 600; letter-spacing: -.01em; font-variant-numeric: tabular-nums; color: #8f2239; }
+  .gift .cd.ok b { font-size: 15px; color: var(--green); }
+  .gift .cd.off b { font-size: 15px; color: var(--text-3); }
+  .gift .gbtn { margin-top: 12px; position: relative; overflow: hidden; background: linear-gradient(135deg, #8f2239, #5a0f20); color: #fff; }
   .gift .gbtn::after { content: ""; position: absolute; top: 0; bottom: 0; width: 40%; left: -60%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.35), transparent); transform: skewX(-18deg); animation: gshine 2.8s var(--ease) infinite; }
   @keyframes gshine { 0% { left: -60%; } 55%, 100% { left: 130%; } }
-  .gift .prize { margin-top: 14px; padding: 14px 16px; border-radius: 16px; display: flex; gap: 14px; align-items: center; background: color-mix(in srgb, #8f2239 9%, var(--surface)); }
-  .gift .prize .pe { font-size: 32px; line-height: 1; }
-  .gift .prize b { display: block; font-size: 18px; letter-spacing: -.02em; }
-  .gift .prize span { font-size: 13.5px; color: var(--text-2); }
-  .gift .gchip { display: inline-block; margin-top: 10px; padding: 5px 11px; border-radius: 99px; font-size: 12.5px; font-weight: 600; background: color-mix(in srgb, var(--orange) 15%, transparent); color: var(--orange); }
-  .gift .gchip.ok { background: color-mix(in srgb, var(--green) 14%, transparent); color: var(--green); }
-  .gift .gchip.off { background: var(--fill); color: var(--text-2); }
-  .gift .terms { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--sep); font-size: 12.5px; line-height: 1.55; color: var(--text-2); }
-  .gift .terms b { color: var(--text); font-weight: 600; }
-  .gift .terms .no { color: #b23a4a; font-weight: 600; }
-  .gift .gnote { margin-top: 10px; font-size: 13.5px; line-height: 1.45; color: var(--text-2); }
-  .gift .gref { display: block; margin: 8px auto 0; padding: 6px 10px; border: 0; background: none; color: var(--text-3); font: inherit; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+  .gift .gpl { margin-top: 14px; display: grid; gap: 8px; font-size: 14px; }
+  .gift .gpl div { display: flex; align-items: center; gap: 9px; }
+  .gift .gpl .ic { width: 18px; height: 18px; flex: none; }
+  .gift .gpl em { font-style: normal; color: var(--text-3); }
+  .gift .gpl .n { color: var(--text-3); }
+  .gift .gft { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--sep); display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 12px; font-size: 13px; color: var(--text-2); }
+  .gift .gft b { color: var(--text); font-weight: 600; }
+  .gift .gref { display: block; margin: 10px auto 0; padding: 4px 10px; border: 0; background: none; color: var(--text-3); font: inherit; font-size: 12.5px; text-decoration: underline; text-underline-offset: 3px; }
   .gift .gref:disabled { opacity: .6; }
-  /* «Точно отказаться?» — удержание */
-  .gkeep { text-align: center; }
-  .gkeep .gk-e { font-size: 64px; line-height: 1; margin-top: 10px; animation: gkb 2.4s var(--ease) infinite; }
-  @keyframes gkb { 0%, 100% { transform: none; } 12% { transform: translateY(-8px) rotate(-6deg); } 24% { transform: none; } 34% { transform: translateY(-4px) rotate(4deg); } 44% { transform: none; } }
-  .gkeep .gk-k { margin-top: 12px; font-size: 12px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: #8f2239; }
-  .gkeep .gk-t { margin-top: 6px; font-size: 24px; font-weight: 700; letter-spacing: -.03em; line-height: 1.15; }
-  .gkeep .gk-s { margin-top: 2px; color: var(--text-2); font-size: 14.5px; }
-  .gkeep .gk-h { margin: 18px 0 0; font-size: 19px; font-weight: 700; letter-spacing: -.02em; }
-  .gkeep .gk-p { margin: 6px auto 0; max-width: 320px; font-size: 14.5px; line-height: 1.45; color: var(--text-2); }
-  .gkeep .gk-keep { margin-top: 18px; background: linear-gradient(135deg, #8f2239, #5a0f20); color: #fff; }
-  .gkeep .gk-no { display: block; margin: 10px auto 0; padding: 8px 12px; border: 0; background: none; color: var(--text-3); font: inherit; font-size: 13.5px; }
-  .gkeep .gk-f { font-size: 12px; color: var(--text-3); }
-  .gift .glink { display: inline-block; margin-top: 8px; padding: 0; border: 0; background: none; color: var(--text); font: inherit; font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+  .gift .glink { padding: 0; border: 0; background: none; color: var(--text); font: inherit; font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
   .grules .gr-h { text-align: center; font-size: 19px; font-weight: 700; letter-spacing: -.02em; margin: 4px 0 0; }
   .grules .gr-s { text-align: center; font-size: 13px; color: var(--text-2); margin: 2px 0 12px; }
   .grules ol { margin: 0; padding: 0 2px 0 18px; font-size: 13px; line-height: 1.42; color: var(--text-2); }
@@ -946,17 +939,6 @@
   <ol id="grList"></ol>
   <button class="btn big" id="grOk" style="margin-top:16px">Я ознакомлен</button>
 </div>
-<div class="sheet gkeep" id="giftKeep">
-  <div class="grab"></div>
-  <div class="gk-e" id="gkE">🎁</div>
-  <div class="gk-k">Сегодня повезло вам</div>
-  <div class="gk-t" id="gkT"></div>
-  <div class="gk-s" id="gkS"></div>
-  <p class="gk-h">Точно отказаться?</p>
-  <p class="gk-p">Такой подарок выпадает не каждому — сегодня он достался вам. Откажетесь — он сгорит, и вернуть его будет нельзя.</p>
-  <button class="btn big gk-keep" id="gkKeep">Оставить подарок</button>
-  <button class="gk-no" id="gkNo">Всё равно отказаться<br><span class="gk-f">сегодня будет ваша обычная скидка по карте</span></button>
-</div>
 <div class="sheet" id="dlg">
   <div class="grab"></div>
   <p class="h" id="dlgTitle" style="text-align:center;margin-bottom:14px"></p>
@@ -967,7 +949,7 @@
 <script>
 // URL своего Apps Script (…/exec)
 // Версия карты — показывается в админке рядом с версией сервера
-const APP_VERSION = 'v25';
+const APP_VERSION = 'v26';
 const API_URL = 'https://script.google.com/macros/s/AKfycbw2iXb0fbYhQg4VFYEeBZZQZ8fjV34-PzjUdsqHz58ikXibTVL5Tl6LiO3OUz2nj_kg6w/exec';
 
 const tg = window.Telegram?.WebApp;
@@ -1281,7 +1263,7 @@ try { document.fonts?.addEventListener?.('loadingdone', segAll); } catch {} // I
 // нижние листы
 function openSheet(id) { $('scrim').classList.add('open'); $(id).classList.add('open'); }
 function closeSheets() { $('scrim').classList.remove('open'); document.querySelectorAll('.sheet').forEach((s) => s.classList.remove('open')); }
-$('scrim').onclick = () => { closeSheets(); if (dlgRes) { dlgRes(null); dlgRes = null; } if (keepRes) { keepRes(false); keepRes = null; } };
+$('scrim').onclick = () => { closeSheets(); if (dlgRes) { dlgRes(null); dlgRes = null; } };
 $('cgOk').onclick = closeSheets;
 function congrats({ heart, title, pct, text }) {
   $('cgHeart').classList.toggle('hidden', !heart);
@@ -1343,17 +1325,25 @@ function renderCard(c) {
   const coupons = ok && Array.isArray(c.coupons) ? c.coupons : [];
   $('couponsBox').classList.toggle('hidden', !coupons.length); $('couponsCap').classList.toggle('hidden', !coupons.length);
   $('coupons').innerHTML = coupons.map((x) => `<div class="li"><span class="grow"><b>${esc(x.title)}</b><span class="sub">до ${new Date(x.expires).toLocaleDateString('ru')} · покажите QR кассиру</span></span><span class="val">−${esc(x.discount)}%</span></div>`).join('');
-  // Мои визиты: только сколько и когда. Сколько осталось до скидки — знают только админы
-  const hist = Array.isArray(c.history) ? c.history : [];
   $('visitsBox').classList.toggle('hidden', !ok || blocked);
-  $('visitsCnt').textContent = hist.length || '';
-  $('visitsList').innerHTML = hist.length
-    ? hist.map((v) => `<div class="vrow"><span>${new Date(v.ts).toLocaleDateString('ru', { day: 'numeric', month: 'long', weekday: 'short' })}</span><span>${esc(v.branch)}</span></div>`).join('')
-    : '<div class="muted">Визитов пока нет. Покажите QR кассиру при покупке — визит засчитается.</div>';
+  paintVisits(c);
   maybeReveal(c, ok && !blocked);
   welcomeCountdown(c.welcome, ok && !blocked);
   if (!ok || blocked) renderGift(null); else if (c.gift !== undefined) renderGift(c.gift); else renderGift();
   showNotice(c.notice);
+}
+
+// Мои визиты: только сколько и когда (сколько осталось до скидки — знают только админы) + «Отказ от подарка» с датой и временем
+function paintVisits(c) {
+  if (c.history === undefined && c.refusals === undefined) return; // обновление QR — без истории, держим прошлое
+  const hist = Array.isArray(c.history) ? c.history : [], refs = Array.isArray(c.refusals) ? c.refusals : [];
+  const day = (ts) => new Date(ts).toLocaleDateString('ru', { day: 'numeric', month: 'long', weekday: 'short' });
+  const list = hist.map((v) => ({ ts: v.ts, h: `<div class="vrow"><span>${day(v.ts)}</span><span>${esc(v.branch)}</span></div>` }))
+    .concat(refs.map((x) => ({ ts: x.ts, h: `<div class="vrow ref"><span>${day(x.ts)}, ${new Date(x.ts).toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' })}</span><span>Отказ от подарка</span></div>` })))
+    .sort((a, b) => b.ts - a.ts);
+  $('visitsCnt').textContent = hist.length || '';
+  $('visitsList').innerHTML = list.length ? list.map((x) => x.h).join('')
+    : '<div class="muted">Визитов пока нет. Покажите QR кассиру при покупке — визит засчитается.</div>';
 }
 
 // Поздравление (приветственная скидка или новый уровень) — один раз, потом сервер его забывает
@@ -2033,21 +2023,30 @@ $('invCodeBtn').onclick = async () => {
 
 // ══════════ Подарок к завтраку ══════════
 // Открыть — с 8:00 до 12:00, погасить у кассира — до 17:00. Только с завтраком и только на точках из условий
-let giftSt = null, giftTimer = 0, giftBusy = false;
+let giftSt = null, giftTimer = 0, giftBusy = false, giftShown = '';
 const hm = (h) => h + ':00';
 const dayRu = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString('ru', { day: 'numeric', month: 'long' });
-function giftTermsHtml(s) {
-  return `<b>Только с завтраком.</b> Действует на ${s.branches.map(esc).join(' и ')}${s.other && s.other.length ? `<br><span class="no">На ${s.other.map(esc).join(', ')} подарки не действуют</span>` : ''}<br>Открыть — с ${hm(s.open)} до ${hm(s.close)}, получить у кассира — до ${hm(s.use)}<br>В день — либо подарок, либо скидка по карте`;
+const GIFT_NOTES = { 'Самал 70/3': 'с 11:00' }; // сервер v26 присылает свои (GIFT_NOTES)
+const giftNotes = (s) => s.notes || GIFT_NOTES, giftBf = (s) => s.breakfast || 12;
+const p2 = (n) => String(n).padStart(2, '0');
+function fmtCd(ms) {
+  ms = Math.max(0, ms || 0); const t = Math.floor(ms / 1000), d = Math.floor(t / 86400), h = Math.floor(t / 3600) % 24, m = Math.floor(t / 60) % 60, sec = t % 60;
+  return d ? `${d} д ${p2(h)}:${p2(m)}` : `${p2(h)}:${p2(m)}:${p2(sec)}`;
 }
-// «Условия акции» — коротко и юридически, помещаются на экран без прокрутки
+// под подарком на анимации открытия — коротко: с завтраком и где
+function giftTermsHtml(s) {
+  const nt = giftNotes(s);
+  return `<b>Только с завтраком</b> · завтраки до ${hm(giftBf(s))}<br>${s.branches.map((b) => esc(b) + (nt[b] ? ' · ' + esc(nt[b]) : '')).join('<br>')}${s.other && s.other.length ? `<br><span class="no">${s.other.map(esc).join(', ')} — не действует</span>` : ''}`;
+}
+// «Условия акции» — юридически, коротко, на один экран без прокрутки
 function giftRulesList(s) {
-  const from = s.from || s.startDay, br = s.branches.map(esc).join(' и '), oth = s.other && s.other.length ? ` На ${s.other.map(esc).join(', ')} акция не действует.` : '';
+  const from = s.from || s.startDay, nt = giftNotes(s), br = s.branches.map(esc).join(' и '), oth = s.other && s.other.length ? ` На ${s.other.map(esc).join(', ')} акция не действует.` : '';
+  const hours = s.branches.filter((b) => nt[b]).map((b) => ` Кофейня на ${esc(b)} работает ${esc(nt[b])}, подарок в ней можно получить до ${hm(s.use)}.`).join('');
   return [
     `Акцию проводят кофейни Seven Times (г. Уральск)${from ? ' с ' + dayRu(from) : ''} на ${br}.${oth}`,
-    `Участник — владелец карты Seven Times с подтверждённым номером. Подарок открывается в карте с ${hm(s.open)} до ${hm(s.close)}, один на карту в день, вид подарка — случайный.`,
-    `Подарок выдаётся <b>только при заказе завтрака</b>, в день открытия до ${hm(s.use)}, и считается полученным после подтверждения кассиром. Неполученный подарок аннулируется.`,
-    '<b>В один день — либо подарок, либо скидка по карте.</b> После подарка скидки и купоны не применяются; после скидки подарок не выдаётся.',
-    'До получения от подарка можно отказаться в карте — тогда действует скидка по карте. Отказ окончательный.',
+    `Участник — владелец карты Seven Times с подтверждённым номером. Подарок открывается в карте с ${hm(s.open)} до ${hm(s.close)}, один на карту в день; вид подарка — случайный.`,
+    `Подарок предоставляется <b>только при заказе завтрака</b> в день открытия; завтраки заказываются до ${hm(giftBf(s))}.${hours} Подарок считается полученным после подтверждения кассиром, неполученный — аннулируется.`,
+    `<b>В один день — либо подарок, либо скидка по карте.</b> Без заказа завтрака подарок не предоставляется и применяется скидка по карте. После получения подарка скидки и купоны в этот день не применяются.`,
     'Подарок не обменивается на деньги и не передаётся. Организатор вправе изменить или завершить акцию, уведомив в канале @seventimesuralsk.',
   ];
 }
@@ -2058,37 +2057,50 @@ function giftPhase(s) {
   if (p === 'got' && !s.test && s.useUntil && now >= s.useUntil) p = 'expired';
   if (p === 'before' && s.opensAt && now >= s.opensAt) p = 'open';
   if (p === 'open' && !s.test && s.closesAt && now >= s.closesAt) p = 'closed';
+  if (p === 'closed' && s.opensAt && now >= s.opensAt) p = 'open';
   if (p === 'soon' && s.startsAt && now >= s.startsAt) p = 'open';
   return p;
 }
+// Минимализм: «Ваш подарок», обратный отсчёт внутри, где действует и где нет, завтраки до 12:00, «Условия акции»
+const ICON_YES = '<svg class="ic" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="var(--green)" opacity=".16"/><path d="M6 10.4l2.6 2.6L14 7.6" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const ICON_NO = '<svg class="ic" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="var(--text-3)" opacity=".2"/><path d="M7.2 7.2l5.6 5.6M12.8 7.2l-5.6 5.6" fill="none" stroke="var(--text-3)" stroke-width="2" stroke-linecap="round"/></svg>';
 function paintGift() {
-  const s = giftSt, box = $('giftBox');
-  const qt = $('qrTitle');
+  const s = giftSt, box = $('giftBox'), qt = $('qrTitle');
   const p = s && giftPhase(s);
-  if (!s || p === 'refused') { box.classList.add('hidden'); if (qt) qt.textContent = 'Ваш QR для скидки'; return; } // отказался — всё как обычно, блока нет
-  const prize = s.prize, v25 = s.from !== undefined; // сервер v25+: отказ от подарка, «либо подарок, либо скидка»
-  if (qt) qt.textContent = p === 'got' && v25 ? 'Ваш QR — для подарка' : 'Ваш QR для скидки';
-  const head = (t, sub) => `<div class="gh"><div class="gi">🎁</div><div><div class="gt">${t}</div><div class="gs">${sub}</div></div></div>`;
-  const pz = prize ? `<div class="prize"><span class="pe">${esc(prize.e)}</span><div><b>${esc(prize.title)}</b><span>${esc(prize.sub)}</span></div></div>` : '';
-  let h = '';
-  if (p === 'soon') h = head('Подарки к завтраку', `С ${dayRu(s.startDay)} каждое утро — подарок в этой карте`);
-  else if (p === 'before') h = head('Подарок к завтраку', `Откроется сегодня в ${hm(s.open)}`);
-  else if (p === 'open') h = head('Ваш подарок к завтраку ждёт', `Откройте до ${hm(s.close)}${s.test ? ' · проверка главного админа' : ''}`) + `<button class="btn big gbtn" id="giftOpen">Открыть подарок</button>`;
-  else if (p === 'closed') h = head('Подарок к завтраку', `Сегодня подарки открывались до ${hm(s.close)}. Завтра с ${hm(s.open)} — новый`);
-  else if (p === 'got') h = head('Ваш подарок сегодня', `Закажите завтрак и покажите QR кассиру до ${hm(s.use)}`) + pz + '<span class="gchip">Ждёт кассира</span>' +
-    (v25 ? '<div class="gnote">Подарок действует вместо скидки по карте.</div><button class="gref" id="giftRefuse">Отказаться от подарка</button>' : '');
-  else if (p === 'used') h = head('Подарок получен', v25 ? 'Приятного аппетита! Скидка по карте — снова завтра' : 'Приятного аппетита! Завтра — новый подарок') + pz + '<span class="gchip ok">Выдан ✓</span>';
-  else if (p === 'expired') h = head('Срок подарка вышел', `Подарок нужно было получить до ${hm(s.use)}. ${v25 ? 'Ваша скидка по карте действует как обычно' : `Завтра с ${hm(s.open)} — новый`}`) + pz + '<span class="gchip off">Не получен</span>';
-  else if (p === 'blocked') h = head(s.prize ? 'Подарок сегодня не действует' : 'Подарок к завтраку', `Сегодня по карте уже была скидка — в день либо подарок, либо скидка. Завтра с ${hm(s.open)} — новый подарок`) + pz + (s.prize ? '<span class="gchip off">Не действует</span>' : '');
-  box.innerHTML = h + `<div class="terms">${giftTermsHtml(s)}<br><button class="glink" id="giftRulesBtn">Условия акции</button></div>`;
+  giftShown = p || '';
+  // нет подарков, отказался или сегодня уже была скидка (подарок не открывал) — блока нет, всё как обычно
+  if (!s || p === 'refused' || (p === 'blocked' && !s.prize)) { box.classList.add('hidden'); if (qt) qt.textContent = 'Ваш QR для скидки'; return; }
+  if (qt) qt.textContent = p === 'got' ? 'Ваш QR — для подарка' : 'Ваш QR для скидки';
+  const pz = s.prize, nt = giftNotes(s);
+  const cd = (label, to) => `<div class="cd"><i>${label}</i><b data-cd="${to || 0}">${fmtCd((to || 0) - Date.now())}</b></div>`;
+  const st = (cls, t) => `<div class="cd ${cls}"><b>${t}</b></div>`;
+  const row = (e, t, sub, right) => `<div class="gpz"><span class="pe">${e}</span><div class="pt"><b>${t}</b>${sub ? `<span>${sub}</span>` : ''}</div>${right}</div>`;
+  const prz = (right) => row(esc(pz.e), esc(pz.title), esc(pz.sub), right);
+  let kick = 'Ваш подарок', body = '', full = true;
+  if (p === 'soon') { kick = 'Подарки к завтраку'; body = row('🎁', 'С ' + dayRu(s.startDay), 'каждое утро — подарок', cd('до старта', s.startsAt)); }
+  else if (p === 'before') body = row('🎁', 'Подарок к завтраку', `откроется в ${hm(s.open)}`, cd('до открытия', s.opensAt));
+  else if (p === 'open') body = row('🎁', 'Подарок ждёт', s.test ? 'проверка главного админа' : `открыть до ${hm(s.close)}`, s.closesAt && !s.test ? cd('осталось', s.closesAt) : '') + '<button class="btn big gbtn" id="giftOpen">Открыть подарок</button>';
+  else if (p === 'closed') body = row('🎁', 'Новый подарок', `завтра с ${hm(s.open)}`, cd('через', s.opensAt));
+  else if (p === 'got') body = prz(cd('осталось', s.useUntil));
+  else if (p === 'used') { body = prz(st('ok', 'Получен ✓')); full = false; }
+  else if (p === 'expired') { body = prz(st('off', 'Сгорел')); full = false; }
+  else if (p === 'blocked') { body = prz(st('off', 'Не действует')); full = false; }
+  const places = full ? `<div class="gpl">${s.branches.map((b) => `<div>${ICON_YES}<span>${esc(b)}${nt[b] ? ` <em>· ${esc(nt[b])}</em>` : ''}</span></div>`).join('')}${(s.other || []).map((b) => `<div class="n">${ICON_NO}<span>${esc(b)} · не действует</span></div>`).join('')}</div>` : '';
+  box.innerHTML = `<div class="gk">${kick}</div>${body}${places}<div class="gft"><span><b>Только с завтраком</b> · завтраки до ${hm(giftBf(s))}</span><button class="glink" id="giftRulesBtn">Условия акции</button></div>${p === 'got' && s.from !== undefined ? '<button class="gref" id="giftRefuse">Отказаться от подарка</button>' : ''}`;
   box.classList.remove('hidden');
   const b = $('giftOpen'); if (b) b.onclick = openGift;
   const rf = $('giftRefuse'); if (rf) rf.onclick = refuseGift;
   $('giftRulesBtn').onclick = openGiftRules;
 }
+// обратный отсчёт — раз в секунду; сменилась фаза (8:00, 12:00, 17:00) — перерисовываем
+function giftTick() {
+  if (!giftSt) return;
+  if (giftPhase(giftSt) !== giftShown) return paintGift();
+  document.querySelectorAll('#giftBox [data-cd]').forEach((el) => { el.textContent = fmtCd(+el.dataset.cd - Date.now()); });
+}
 function renderGift(s) {
   if (s !== undefined) giftSt = s; // обновление QR приходит без поля — держим прошлое
-  clearInterval(giftTimer); paintGift(); if (giftSt) giftTimer = setInterval(paintGift, 30000);
+  clearInterval(giftTimer); paintGift(); if (giftSt) giftTimer = setInterval(giftTick, 1000);
 }
 async function openGift() {
   if (giftBusy) return; giftBusy = true; tick();
@@ -2101,22 +2113,11 @@ async function openGift() {
   } catch (e) { haptic('error'); alertMsg(e.message); if (b) { b.disabled = false; b.textContent = 'Открыть подарок'; } }
   giftBusy = false;
 }
-// «Отказаться от подарка»: сегодня вместо него — своя скидка по карте
-let keepRes = null;
-function askKeep(prize) {
-  return new Promise((res) => {
-    keepRes = res; tick();
-    $('gkE').textContent = prize?.e || '🎁'; $('gkT').textContent = prize?.title || 'Ваш подарок'; $('gkS').textContent = prize?.sub || '';
-    openSheet('giftKeep');
-  });
-}
-$('gkKeep').onclick = () => { haptic('success'); closeSheets(); if (keepRes) { keepRes(false); keepRes = null; } };
-$('gkNo').onclick = () => { tick(); closeSheets(); if (keepRes) { keepRes(true); keepRes = null; } };
+// «Отказаться от подарка» — сразу, без вопросов: карта как обычно, работает своя скидка. В «Моих визитах» — «Отказ от подарка»
 async function refuseGift() {
   if (giftBusy) return;
-  if (!(await askKeep(giftSt?.prize))) return; // «Оставить подарок» — ничего не делаем
-  giftBusy = true; const b = $('giftRefuse'); if (b) { b.disabled = true; b.textContent = 'Отказываемся…'; }
-  try { const r = await api('giftRefuse'); haptic('success'); if (me?.card) me.card.gift = r.gift; renderGift(r.gift); }
+  giftBusy = true; tick(); const b = $('giftRefuse'); if (b) { b.disabled = true; b.textContent = 'Отказываемся…'; }
+  try { const r = await api('giftRefuse'); haptic('success'); if (me?.card) { me.card.gift = r.gift; me.card.refusals = [{ ts: Date.now() }].concat(me.card.refusals || []); paintVisits(me.card); } renderGift(r.gift); }
   catch (e) { haptic('error'); alertMsg(e.message); paintGift(); }
   giftBusy = false;
 }
@@ -2209,13 +2210,13 @@ function paintGeo(r) {
 }
 
 // касса: подарок гостя отдельной карточкой
-// r — режим подарка (сервер v25): у гостя сегодня подарок вместо скидки, касса показывает только его
+// r — режим подарка (сервер v25+): у гостя сегодня подарок, касса показывает только его — одна кнопка «Погасить подарок»
 function giftKassaHtml(g, r) {
   if (!g) return '';
   const cls = g.state === 'open' ? 'warn' : g.state === 'used' ? '' : 'err';
   const who = r ? `<div class="kg-who">${esc(r.name)}</div>${r.card ? `<div class="kg-card">Карта ${esc(r.card)}</div>` : ''}` : '';
   return `<div class="card kgift${r ? ' gm' : ''}" id="kGift"><div class="kg-h">🎁 Подарок к завтраку</div>${who}<div class="kg-t">${esc(g.title)}</div>${g.sub ? `<div class="kg-s">${esc(g.sub)}</div>` : ''}
-    <div class="msg ${cls}" style="display:block">${esc(g.note)}</div>${g.state === 'open' ? '<button class="btn big kgbtn" id="kGiftBtn">Погасить подарок</button>' : ''}${r && r.note ? `<div class="kg-hint">${esc(r.note)}</div>` : ''}</div>`;
+    <div class="msg ${cls}" style="display:block">${esc(g.note)}</div>${g.state === 'open' ? '<button class="btn big kgbtn" id="kGiftBtn">Погасить подарок</button>' : ''}${r ? '<div class="kg-hint">Без завтрака и хочет скидку — пусть гость нажмёт в карте «Отказаться от подарка» и покажет QR снова</div>' : ''}</div>`;
 }
 function bindKassaGift(g) {
   const b = $('kGiftBtn'); if (!b || !g) return;
