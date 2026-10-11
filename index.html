@@ -110,7 +110,7 @@
       repeating-radial-gradient(circle at 115% -25%, rgba(255,255,255,.035) 0 1px, transparent 1px 6px),
       radial-gradient(120% 140% at 100% 0%, var(--w2, var(--wallet-2)) 0%, var(--w1, var(--wallet-1)) 58%);
     box-shadow: 0 1px 0 rgba(255,255,255,.08) inset, 0 30px 50px -24px rgba(0,0,0,.55), 0 10px 20px -12px rgba(0,0,0,.3);
-    transform: rotateX(var(--rx)) rotateY(var(--ry)); transform-style: preserve-3d; transition: transform .6s var(--ease); will-change: transform; }
+    transform: rotateX(var(--rx)) rotateY(var(--ry)); transform-style: flat; transition: transform .6s var(--ease); will-change: transform; } /* flat: на iPhone с preserve-3d надписи съезжали с карты и не обрезались по краю */
   .wallet.live { transition: transform .08s linear; }
   .wallet .glow { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(360px circle at var(--mx) var(--my), rgba(255,255,255,.16), transparent 45%); mix-blend-mode: soft-light; transition: background-position .3s; }
   .wallet::after { content: ""; position: absolute; inset: -20%; pointer-events: none; background: linear-gradient(105deg, transparent 38%, rgba(255,255,255,.13) 48%, rgba(255,255,255,.02) 55%, transparent 62%); transform: translateX(-120%); animation: sheen 7s 1s var(--ease) infinite; }
@@ -959,7 +959,7 @@
 <script>
 // URL своего Apps Script (…/exec)
 // Версия карты — показывается в админке рядом с версией сервера
-const APP_VERSION = 'v43';
+const APP_VERSION = 'v44';
 const API_URL = 'https://script.google.com/macros/s/AKfycbw6dxM-Fuke8BrCjaAT1C7AFElTJLIEg3iMU7weMjMQ4iTFen_9A4jGZdKbvn743pa1Kg/exec';
 
 const tg = window.Telegram?.WebApp;
