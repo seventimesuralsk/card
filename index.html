@@ -524,33 +524,35 @@
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 
   /* ── подарок к завтраку: минимализм ── */
-  .gift { padding: 18px 18px 16px; }
-  .gift .gk { font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: #8f2239; }
-  .gift .gpz { margin-top: 10px; padding: 14px 14px 14px 16px; border-radius: 18px; display: flex; align-items: center; gap: 12px; background: color-mix(in srgb, #8f2239 7%, var(--surface)); }
+  .gift { padding: 18px 18px 16px; color: #fff; background: linear-gradient(160deg, #3d9bff 0%, var(--sysblue) 48%, #0058d0 100%); box-shadow: 0 16px 36px -18px rgba(0,122,255,.75); } /* системный синий Apple */
+  .gift .gk { font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: rgba(255,255,255,.78); }
+  .gift .gpz { margin-top: 10px; padding: 14px 14px 14px 16px; border-radius: 18px; display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,.15); }
   .gift .gpz .pe { font-size: 34px; line-height: 1; flex: none; }
   .gift .gpz .pt { flex: 1; min-width: 0; }
   .gift .gpz .pt b { display: block; font-size: 17px; font-weight: 700; letter-spacing: -.02em; line-height: 1.2; }
-  .gift .gpz .pt span { display: block; margin-top: 2px; font-size: 13px; color: var(--text-2); }
+  .gift .gpz .pt span { display: block; margin-top: 2px; font-size: 13px; color: rgba(255,255,255,.8); }
   .gift .cd { flex: none; text-align: right; }
-  .gift .gx { filter: grayscale(1); opacity: .45; }
-  .gift .gtest { margin-top: 8px; text-align: center; font-size: 12.5px; color: var(--text-3); }
-  .gift .gtest b { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text-2); }
-  .gift .cd i { display: block; font-style: normal; font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); }
-  .gift .cd b { display: block; margin-top: 1px; font-size: 21px; font-weight: 600; letter-spacing: -.01em; font-variant-numeric: tabular-nums; color: #8f2239; }
-  .gift .cd.ok b { font-size: 15px; color: var(--green); }
+  .gift .gx { filter: grayscale(1); opacity: .55; }
+  .gift .gtest { margin-top: 8px; text-align: center; font-size: 12.5px; color: rgba(255,255,255,.75); }
+  .gift .gtest b { font-weight: 600; font-variant-numeric: tabular-nums; color: #fff; }
+  .gift .cd i { display: block; font-style: normal; font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.72); }
+  .gift .cd b { display: block; margin-top: 1px; font-size: 21px; font-weight: 600; letter-spacing: -.01em; font-variant-numeric: tabular-nums; color: #fff; }
+  .gift .cd.ok b { font-size: 15px; color: #fff; }
   .gift .cd b.sm { font-size: 15px; }
-  .gift .cd.off b { font-size: 15px; color: var(--text-3); }
-  .gift .gbtn { margin-top: 12px; position: relative; overflow: hidden; background: linear-gradient(135deg, #8f2239, #5a0f20); color: #fff; }
-  .gift .gbtn::after { content: ""; position: absolute; top: 0; bottom: 0; width: 40%; left: -60%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.35), transparent); transform: skewX(-18deg); animation: gshine 2.8s var(--ease) infinite; }
+  .gift .cd.off b { font-size: 15px; color: rgba(255,255,255,.6); }
+  .gift .gbtn { margin-top: 12px; position: relative; overflow: hidden; background: #fff; color: #007aff; box-shadow: 0 6px 16px -8px rgba(0,0,0,.35); }
+  .gift .gbtn::after { content: ""; position: absolute; top: 0; bottom: 0; width: 40%; left: -60%; background: linear-gradient(100deg, transparent, rgba(0,122,255,.16), transparent); transform: skewX(-18deg); animation: gshine 2.8s var(--ease) infinite; }
   @keyframes gshine { 0% { left: -60%; } 55%, 100% { left: 130%; } }
   .gift .gpl { margin-top: 14px; display: grid; gap: 8px; font-size: 14px; }
   .gift .gpl div { display: flex; align-items: center; gap: 9px; }
   .gift .gpl .ic { width: 18px; height: 18px; flex: none; }
-  .gift .gpl em { font-style: normal; color: var(--text-3); }
-  .gift .gpl .n { color: var(--text-3); }
-  .gift .gft { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--sep); display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 12px; font-size: 13px; color: var(--text-2); }
-  .gift .gft b { color: var(--text); font-weight: 600; }
-  .gift .gref { display: block; margin: 10px auto 0; padding: 4px 10px; border: 0; background: none; color: var(--text-3); font: inherit; font-size: 12.5px; text-decoration: underline; text-underline-offset: 3px; }
+  .gift .gpl .ic circle { fill: #fff; } .gift .gpl .ic path { stroke: #fff; }
+  .gift .gpl em { font-style: normal; color: rgba(255,255,255,.75); }
+  .gift .gpl .n { color: rgba(255,255,255,.6); }
+  .gift .gpl .n .ic { opacity: .75; }
+  .gift .gft { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.24); display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 12px; font-size: 13px; color: rgba(255,255,255,.82); }
+  .gift .gft b { color: #fff; font-weight: 600; }
+  .gift .gref { display: block; margin: 10px auto 0; padding: 4px 10px; border: 0; background: none; color: rgba(255,255,255,.72); font: inherit; font-size: 12.5px; text-decoration: underline; text-underline-offset: 3px; }
   .gift .gref:disabled { opacity: .6; }
   .kres .kgh { font-size: 26px; letter-spacing: -.02em; line-height: 1.15; margin: 12px 0 6px; }
   /* «ВЫДАЙ ПОДАРОК» — компактно: заметно, но вместе с подсказкой влезает в экран */
@@ -559,7 +561,7 @@
   .kres.give .kgv { font-size: 11px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; opacity: .85; }
   .kres.give .kgh { margin: 1px 0 0; font-size: 18px; font-weight: 700; letter-spacing: -.02em; line-height: 1.2; color: #fff; }
   .kres.give .gw { margin-top: 2px; font-size: 13px; opacity: .8; }
-  .gift .glink { padding: 0; border: 0; background: none; color: var(--text); font: inherit; font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+  .gift .glink { padding: 0; border: 0; background: none; color: #fff; font: inherit; font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
   .grules .gr-h { text-align: center; font-size: 19px; font-weight: 700; letter-spacing: -.02em; margin: 4px 0 0; }
   .grules .gr-s { text-align: center; font-size: 13px; color: var(--text-2); margin: 2px 0 12px; }
   .grules ol { margin: 0; padding: 0 2px 0 18px; font-size: 13px; line-height: 1.42; color: var(--text-2); }
@@ -587,12 +589,15 @@
   .gp { position: absolute; left: 0; right: 0; top: 40px; padding: 26px 22px 22px; border-radius: 26px; background: var(--surface); text-align: center; transform: translateY(30px) scale(.92); opacity: 0; transition: transform .9s var(--spring), opacity .6s var(--ease); box-shadow: 0 30px 80px rgba(0,0,0,.35); }
   .gp.on { transform: none; opacity: 1; }
   .gp .e { font-size: 58px; line-height: 1; }
-  .gp .k { margin-top: 10px; font-size: 12px; font-weight: 700; letter-spacing: .28em; color: #8f2239; }
+  .gp .k { margin-top: 10px; font-size: 12px; font-weight: 700; letter-spacing: .28em; color: var(--sysblue); }
   .gp .t { margin-top: 6px; font-size: 26px; font-weight: 700; letter-spacing: -.03em; line-height: 1.15; }
   .gp .s { margin-top: 4px; color: var(--text-2); }
   .gp .terms { margin-top: 14px; padding: 12px 14px; border-radius: 14px; background: var(--fill); font-size: 13px; line-height: 1.5; text-align: left; color: var(--text-2); }
   .gp .terms b { color: var(--text); } .gp .terms .no { color: #b23a4a; font-weight: 600; }
-  .gp .btn { margin-top: 16px; background: linear-gradient(135deg, #8f2239, #5a0f20); color: #fff; }
+  .gp .gauto { margin: 16px auto 0; width: 64px; height: 3px; border-radius: 2px; background: var(--fill); overflow: hidden; } /* закроется само */
+  .gp .gauto i { display: block; height: 100%; background: var(--sysblue); transform-origin: left; }
+  .gp .gauto i.run { animation: gbar var(--gdur, 3s) linear forwards; }
+  @keyframes gbar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
   .gconf i { position: absolute; left: 50%; top: 170px; width: 8px; height: 12px; border-radius: 2px; opacity: 0; }
 
   /* геолокация кассы */
@@ -611,7 +616,7 @@
   .geo-row .ga button { border: 0; border-radius: 12px; padding: 0 14px; font: inherit; font-size: 14px; font-weight: 600; background: var(--fill); color: var(--text); white-space: nowrap; }
   .geo-row .here { margin-top: 10px; }
   /* касса: подарок */
-  .kgift .kg-h { font-size: 12.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #8f2239; }
+  .kgift .kg-h { font-size: 12.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--sysblue); }
   .kgift .kg-t { font-size: 22px; font-weight: 700; letter-spacing: -.02em; margin-top: 6px; }
   .kgift .kg-s { color: var(--text-2); font-size: 14px; }
 </style>
@@ -954,7 +959,7 @@
 <script>
 // URL своего Apps Script (…/exec)
 // Версия карты — показывается в админке рядом с версией сервера
-const APP_VERSION = 'v41';
+const APP_VERSION = 'v42';
 const API_URL = 'https://script.google.com/macros/s/AKfycbwdAyvKxSir6YHJZqJiHD9a8HGA5_ASsK2lVb8WnSQgJkymI3sKkyltjTr-ASqP3uAXUw/exec';
 
 const tg = window.Telegram?.WebApp;
@@ -2044,8 +2049,8 @@ const hm = (h) => (h >= 24 ? '00' : h) + ':00'; // 24 — до полуночи
 const dayRu = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString('ru', { day: 'numeric', month: 'long' });
 const nb = (t) => String(t).replace(/(\d) ₸/g, '$1&nbsp;₸'); // «999 ₸» не разрывается на две строки
 const dayLong = (t) => new Date(t).toLocaleDateString('ru', { day: 'numeric', month: 'long', timeZone: 'Asia/Oral' });
-const GIFT_NOTES = { 'Самал 70/3': 'с 11:00' }; // сервер v26 присылает свои (GIFT_NOTES)
-const giftNotes = (s) => s.notes || GIFT_NOTES, giftBf = (s) => s.breakfast || 12;
+const GIFT_NOTES = { 'Абулхаир Хана 177': 'с 8:00', 'Самал 70/3': 'с 11:00' }; // часы работы точек; сервер присылает свои (GIFT_NOTES)
+const giftNotes = (s) => Object.assign({}, GIFT_NOTES, s.notes || {}), giftBf = (s) => s.breakfast || 12;
 const p2 = (n) => String(n).padStart(2, '0');
 function fmtCd(ms) {
   ms = Math.max(0, ms || 0); const t = Math.floor(ms / 1000), d = Math.floor(t / 86400), h = Math.floor(t / 3600) % 24, m = Math.floor(t / 60) % 60, sec = t % 60;
@@ -2058,16 +2063,15 @@ function giftTermsHtml(s) {
 }
 // «Условия акции» — юридически, коротко, на один экран без прокрутки
 function giftRulesList(s) {
-  const from = s.from || s.startDay, nt = giftNotes(s), oth = s.other && s.other.length ? ` На ${s.other.map(esc).join(', ')} акция не действует.` : '';
-  const br = s.branches.map((b) => esc(b) + (nt[b] ? ` (работает ${esc(nt[b])})` : '')).join(' и '), bf = hm(giftBf(s));
-  const lim = s.limit ? ` Количество подарков ограничено: до ${s.limit} в день на каждой точке.` : '', mp = s.main; // сервер v33+
+  const from = s.from || s.startDay, nt = giftNotes(s), bf = hm(giftBf(s)), mp = s.main;
+  const br = s.branches.map((b) => esc(b) + (nt[b] ? ` (${esc(nt[b])})` : '')).join(', ');
   return [
-    `Акцию проводят кофейни Seven Times (г. Уральск)${from ? ' с ' + dayRu(from) : ''} на ${br}.${oth}`,
-    `Участник — владелец карты Seven Times с подтверждённым номером. Подарок открывается в карте с ${hm(s.open)} до ${hm(s.close)}, один на карту в день; вид подарка — случайный.${lim}`,
-    `Подарок предоставляется <b>только при заказе завтрака</b>: кассир сканирует QR из карты до ${bf} в день открытия и сразу выдаёт подарок. Без скана до ${bf} подарок аннулируется.`,
-    mp ? `Главный приз — <b>«Завтраки за ${mp.price} ₸ на ${mp.days} дней»</b> — может выпасть при открытии подарка до ${hm(mp.before)}; количество главных призов ограничено. Победитель ${mp.days} дней со дня выигрыша может раз в день до ${bf} получить завтрак за ${mp.price} ₸ на точках акции; в эти дни ежедневный подарок не открывается.` : '',
-    `<b>В один день — либо подарок, либо скидка по карте.</b> После получения подарка скидки и купоны по карте до конца дня не применяются; после применения скидки подарок не предоставляется. До скана от подарка можно отказаться в карте.`,
-    'Подарок не обменивается на деньги и не передаётся. Организатор вправе изменить или завершить акцию, уведомив в канале @seventimesuralsk.',
+    `Организатор — кофейни Seven Times, г. Уральск. Акция действует${from ? ' с ' + dayRu(from) : ''} на ${br}.${s.other && s.other.length ? ` На ${s.other.map(esc).join(', ')} не действует.` : ''}`,
+    'Участник — владелец карты Seven Times с подтверждённым номером. Один подарок в день, вид подарка — случайный.',
+    `Подарок открывается в карте с ${hm(s.open)} до ${hm(s.close)} и выдаётся <b>только к завтраку</b> по QR до ${bf}. Без скана до ${bf} подарок аннулируется.`,
+    '<b>В один день — либо подарок, либо скидка по карте.</b> До скана от подарка можно отказаться.',
+    `Количество подарков ограничено.${mp ? ` Главный приз — завтраки за ${mp.price} ₸ в течение ${mp.days} дней: может выпасть при открытии подарка до ${hm(mp.before)}, действует раз в день до ${bf}.` : ''}`,
+    'Подарок не обменивается на деньги и не передаётся. Организатор вправе изменить или завершить акцию, сообщив в @seventimesuralsk.',
   ];
 }
 function openGiftRules() { if (!giftSt) return; tick(); $('grList').innerHTML = giftRulesList(giftSt).filter(Boolean).map((x) => `<li>${nb(x)}</li>`).join(''); openSheet('giftRules'); }
@@ -2116,7 +2120,7 @@ function paintGift() {
   // сгорел / не действует — сам подарок не показываем: со скриншотом нечего показывать на кассе
   else if (p === 'expired') { body = row('<span class="gx">🎁</span>', 'Подарок сгорел', `Не отсканирован до ${hm(giftBf(s))}. Завтра с ${hm(s.open)} — новый`, ''); full = false; }
   else if (p === 'blocked') { body = row('<span class="gx">🎁</span>', 'Подарок сегодня не действует', `По карте уже была скидка. Завтра с ${hm(s.open)} — новый`, ''); full = false; }
-  const showLeft = !!s.stock && (p === 'open' || p === 'got' || p === 'soldout'); // сколько подарков осталось сегодня на точке
+  const showLeft = !!s.stock && !!me?.admin && (p === 'open' || p === 'got' || p === 'soldout'); // сколько подарков осталось — видят только админы
   const places = full ? `<div class="gpl">${s.branches.map((b) => { const l = showLeft ? s.stock[b] : undefined, none = l === 0;
     return `<div${none ? ' class="n"' : ''}>${none ? ICON_NO : ICON_YES}<span>${esc(b)}${nt[b] ? ` <em>· ${esc(nt[b])}</em>` : ''}${l === undefined ? '' : none ? ' <em>· на сегодня закончились</em>' : ` <em>· осталось ${l}</em>`}</span></div>`; }).join('')}${(s.other || []).map((b) => `<div class="n">${ICON_NO}<span>${esc(b)} · не действует</span></div>`).join('')}</div>` : '';
   const foot = p === 'pass' ? `<b>Покажите QR кассиру до ${hm(giftBf(s))}</b> · завтрак за ${s.pass?.price || 999} ₸` : p === 'got' && s.orderUntil ? `<b>Только с завтраком</b> · покажите QR кассиру до ${hm(giftBf(s))}` : `<b>Только с завтраком</b> · завтраки до ${hm(giftBf(s))}`;
@@ -2179,15 +2183,15 @@ async function refuseGift() {
 function giftAnim() {
   let ov = $('giftRv');
   if (!ov) { document.body.insertAdjacentHTML('beforeend', `<div class="grv hidden" id="giftRv"><div class="grv-in"><div class="glow" id="gGlow"></div><div class="gbx" id="gBox"><div class="bd"></div><div class="rb"></div><div class="ld"></div><div class="bow"></div></div><div class="gconf" id="gConf"></div>
-    <div class="gp" id="gCard"><div class="e" id="gE"></div><div class="k" id="gK">ВАШ ПОДАРОК</div><div class="t" id="gT"></div><div class="s" id="gS"></div><div class="terms" id="gTerms"></div><button class="btn big" id="gOk">Отлично</button></div></div></div>`); ov = $('giftRv'); }
+    <div class="gp" id="gCard"><div class="e" id="gE"></div><div class="k" id="gK">ВАШ ПОДАРОК</div><div class="t" id="gT"></div><div class="s" id="gS"></div><div class="terms" id="gTerms"></div><div class="gauto"><i id="gBar"></i></div></div></div></div>`); ov = $('giftRv'); }
   const box = $('gBox'), card = $('gCard'), glow = $('gGlow'), conf = $('gConf'), t0 = Date.now();
-  box.className = 'gbx'; card.classList.remove('on'); glow.classList.remove('on'); conf.innerHTML = '';
+  box.className = 'gbx'; card.classList.remove('on'); glow.classList.remove('on'); conf.innerHTML = ''; $('gBar').className = ''; ov.onclick = null;
   ov.classList.remove('hidden'); void ov.offsetWidth; ov.classList.add('on');
   try { Snd.init(); } catch {}
   const shakeT = calm ? 0 : setTimeout(() => { box.classList.add('wait'); tick(); }, 250);
   const hide = (done) => { ov.classList.remove('on'); setTimeout(() => { ov.classList.add('hidden'); if (done) done(); }, 450); };
   return {
-    cancel() { clearTimeout(shakeT); box.classList.remove('wait'); hide(); },
+    cancel() { clearTimeout(shakeT); box.classList.remove('wait'); ov.onclick = null; hide(); },
     reveal(s) {
       return new Promise((done) => {
         const p = s.prize || {};
@@ -2195,14 +2199,16 @@ function giftAnim() {
         const main = p.k === 'b999', mp = s.main || { price: 999, days: 7 };
         $('gK').textContent = main ? 'ГЛАВНЫЙ ПРИЗ' : 'ВАШ ПОДАРОК';
         $('gTerms').innerHTML = main ? `<b>${mp.days} дней — завтрак за ${mp.price} ₸ каждое утро</b><br>Сегодня покажите QR кассиру до ${hm(giftBf(s))} — и неделя начнётся<br>${s.branches.map(esc).join('<br>')}` : giftTermsHtml(s);
-        $('gOk').onclick = () => { tick(); hide(done); };
-        const show = () => { card.classList.add('on'); haptic('success'); };
+        // без «Отлично»: показали подарок — окно закрывается само (главный приз — чуть дольше), тап — сразу
+        const dur = main ? 5000 : 3000; let closed = false, autoT = 0;
+        const close = () => { if (closed) return; closed = true; clearTimeout(autoT); ov.onclick = null; tick(); hide(done); };
+        const show = () => { card.classList.add('on'); haptic('success'); const bar = $('gBar'); bar.style.setProperty('--gdur', dur + 'ms'); bar.className = 'run'; ov.onclick = close; autoT = setTimeout(close, dur); };
         clearTimeout(shakeT);
         if (calm) { box.classList.add('gone'); return show(); }
         setTimeout(() => {
           box.classList.remove('wait'); box.classList.add('open'); glow.classList.add('on');
           try { Snd.play('thump'); Snd.play('shimmer'); } catch {}
-          const cols = ['#8f2239', '#c0475f', '#e9cf9b', '#f6e7d6', '#5a0f20'];
+          const cols = ['#007aff', '#5ac8fa', '#ffd60a', '#ff375f', '#ffffff'];
           conf.innerHTML = Array.from({ length: 36 }, () => '<i></i>').join('');
           conf.querySelectorAll('i').forEach((el, i) => { const a = Math.random() * Math.PI * 2, d = 90 + Math.random() * 150;
             el.style.background = cols[i % cols.length];
