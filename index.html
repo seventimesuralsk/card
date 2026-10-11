@@ -533,6 +533,8 @@
   .gift .gpz .pt span { display: block; margin-top: 2px; font-size: 13px; color: var(--text-2); }
   .gift .cd { flex: none; text-align: right; }
   .gift .gx { filter: grayscale(1); opacity: .45; }
+  .gift .gtest { margin-top: 8px; text-align: center; font-size: 12.5px; color: var(--text-3); }
+  .gift .gtest b { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text-2); }
   .gift .cd i { display: block; font-style: normal; font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); }
   .gift .cd b { display: block; margin-top: 1px; font-size: 21px; font-weight: 600; letter-spacing: -.01em; font-variant-numeric: tabular-nums; color: #8f2239; }
   .gift .cd.ok b { font-size: 15px; color: var(--green); }
@@ -950,7 +952,7 @@
 <script>
 // URL своего Apps Script (…/exec)
 // Версия карты — показывается в админке рядом с версией сервера
-const APP_VERSION = 'v35';
+const APP_VERSION = 'v36';
 const API_URL = 'https://script.google.com/macros/s/AKfycbyTwWc--juLP1N9Jf5bY32YVhKUHNz-IlRiG3uiK_d597-XHQT1Zf-Zf_54eE5YTNGWQA/exec';
 
 const tg = window.Telegram?.WebApp;
@@ -2069,9 +2071,9 @@ const ICON_NO = '<svg class="ic" viewBox="0 0 20 20"><circle cx="10" cy="10" r="
 function paintGift() {
   const s = giftSt, box = $('giftBox'), qt = $('qrTitle');
   const p = s && giftPhase(s);
-  giftShown = p || '';
+  giftShown = giftKey(s, p);
   // нет подарков, отказался или сегодня уже была скидка (подарок не открывал) — блока нет, всё как обычно
-  if (!s || p === 'refused' || (p === 'blocked' && !s.prize)) { box.classList.add('hidden'); if (qt) qt.textContent = 'Ваш QR для скидки'; return; }
+  if (!s || (p === 'refused' && !s.retest) || (p === 'blocked' && !s.prize)) { box.classList.add('hidden'); if (qt) qt.textContent = 'Ваш QR для скидки'; return; }
   if (qt) qt.textContent = p === 'got' ? 'Ваш QR — для подарка' : 'Ваш QR для скидки';
   const pz = s.prize, nt = giftNotes(s);
   const cd = (label, to) => `<div class="cd"><i>${label}</i><b data-cd="${to || 0}">${fmtCd((to || 0) - Date.now())}</b></div>`;
@@ -2081,10 +2083,11 @@ function paintGift() {
   let kick = 'Ваш подарок', body = '', full = true;
   if (p === 'soon') { kick = 'Подарки к завтраку'; body = row('🎁', 'С ' + dayRu(s.startDay), 'каждое утро — подарок', cd('до старта', s.startsAt)); }
   else if (p === 'before') body = row('🎁', 'Подарок к завтраку', `откроется в ${hm(s.open)}`, cd('до открытия', s.opensAt));
-  else if (p === 'open') body = row('🎁', 'Подарок ждёт', s.test ? 'проверка главного админа' : `открыть до ${hm(s.close)}`, s.closesAt && !s.test ? cd('осталось', s.closesAt) : '') + '<button class="btn big gbtn" id="giftOpen">Открыть подарок</button>';
+  else if (p === 'open') { const rc = realCd(s); body = row('🎁', 'Подарок ждёт', s.test ? 'главный админ: открыть можно в любое время' : `открыть до ${hm(s.close)}`, rc ? cd(rc[0], rc[1]) : s.closesAt ? cd('осталось', s.closesAt) : '') + '<button class="btn big gbtn" id="giftOpen">Открыть подарок</button>'; }
   else if (p === 'closed') body = row('🎁', 'Новый подарок', `завтра с ${hm(s.open)}`, cd('через', s.opensAt));
   else if (p === 'got') body = prz(s.orderUntil ? cd(`завтрак до ${hm(giftBf(s))}`, s.orderUntil) : cd('осталось', s.useUntil)); // старый сервер — без orderUntil
-  else if (p === 'used') { body = prz(st('ok', 'Получен ✓')); full = false; }
+  else if (p === 'used') { body = prz(st('ok', 'Получен ✓')) + retest(); full = false; }
+  else if (p === 'refused') { body = prz(st('off', 'Отказ')) + retest(); full = false; } // сюда — только главный админ (тест)
   // сгорел / не действует — сам подарок не показываем: со скриншотом нечего показывать на кассе
   else if (p === 'expired') { body = row('<span class="gx">🎁</span>', 'Подарок сгорел', `Не отсканирован до ${hm(giftBf(s))}. Завтра с ${hm(s.open)} — новый`, ''); full = false; }
   else if (p === 'blocked') { body = row('<span class="gx">🎁</span>', 'Подарок сегодня не действует', `По карте уже была скидка. Завтра с ${hm(s.open)} — новый`, ''); full = false; }
@@ -2097,9 +2100,23 @@ function paintGift() {
   $('giftRulesBtn').onclick = openGiftRules;
 }
 // обратный отсчёт — раз в секунду; сменилась фаза (8:00, 12:00, 17:00) — перерисовываем
+// Главный админ: отсчёт как у гостей — до старта / до открытия (8:00) / осталось (до 12:00) / через (до завтра 8:00)
+function realCd(s) {
+  const r = s && s.test && s.real; if (!r) return null; const now = Date.now();
+  if (now < r.opensAt) return [r.soon ? 'до старта' : 'до открытия', r.opensAt];
+  if (now < r.closesAt) return ['осталось', r.closesAt];
+  return ['через', r.opensAt + 864e5];
+}
+const giftKey = (s, p) => (p || '') + '|' + ((realCd(s) || [])[0] || '');
+// после выдачи/отказа главный админ открывает подарок заново (тест) и видит, что у гостей
+function retest() {
+  const s = giftSt; if (!s || !s.retest) return '';
+  const rc = realCd(s);
+  return `<button class="btn big gbtn" id="giftOpen">Открыть ещё раз (тест)</button>${rc ? `<div class="gtest">У гостей сейчас: ${rc[0]} <b data-cd="${rc[1]}">${fmtCd(rc[1] - Date.now())}</b></div>` : ''}`;
+}
 function giftTick() {
   if (!giftSt) return;
-  if (giftPhase(giftSt) !== giftShown) return paintGift();
+  if (giftKey(giftSt, giftPhase(giftSt)) !== giftShown) return paintGift();
   document.querySelectorAll('#giftBox [data-cd]').forEach((el) => { el.textContent = fmtCd(+el.dataset.cd - Date.now()); });
 }
 function renderGift(s) {
