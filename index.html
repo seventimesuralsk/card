@@ -570,6 +570,16 @@
   .grules ol { margin: 0; padding: 0 2px 0 18px; font-size: 13px; line-height: 1.42; color: var(--text-2); }
   .grules li + li { margin-top: 6px; }
   .grules li b { color: var(--text); font-weight: 600; }
+  .grules { max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch; } /* условия + частые вопросы — прокручиваются */
+  .grules .gr-fh { margin: 14px 0 4px; font-size: 13px; font-weight: 700; color: var(--text); }
+  .gr-faq details { border-top: 1px solid var(--sep); }
+  .gr-faq details:last-child { border-bottom: 1px solid var(--sep); }
+  .gr-faq summary { list-style: none; cursor: pointer; padding: 10px 22px 10px 0; position: relative; font-size: 14px; font-weight: 600; letter-spacing: -.01em; }
+  .gr-faq summary::-webkit-details-marker { display: none; }
+  .gr-faq summary::after { content: "+"; position: absolute; right: 2px; top: 8px; font-size: 18px; font-weight: 400; color: var(--sysblue); }
+  .gr-faq details[open] summary::after { content: "−"; }
+  .gr-faq p { margin: -2px 0 10px; font-size: 13px; line-height: 1.45; color: var(--text-2); }
+  .grules .gr-ok { position: sticky; bottom: 0; box-shadow: 0 -12px 18px var(--surface), 0 34px 0 30px var(--surface); } /* «Я ознакомлен» всегда под рукой */
   .kguide { max-height: 88vh; overflow-y: auto; -webkit-overflow-scrolling: touch; } /* нұсқаулық кассирге — длинная, прокручивается */
   .kguide ul { margin: 0; padding: 0 2px 0 18px; font-size: 13px; line-height: 1.42; color: var(--text-2); }
   .kguide .kg-sec { margin: 14px 0 6px; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--sysblue); }
@@ -958,7 +968,9 @@
   <p class="gr-h">Условия акции</p>
   <p class="gr-s">«Подарки к завтраку» в Seven Times</p>
   <ol id="grList"></ol>
-  <button class="btn big" id="grOk" style="margin-top:16px">Я ознакомлен</button>
+  <p class="gr-fh">7. Частые вопросы</p>
+  <div class="gr-faq" id="grFaq"></div>
+  <button class="btn big gr-ok" id="grOk" style="margin-top:16px">Я ознакомлен</button>
 </div>
 <div class="sheet grules kguide" id="kGuide">
   <div class="grab"></div>
@@ -1005,8 +1017,8 @@
 <script>
 // URL своего Apps Script (…/exec)
 // Версия карты — показывается в админке рядом с версией сервера
-const APP_VERSION = 'v47';
-const API_URL = 'https://script.google.com/macros/s/AKfycbzaJzsvSfqN4bhHapu9uVzIam_Mm1zVQvXnX4SeglaUhWCcvBN1Ysa1vpuuLuj6ewwuog/exec';
+const APP_VERSION = 'v48';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwCLm3j8qUh76MsQheAd3fjOsC2UE7o8FRNkzp2CG4I0o99hxj-PBwK9Z0-jBo3nh0H4w/exec';
 
 const tg = window.Telegram?.WebApp;
 let curTab = 'card', walletKind = '', me = null;
@@ -2120,10 +2132,37 @@ function giftRulesList(s) {
     `Подарок открывается в карте с ${hm(s.open)} до ${hm(s.close)} и выдаётся <b>только к завтраку</b> по QR до ${bf}. Без скана до ${bf} подарок аннулируется.`,
     '<b>В один день — либо подарок, либо скидка по карте.</b> До скана от подарка можно отказаться.',
     `Количество подарков ограничено.${mp ? ` Главный приз — завтраки за ${mp.price} ₸ в течение ${mp.days} дней (${esc(mp.menu || MENU999)} — на выбор): может выпасть при открытии подарка до ${hm(mp.before)}, действует раз в день до ${bf}.` : ''}`,
-    'Подарок не обменивается на деньги и не передаётся. Организатор вправе изменить или завершить акцию, сообщив в @seventimesuralsk.',
+    'Подарок не обменивается на деньги и не передаётся. Организатор вправе отказать в подарке при злоупотреблении условиями, а также изменить или завершить акцию, сообщив в @seventimesuralsk.',
   ];
 }
-function openGiftRules() { if (!giftSt) return; tick(); $('grList').innerHTML = giftRulesList(giftSt).filter(Boolean).map((x) => `<li>${nb(x)}</li>`).join(''); openSheet('giftRules'); }
+// 7. Частые вопросы — коротко и твёрдо: что спрашивают гости, которые не разобрались или недовольны
+function giftFaq(s) {
+  const nt = giftNotes(s), bf = hm(giftBf(s)), mp = s.main || { price: 999, before: 9, days: 7 };
+  const br = s.branches.map((b) => esc(b) + (nt[b] ? ` (${esc(nt[b])})` : '')).join(' и '), oth = s.other && s.other.length ? ` На ${s.other.map(esc).join(', ')} акция не действует.` : '';
+  return [
+    ['Почему нет кнопки «Открыть подарок»?', `Подарок открывается с ${hm(s.open)} до ${hm(s.close)}. Если кнопки нет — сейчас другое время, сегодня по карте уже была скидка или подарки на сегодня закончились. Новый подарок — завтра с ${hm(s.open)}.`],
+    ['Открыл подарок — что дальше?', `Закажите завтрак и покажите QR из карты кассиру до ${bf}. Кассир увидит подарок на экране и выдаст его.`],
+    ['Можно без завтрака, только кофе?', 'Нет. Подарок выдаётся только при заказе завтрака.'],
+    ['Почему другу выпал кофе, а мне другое?', 'Вид подарка определяется случайно для каждой карты. Заменить его нельзя.'],
+    ['Можно поменять подарок или получить деньгами?', 'Нет. Подарок не обменивается на другой подарок, скидку или деньги.'],
+    ['Почему подарок сгорел, я же его открыл?', `Подарок действует только в день открытия до ${bf}. Если QR не отсканирован до ${bf}, подарок аннулируется автоматически. Завтра с ${hm(s.open)} — новый.`],
+    ['Почему не дали скидку по карте?', 'В один день действует что-то одно: подарок или скидка по карте. Нужна скидка — до скана нажмите «Отказаться от подарка».'],
+    ['Отказался по ошибке — можно вернуть?', `Нет, отказ отменить нельзя. Новый подарок — завтра с ${hm(s.open)}.`],
+    ['Почему подарков не осталось?', 'Количество подарков на каждой точке в день ограничено. Приходите пораньше.'],
+    ['Где действует акция?', `${br}.${oth}`],
+    ['Можно передать подарок или взять два?', 'Нет. Один подарок в день на одну карту, подарок не передаётся. При злоупотреблении (например, несколько карт на одного человека) организатор вправе отказать в выдаче.'],
+    ['Как выиграть главный приз?', `Главный приз может выпасть только при открытии подарка до ${hm(mp.before)}. Количество главных призов ограничено.`],
+    ['Выиграл главный приз — что дальше?', `В тот же день до ${bf} покажите QR кассиру. Затем ${mp.days} дней со дня выигрыша — раз в день до ${bf} завтрак за ${mp.price} ₸ на выбор: ${esc(mp.menu || MENU999)}. Пропущенные дни не переносятся.`],
+    ['Кассир не знает про акцию', 'Просто покажите QR — касса сама показывает подарок. Все условия — здесь, в карте, и в Telegram-канале @seventimesuralsk.'],
+    ['Что-то не работает', 'Проверьте интернет и откройте карту заново. Не помогло — покажите карту кассиру или напишите в Telegram @seventimesuralsk.'],
+  ];
+}
+function openGiftRules() {
+  if (!giftSt) return; tick();
+  $('grList').innerHTML = giftRulesList(giftSt).filter(Boolean).map((x) => `<li>${nb(x)}</li>`).join('');
+  $('grFaq').innerHTML = giftFaq(giftSt).map(([q, a]) => `<details><summary>${q}</summary><p>${nb(a)}</p></details>`).join(''); // ответ — по нажатию на вопрос
+  openSheet('giftRules'); $('giftRules').scrollTop = 0;
+}
 $('grOk').onclick = closeSheets;
 $('kGuideBtn').onclick = () => { tick(); openSheet('kGuide'); $('kGuide').scrollTop = 0; };
 $('kGuideOk').onclick = closeSheets;
