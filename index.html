@@ -2085,12 +2085,12 @@ function paintGift() {
   else if (p === 'open') body = row('🎁', 'Подарок ждёт', s.test ? 'проверка главного админа' : `открыть до ${hm(s.close)}`, s.closesAt && !s.test ? cd('осталось', s.closesAt) : '') + '<button class="btn big gbtn" id="giftOpen">Открыть подарок</button>';
   else if (p === 'closed') body = row('🎁', 'Новый подарок', `завтра с ${hm(s.open)}`, cd('через', s.opensAt));
   else if (p === 'got') body = prz(s.orderUntil ? cd(`завтрак до ${hm(giftBf(s))}`, s.orderUntil) : cd('осталось', s.useUntil)); // старый сервер — без orderUntil
-  else if (p === 'earned') { kick = 'Подарок ждёт вас'; body = prz(cd('осталось', s.useUntil)); }
+  else if (p === 'earned') body = prz(cd('осталось', s.useUntil)); // кассир отсканировал до 12:00 — забрать до 00:00
   else if (p === 'used') { body = prz(st('ok', 'Получен ✓')); full = false; }
   else if (p === 'expired') { body = prz(st('off', 'Сгорел')); full = false; }
   else if (p === 'blocked') { body = prz(st('off', 'Не действует')); full = false; }
   const places = full ? `<div class="gpl">${s.branches.map((b) => `<div>${ICON_YES}<span>${esc(b)}${nt[b] ? ` <em>· ${esc(nt[b])}</em>` : ''}</span></div>`).join('')}${(s.other || []).map((b) => `<div class="n">${ICON_NO}<span>${esc(b)} · не действует</span></div>`).join('')}</div>` : '';
-  const foot = p === 'earned' ? `<b>Возьмите когда удобно</b> · до ${hm(s.use)}, покажите QR` : `<b>Только с завтраком</b> · завтраки до ${hm(giftBf(s))}`;
+  const foot = p === 'earned' ? `<b>Вы можете забрать подарок до ${hm(s.use)}</b> · покажите QR` : p === 'got' && s.orderUntil ? `<b>Только с завтраком</b> · покажите QR кассиру до ${hm(giftBf(s))}` : `<b>Только с завтраком</b> · завтраки до ${hm(giftBf(s))}`;
   box.innerHTML = `<div class="gk">${kick}</div>${body}${places}<div class="gft"><span>${foot}</span><button class="glink" id="giftRulesBtn">Условия акции</button></div>${p === 'got' && s.from !== undefined ? '<button class="gref" id="giftRefuse">Отказаться от подарка</button>' : ''}`;
   box.classList.remove('hidden');
   const b = $('giftOpen'); if (b) b.onclick = openGift;
