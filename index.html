@@ -568,6 +568,22 @@
   .gp .terms b { color: var(--text); } .gp .terms .no { color: #b23a4a; font-weight: 600; }
   .gp .btn { margin-top: 16px; background: linear-gradient(135deg, #8f2239, #5a0f20); color: #fff; }
   .gconf i { position: absolute; left: 50%; top: 170px; width: 8px; height: 12px; border-radius: 2px; opacity: 0; }
+
+  /* геолокация кассы */
+  .kplace { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; padding: 10px 14px; border-radius: 14px; font-size: 14px; font-weight: 600; background: color-mix(in srgb, var(--green) 12%, transparent); color: var(--green); }
+  .kplace.far { background: color-mix(in srgb, var(--orange) 14%, transparent); color: var(--orange); }
+  .kplace.none { background: var(--fill); color: var(--text-2); }
+  .kplace button { margin-left: auto; border: 0; border-radius: 10px; padding: 7px 12px; font: inherit; font-size: 13px; background: var(--accent); color: var(--on-accent); }
+  .geo-row { background: var(--surface); border-radius: var(--r); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+  .geo-row .gn { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-weight: 700; font-size: 16px; }
+  .geo-row .gb { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 99px; background: color-mix(in srgb, var(--green) 14%, transparent); color: var(--green); white-space: nowrap; }
+  .geo-row .gb.no { background: color-mix(in srgb, var(--red) 12%, transparent); color: var(--red); }
+  .geo-row .gc { margin-top: 4px; font-size: 13px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+  .geo-row .gc.unset { color: var(--orange); font-weight: 600; }
+  .geo-row .ga { display: flex; gap: 8px; margin-top: 12px; }
+  .geo-row .ga input { flex: 1; padding: 11px 13px; font-size: 14px; }
+  .geo-row .ga button { border: 0; border-radius: 12px; padding: 0 14px; font: inherit; font-size: 14px; font-weight: 600; background: var(--fill); color: var(--text); white-space: nowrap; }
+  .geo-row .here { margin-top: 10px; }
   /* касса: подарок */
   .kgift .kg-h { font-size: 12.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #8f2239; }
   .kgift .kg-t { font-size: 22px; font-weight: 700; letter-spacing: -.02em; margin-top: 6px; }
@@ -693,6 +709,7 @@
       <div class="list">
         <button class="li" data-go="pPeople"><span class="grow">Скидки гостям<span class="sub">Постоянные, знакомые, сотрудники</span></span><span class="val" id="cntPeople"></span><span class="chev"></span></button>
         <button class="li" data-go="pCashiers"><span class="grow">Кассиры</span><span class="val" id="cntCashiers"></span><span class="chev"></span></button>
+        <button class="li" data-go="pGeo" data-perm="cashiers"><span class="grow">Точки на карте<span class="sub">Касса узнаёт точку по геолокации · 50 м</span></span><span class="val" id="cntGeo"></span><span class="chev"></span></button>
         <button class="li" data-go="pAdmins"><span class="grow">Админы и права</span><span class="val" id="cntAdmins"></span><span class="chev"></span></button>
       </div>
 
@@ -830,6 +847,15 @@
     </div>
 
     <!-- уведомления -->
+    <div class="page hidden" id="pGeo">
+      <div class="pagehead"><button class="back" data-back>Админ</button></div>
+      <div class="ptitle">Точки на карте</div>
+      <div class="note" style="margin-top:0">Касса определяет точку по телефону кассира — в радиусе <b id="geoR">50</b> м. Кассиры могут меняться: где стоит телефон, та точка и засчитается. Подарки к завтраку гасятся только на точках с отметкой «подарки».</div>
+      <div id="geoList"></div>
+      <div class="note">Как задать: встаньте внутри кафе и нажмите «Я здесь — запомнить». Или вставьте координаты из 2ГИС / Google Maps (долгое нажатие на здание) в виде «51.2345, 51.3678».</div>
+      <div class="msg" id="geoMsg"></div>
+    </div>
+
     <div class="page hidden" id="pNotify">
       <div class="pagehead"><button class="back" data-back>Админ</button></div>
       <div class="ptitle">Уведомления</div>
@@ -896,7 +922,7 @@
 <script>
 // URL своего Apps Script (…/exec)
 // Версия карты — показывается в админке рядом с версией сервера
-const APP_VERSION = 'v23';
+const APP_VERSION = 'v24';
 const API_URL = 'https://script.google.com/macros/s/AKfycbw2iXb0fbYhQg4VFYEeBZZQZ8fjV34-PzjUdsqHz58ikXibTVL5Tl6LiO3OUz2nj_kg6w/exec';
 
 const tg = window.Telegram?.WebApp;
@@ -2039,6 +2065,64 @@ function playGift(s) {
     setTimeout(show, 2350);
   });
 }
+
+// ══════════ Геолокация ══════════
+// Telegram LocationManager (8.0+), иначе — геолокация браузера. null — не дали доступ или не успели
+let geoCache = null, geoDenied = false;
+function getGeo(maxAge = 60000) {
+  if (geoCache && Date.now() - geoCache.t < maxAge) return Promise.resolve(geoCache.g);
+  return new Promise((res) => {
+    let done = false; const fin = (g) => { if (done) return; done = true; if (g) { geoCache = { g, t: Date.now() }; geoDenied = false; } res(g); };
+    setTimeout(() => fin(null), 12000);
+    const viaBrowser = () => { if (!navigator.geolocation) return fin(null);
+      navigator.geolocation.getCurrentPosition((p) => fin({ lat: p.coords.latitude, lon: p.coords.longitude, acc: Math.round(p.coords.accuracy || 0) }), (e) => { if (e && e.code === 1) geoDenied = true; fin(null); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 15000 }); };
+    const lm = tg?.LocationManager;
+    if (lm && tg.isVersionAtLeast?.('8.0')) {
+      const go = () => {
+        if (!lm.isLocationAvailable) return viaBrowser();
+        if (lm.isAccessRequested && !lm.isAccessGranted) { geoDenied = true; return fin(null); }
+        lm.getLocation((d) => { if (d) fin({ lat: d.latitude, lon: d.longitude, acc: Math.round(d.horizontal_accuracy || 0) }); else { geoDenied = !!(lm.isAccessRequested && !lm.isAccessGranted); fin(null); } });
+      };
+      try { lm.isInited ? go() : lm.init(go); } catch { viaBrowser(); }
+    } else viaBrowser();
+  });
+}
+function openGeoSettings() { try { if (tg?.LocationManager?.openSettings) return tg.LocationManager.openSettings(); } catch {} alertMsg('Разрешите Telegram доступ к геолокации в настройках телефона и откройте кассу снова'); }
+function placeHtml(p) {
+  if (!p) return '';
+  if (p.none) return `<div class="kplace none">📍 Геолокация не пришла${geoDenied ? '<button id="geoAllow">Разрешить</button>' : ''}</div>`;
+  if (p.ok) return `<div class="kplace">📍 ${esc(p.branch)} · ${esc(p.dist)} м</div>`;
+  return `<div class="kplace far">📍 Не у точки: до ${esc(p.branch)} ~${esc(p.dist)} м</div>`;
+}
+function bindPlace(p) { const b = $('geoAllow'); if (b) b.onclick = openGeoSettings; if (p && p.ok && $('kBranch')) $('kBranch').textContent = '📍 ' + p.branch; } // шапка кассы — где кассир стоит сейчас
+// админ: точки на карте
+async function loadGeo() {
+  $('geoList').innerHTML = '<div class="empty">Загружаем…</div>';
+  try { paintGeo(await api('adminGeo')); } catch (e) { $('geoList').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+}
+function paintGeo(r) {
+  $('geoR').textContent = r.radius;
+  $('geoList').innerHTML = r.branches.map((b, i) => `<div class="geo-row"><div class="gn"><span>${esc(b.name)}</span><span class="gb${b.gift ? '' : ' no'}">${b.gift ? 'подарки' : 'без подарков'}</span></div>
+    <div class="gc${b.lat ? '' : ' unset'}">${b.lat ? `${b.lat.toFixed(6)}, ${b.lon.toFixed(6)}${b.at ? ' · ' + fmtTime(b.at) : ''}` : 'Координаты не заданы'}</div>
+    <button class="btn here" data-geo-here="${i}">📍 Я здесь — запомнить</button>
+    <div class="ga"><input data-geo-in="${i}" placeholder="51.2345, 51.3678" inputmode="decimal"><button data-geo-save="${i}">Сохранить</button></div></div>`).join('');
+  const cnt = r.branches.filter((b) => b.lat).length; if ($('cntGeo')) $('cntGeo').textContent = cnt + '/' + r.branches.length;
+  const save = async (i, lat, lon) => { const name = r.branches[i].name;
+    try { const x = await api('adminGeoSet', { branch: name, lat, lon }); haptic('success'); show($('geoMsg'), `${name}: координаты сохранены`, true); paintGeo(x); } catch (e) { haptic('error'); show($('geoMsg'), e.message); } };
+  document.querySelectorAll('[data-geo-here]').forEach((b) => (b.onclick = async () => {
+    const i = +b.dataset.geoHere; b.disabled = true; b.textContent = 'Определяем…';
+    geoCache = null; const g = await getGeo(0);
+    if (!g) { b.disabled = false; b.textContent = '📍 Я здесь — запомнить'; return geoDenied ? openGeoSettings() : show($('geoMsg'), 'Не получилось определить геолокацию. Включите её на телефоне и попробуйте ещё раз'); }
+    if (g.acc > 60) show($('geoMsg'), `Точность ±${g.acc} м — подойдите к окну и нажмите ещё раз для точности`, 'warn');
+    await save(i, g.lat, g.lon);
+  }));
+  document.querySelectorAll('[data-geo-save]').forEach((b) => (b.onclick = () => {
+    const i = +b.dataset.geoSave, m = String(document.querySelector(`[data-geo-in="${i}"]`).value).match(/(-?\d{1,2}[.,]\d+)\s*[,; ]\s*(-?\d{1,3}[.,]\d+)/);
+    if (!m) return show($('geoMsg'), 'Вставьте координаты так: 51.2345, 51.3678');
+    save(i, +m[1].replace(',', '.'), +m[2].replace(',', '.'));
+  }));
+}
+
 // касса: подарок гостя отдельной карточкой
 function giftKassaHtml(g) {
   if (!g) return '';
@@ -2049,8 +2133,11 @@ function giftKassaHtml(g) {
 function bindKassaGift(g) {
   const b = $('kGiftBtn'); if (!b || !g) return;
   b.onclick = async () => {
-    b.disabled = true; b.textContent = 'Гасим подарок…';
-    try { const r = await api('giftRedeem', { token: g.token }); haptic('success');
+    b.disabled = true; b.textContent = g.geo ? 'Проверяем геолокацию…' : 'Гасим подарок…';
+    const geo = g.geo ? await getGeo(30000) : null;
+    if (g.geo && !geo) { haptic('error'); b.disabled = false; b.textContent = 'Погасить подарок'; return geoDenied ? openGeoSettings() : alertMsg('Не получилось определить геолокацию. Включите её на телефоне и нажмите ещё раз'); }
+    b.textContent = 'Гасим подарок…';
+    try { const r = await api('giftRedeem', { token: g.token, geo }); haptic('success');
       $('kGift').innerHTML = `${checkSvg()}<div class="kg-h" style="margin-top:6px">Подарок выдан</div><div class="kg-t">${esc(r.title)}</div><div class="msg ok" style="display:block">${esc(r.note)}</div>`; }
     catch (e) { haptic('error'); b.disabled = false; b.textContent = 'Погасить подарок'; alertMsg(e.message); }
   };
@@ -2062,42 +2149,43 @@ function kassaResult(html) { const el = $('kRes'); el.innerHTML = html; enter(el
 function kassaFinal(r) {
   if (r.again) { // этот гость сегодня уже был: показываем, что уже применено, — без зелёной галочки, чтобы не провели второй раз
     haptic('warning');
-    kassaResult(`<div class="card kres again"><div class="warn-ico">!</div><div class="who">${esc(r.name)}</div>${r.card ? `<div class="grp" style="color:var(--text-2);font-weight:400">Карта ${esc(r.card)}</div>` : ''}
+    kassaResult(`${placeHtml(r.place)}<div class="card kres again"><div class="warn-ico">!</div><div class="who">${esc(r.name)}</div>${r.card ? `<div class="grp" style="color:var(--text-2);font-weight:400">Карта ${esc(r.card)}</div>` : ''}
       <div class="hero-num">${r.percent ? '−' + esc(r.percent) + '%' : 'Визит'}</div><div class="grp">${esc(r.group)}</div></div>
       <div class="msg warn" style="display:block">${esc(r.note)}</div>${giftKassaHtml(r.gift)}`);
-    bindKassaGift(r.gift);
+    bindKassaGift(r.gift); bindPlace(r.place);
     return;
   }
   haptic('success');
   const visitOnly = r.kind === 'visit' || !r.percent;
-  kassaResult(`<div class="card kres">${checkSvg('big')}<div class="who">${esc(r.name)}</div>${r.card ? `<div class="grp">Карта ${esc(r.card)}</div>` : ''}
+  kassaResult(`${placeHtml(r.place)}<div class="card kres">${checkSvg('big')}<div class="who">${esc(r.name)}</div>${r.card ? `<div class="grp">Карта ${esc(r.card)}</div>` : ''}
     <div class="hero-num" id="kPct">${visitOnly ? 'Визит' : '−0%'}</div><div class="grp">${esc(r.group)}</div></div>
     <div class="msg ${visitOnly ? 'warn' : 'ok'}" style="display:block">${esc(r.note)}</div>${giftKassaHtml(r.gift)}`);
-  bindKassaGift(r.gift);
+  bindKassaGift(r.gift); bindPlace(r.place);
   if (!visitOnly) countTo($('kPct'), r.percent, '%', '−', 700);
 }
 const kassaFail = (e) => { haptic('error'); kassaResult(`<div class="card kres bad"><div class="cross"></div>${e.data?.guest ? `<div class="who">${esc(e.data.guest)}</div>` : ''}<div class="grp" style="color:var(--red)">${esc(e.message)}</div></div>`); };
 // Шаг 2: кассир нажал «Активировать скидку» — только теперь скидка применяется и пишется в журнал
 async function kassaApply(token, btn) {
   btn.disabled = true; btn.textContent = 'Применяем…';
-  try { kassaFinal(await api('scanApply', { token })); } catch (e) { kassaFail(e); }
+  try { kassaFinal(await api('scanApply', { token, geo: geoCache && Date.now() - geoCache.t < 120000 ? geoCache.g : null })); } catch (e) { kassaFail(e); }
   loadKassaLog();
 }
 $('scanGuest').onclick = async () => {
-  let qr;
+  let qr; const geoP = getGeo(90000); // точку узнаём по телефону кассира, пока он наводит камеру
   try { qr = await scan('Наведите на QR с карты гостя'); } catch (e) { if (e.message) kassaResult(`<div class="card kres bad"><div class="cross"></div><div class="grp">${esc(e.message)}</div></div>`); return; }
   $('scanGuest').disabled = true;
   kassaResult('<div class="card kres wait"><div class="kspin"></div><div class="grp">Проверяем карту…</div></div>');
   try {
-    const r = await api('scan', { qr, preview: true });
+    const geo = await Promise.race([geoP, sleep(3500).then(() => null)]);
+    const r = await api('scan', { qr, preview: true, geo });
     if (r.preview) { // шаг 1: показываем, что положено, — ничего ещё не записано
       tick();
       const pct = r.percent ? '−' + r.percent + '%' : '';
-      kassaResult(`<div class="card kres preview"><div class="who">${esc(r.name)}</div>${r.card ? `<div class="grp">Карта ${esc(r.card)}</div>` : ''}
+      kassaResult(`${placeHtml(r.place)}<div class="card kres preview"><div class="who">${esc(r.name)}</div>${r.card ? `<div class="grp">Карта ${esc(r.card)}</div>` : ''}
         <div class="hero-num">${pct ? esc(pct) : 'Без скидки'}</div><div class="grp">${esc(r.group)}</div>
         <button class="btn big kapply" id="kApply">${pct ? 'Активировать скидку ' + esc(pct) : 'Засчитать визит'}</button></div>${giftKassaHtml(r.gift)}`);
       $('kApply').onclick = () => kassaApply(r.token, $('kApply'));
-      bindKassaGift(r.gift);
+      bindKassaGift(r.gift); bindPlace(r.place);
     } else kassaFinal(r); // повтор за день, день регистрации или старый сервер — сразу итог
   } catch (e) { kassaFail(e); }
   $('scanGuest').disabled = false;
@@ -2138,6 +2226,7 @@ function openPage(id) {
   curPage = id; window.scrollTo(0, 0); tick();
   try { tg?.BackButton?.show(); } catch {}
   if (id === 'pLog') loadLog();
+  if (id === 'pGeo') loadGeo();
   if (id === 'pPeople') requestAnimationFrame(() => segMove($('catSeg')));
 }
 function closePage() {
@@ -2539,7 +2628,7 @@ let painted = false;
 function renderMe() {
   $('loader').classList.add('hidden'); $('failBox').classList.add('hidden');
   $('hello').textContent = me.cashier ? me.cashier.name : `Здравствуйте, ${me.card.name || 'гость'}`;
-  if (me.cashier) $('hello').insertAdjacentHTML('beforeend', `<div class="muted" style="font-size:15px;font-weight:400;letter-spacing:0">${esc(me.cashier.branch)}</div>`);
+  if (me.cashier) $('hello').insertAdjacentHTML('beforeend', `<div class="muted" id="kBranch" style="font-size:15px;font-weight:400;letter-spacing:0">${esc(me.cashier.branch)}</div>`);
   if (me.adminNeedsPhone) $('phoneText').textContent = 'Подтвердите номер — откроются карта, QR и рабочие вкладки (касса, админка). Без номера они не работают.';
   renderCard(me.card);
   if (!painted) { enter($('guest')); painted = true; }
