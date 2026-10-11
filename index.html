@@ -540,6 +540,14 @@
   .gift .terms { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--sep); font-size: 12.5px; line-height: 1.55; color: var(--text-2); }
   .gift .terms b { color: var(--text); font-weight: 600; }
   .gift .terms .no { color: #b23a4a; font-weight: 600; }
+  .gift .gnote { margin-top: 10px; font-size: 13.5px; line-height: 1.45; color: var(--text-2); }
+  .gift .gref { display: block; width: 100%; margin-top: 12px; padding: 12px; border: 0; border-radius: 14px; background: var(--fill); color: var(--text); font: inherit; font-size: 14.5px; font-weight: 600; }
+  .gift .gref:disabled { opacity: .6; }
+  .gift .glink { display: inline-block; margin-top: 8px; padding: 0; border: 0; background: none; color: var(--text); font: inherit; font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+  .grules .gr-h { text-align: center; font-size: 19px; font-weight: 700; letter-spacing: -.02em; margin: 6px 0 14px; }
+  .grules ol { margin: 0; padding: 0 4px 0 20px; max-height: 58vh; overflow: auto; font-size: 13.5px; line-height: 1.5; color: var(--text-2); }
+  .grules li + li { margin-top: 8px; }
+  .grules li b { color: var(--text); }
   .grv { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; background: rgba(10,6,8,.55); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); opacity: 0; transition: opacity .5s var(--ease); padding: 24px; }
   .grv.on { opacity: 1; }
   .grv-in { position: relative; width: 100%; max-width: 360px; height: 460px; }
@@ -589,6 +597,12 @@
   .kgift .kg-t { font-size: 22px; font-weight: 700; letter-spacing: -.02em; margin-top: 6px; }
   .kgift .kg-s { color: var(--text-2); font-size: 14px; }
   .kgift .kgbtn { background: linear-gradient(135deg, #8f2239, #5a0f20); color: #fff; }
+  .kgift.gm .chk { display: block; margin: 0 auto; }
+  .kgift.gm { margin-top: 14px; text-align: center; padding: 24px 20px 20px; animation: pop-in .6s var(--spring) both; }
+  .kgift .kg-who { font-size: 22px; font-weight: 700; letter-spacing: -.02em; margin-top: 10px; }
+  .kgift .kg-card { color: var(--text-2); font-size: 14px; margin-top: 2px; }
+  .kgift.gm .kg-t { font-size: 26px; margin-top: 14px; }
+  .kgift .kg-hint { margin-top: 12px; font-size: 13px; line-height: 1.45; color: var(--text-2); }
 </style>
 </head>
 <body>
@@ -645,7 +659,7 @@
 
     <div class="card gift hidden" id="giftBox"></div>
     <div class="card qrcard hidden" id="qrBox">
-      <div class="qrtitle">Ваш QR для скидки</div>
+      <div class="qrtitle" id="qrTitle">Ваш QR для скидки</div>
       <div class="qrwrap" id="qrWrap"><div id="qr"></div><div class="qrover">Создаём новый QR…<br>подождите</div></div>
       <div class="code" id="code">&nbsp;</div>
       <div class="bar"><i id="timer"></i></div>
@@ -912,6 +926,12 @@
   <p class="lead" id="cgText"></p>
   <button class="btn big" id="cgOk" style="margin-top:22px">Отлично</button>
 </div>
+<div class="sheet grules" id="giftRules">
+  <div class="grab"></div>
+  <p class="gr-h">Условия акции «Подарки к завтраку»</p>
+  <ol id="grList"></ol>
+  <button class="btn big" id="grOk" style="margin-top:18px">Понятно</button>
+</div>
 <div class="sheet" id="dlg">
   <div class="grab"></div>
   <p class="h" id="dlgTitle" style="text-align:center;margin-bottom:14px"></p>
@@ -922,7 +942,7 @@
 <script>
 // URL своего Apps Script (…/exec)
 // Версия карты — показывается в админке рядом с версией сервера
-const APP_VERSION = 'v24';
+const APP_VERSION = 'v25';
 const API_URL = 'https://script.google.com/macros/s/AKfycbw2iXb0fbYhQg4VFYEeBZZQZ8fjV34-PzjUdsqHz58ikXibTVL5Tl6LiO3OUz2nj_kg6w/exec';
 
 const tg = window.Telegram?.WebApp;
@@ -1992,8 +2012,25 @@ let giftSt = null, giftTimer = 0, giftBusy = false;
 const hm = (h) => h + ':00';
 const dayRu = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString('ru', { day: 'numeric', month: 'long' });
 function giftTermsHtml(s) {
-  return `<b>Только с завтраком.</b> Действует на ${s.branches.map(esc).join(' и ')}${s.other && s.other.length ? `<br><span class="no">На ${s.other.map(esc).join(', ')} подарки не действуют</span>` : ''}<br>Открыть — с ${hm(s.open)} до ${hm(s.close)}, получить у кассира — до ${hm(s.use)}`;
+  return `<b>Только с завтраком.</b> Действует на ${s.branches.map(esc).join(' и ')}${s.other && s.other.length ? `<br><span class="no">На ${s.other.map(esc).join(', ')} подарки не действуют</span>` : ''}<br>Открыть — с ${hm(s.open)} до ${hm(s.close)}, получить у кассира — до ${hm(s.use)}<br>В день — либо подарок, либо скидка по карте`;
 }
+// «Условия акции» — коротко и юридически
+function giftRulesList(s) {
+  const from = s.from || s.startDay, oth = s.other && s.other.length ? ` На ${s.other.map(esc).join(', ')} акция не действует.` : '';
+  return [
+    `Акцию «Подарки к завтраку» проводят кофейни Seven Times, г. Уральск${from ? ', с ' + dayRu(from) : ''} и до её отмены.`,
+    'Участник — владелец карты Seven Times в Telegram с подтверждённым номером телефона. Условия одинаковы для всех карт.',
+    `Подарок открывается в карте ежедневно с ${hm(s.open)} до ${hm(s.close)} по времени Уральска. Одна карта — один подарок в день, вид подарка выпадает случайно.`,
+    `Подарок предоставляется <b>только при заказе завтрака</b>, в день открытия, до ${hm(s.use)}, в кофейнях на ${s.branches.map(esc).join(' и ')}.${oth}`,
+    `Подарок считается полученным только после подтверждения кассиром. Не полученный до ${hm(s.use)} подарок аннулируется.`,
+    '<b>В один день — либо подарок, либо скидка по карте.</b> После получения подарка скидки и купоны по карте до конца дня не применяются. Если скидка в этот день уже применена, подарок не предоставляется.',
+    'До получения подарка от него можно отказаться в карте — тогда в этот день действует ваша скидка по карте. Отказ отменить нельзя.',
+    'Подарок не обменивается на деньги и не передаётся другим лицам.',
+    'Организатор вправе изменить условия или завершить акцию, сообщив об этом в Telegram-канале @seventimesuralsk.',
+  ];
+}
+function openGiftRules() { if (!giftSt) return; tick(); $('grList').innerHTML = giftRulesList(giftSt).map((x) => `<li>${x}</li>`).join(''); $('grList').scrollTop = 0; openSheet('giftRules'); }
+$('grOk').onclick = closeSheets;
 function giftPhase(s) {
   const now = Date.now(); let p = s.phase;
   if (p === 'got' && !s.test && s.useUntil && now >= s.useUntil) p = 'expired';
@@ -2004,8 +2041,10 @@ function giftPhase(s) {
 }
 function paintGift() {
   const s = giftSt, box = $('giftBox');
-  if (!s) { box.classList.add('hidden'); return; }
-  const p = giftPhase(s), prize = s.prize;
+  const qt = $('qrTitle');
+  if (!s) { box.classList.add('hidden'); if (qt) qt.textContent = 'Ваш QR для скидки'; return; }
+  const p = giftPhase(s), prize = s.prize, v25 = s.from !== undefined; // сервер v25+: отказ от подарка, «либо подарок, либо скидка»
+  if (qt) qt.textContent = p === 'got' && v25 ? 'Ваш QR — для подарка' : 'Ваш QR для скидки';
   const head = (t, sub) => `<div class="gh"><div class="gi">🎁</div><div><div class="gt">${t}</div><div class="gs">${sub}</div></div></div>`;
   const pz = prize ? `<div class="prize"><span class="pe">${esc(prize.e)}</span><div><b>${esc(prize.title)}</b><span>${esc(prize.sub)}</span></div></div>` : '';
   let h = '';
@@ -2013,12 +2052,17 @@ function paintGift() {
   else if (p === 'before') h = head('Подарок к завтраку', `Откроется сегодня в ${hm(s.open)}`);
   else if (p === 'open') h = head('Ваш подарок к завтраку ждёт', `Откройте до ${hm(s.close)}${s.test ? ' · проверка главного админа' : ''}`) + `<button class="btn big gbtn" id="giftOpen">Открыть подарок</button>`;
   else if (p === 'closed') h = head('Подарок к завтраку', `Сегодня подарки открывались до ${hm(s.close)}. Завтра с ${hm(s.open)} — новый`);
-  else if (p === 'got') h = head('Ваш подарок сегодня', `Закажите завтрак и покажите QR кассиру до ${hm(s.use)}`) + pz + '<span class="gchip">Ждёт кассира</span>';
-  else if (p === 'used') h = head('Подарок получен', 'Приятного аппетита! Завтра — новый подарок') + pz + '<span class="gchip ok">Выдан ✓</span>';
-  else if (p === 'expired') h = head('Срок подарка вышел', `Подарок нужно было получить до ${hm(s.use)}. Завтра с ${hm(s.open)} — новый`) + pz + '<span class="gchip off">Не получен</span>';
-  box.innerHTML = h + `<div class="terms">${giftTermsHtml(s)}</div>`;
+  else if (p === 'got') h = head('Ваш подарок сегодня', `Закажите завтрак и покажите QR кассиру до ${hm(s.use)}`) + pz + '<span class="gchip">Ждёт кассира</span>' +
+    (v25 ? '<div class="gnote">Сегодня подарок — вместо скидки по карте. Хотите свою скидку — откажитесь от подарка.</div><button class="gref" id="giftRefuse">Отказаться от подарка</button>' : '');
+  else if (p === 'used') h = head('Подарок получен', v25 ? 'Приятного аппетита! Скидка по карте — снова завтра' : 'Приятного аппетита! Завтра — новый подарок') + pz + '<span class="gchip ok">Выдан ✓</span>';
+  else if (p === 'expired') h = head('Срок подарка вышел', `Подарок нужно было получить до ${hm(s.use)}. ${v25 ? 'Ваша скидка по карте действует как обычно' : `Завтра с ${hm(s.open)} — новый`}`) + pz + '<span class="gchip off">Не получен</span>';
+  else if (p === 'refused') h = head('Вы отказались от подарка', `Сегодня действует ваша скидка по карте. Завтра с ${hm(s.open)} — новый подарок`) + pz + '<span class="gchip off">Отказ</span>';
+  else if (p === 'blocked') h = head(s.prize ? 'Подарок сегодня не действует' : 'Подарок к завтраку', `Сегодня по карте уже была скидка — в день либо подарок, либо скидка. Завтра с ${hm(s.open)} — новый подарок`) + pz + (s.prize ? '<span class="gchip off">Не действует</span>' : '');
+  box.innerHTML = h + `<div class="terms">${giftTermsHtml(s)}<br><button class="glink" id="giftRulesBtn">Условия акции</button></div>`;
   box.classList.remove('hidden');
   const b = $('giftOpen'); if (b) b.onclick = openGift;
+  const rf = $('giftRefuse'); if (rf) rf.onclick = refuseGift;
+  $('giftRulesBtn').onclick = openGiftRules;
 }
 function renderGift(s) {
   if (s !== undefined) giftSt = s; // обновление QR приходит без поля — держим прошлое
@@ -2030,9 +2074,18 @@ async function openGift() {
   try {
     const r = await api('giftOpen');
     if (me?.card) me.card.gift = r.gift;
-    await playGift(r.gift);
+    if (r.gift && r.gift.phase === 'got') await playGift(r.gift);
     renderGift(r.gift);
   } catch (e) { haptic('error'); alertMsg(e.message); if (b) { b.disabled = false; b.textContent = 'Открыть подарок'; } }
+  giftBusy = false;
+}
+// «Отказаться от подарка»: сегодня вместо него — своя скидка по карте
+async function refuseGift() {
+  if (giftBusy) return;
+  if (!(await ask('Отказаться от подарка? Сегодня вместо него будет действовать ваша скидка по карте. Вернуть подарок нельзя.'))) return;
+  giftBusy = true; const b = $('giftRefuse'); if (b) { b.disabled = true; b.textContent = 'Отказываемся…'; }
+  try { const r = await api('giftRefuse'); haptic('success'); if (me?.card) me.card.gift = r.gift; renderGift(r.gift); }
+  catch (e) { haptic('error'); alertMsg(e.message); paintGift(); }
   giftBusy = false;
 }
 function playGift(s) {
@@ -2124,11 +2177,13 @@ function paintGeo(r) {
 }
 
 // касса: подарок гостя отдельной карточкой
-function giftKassaHtml(g) {
+// r — режим подарка (сервер v25): у гостя сегодня подарок вместо скидки, касса показывает только его
+function giftKassaHtml(g, r) {
   if (!g) return '';
   const cls = g.state === 'open' ? 'warn' : g.state === 'used' ? '' : 'err';
-  return `<div class="card kgift" id="kGift"><div class="kg-h">🎁 Подарок к завтраку</div><div class="kg-t">${esc(g.title)}</div>${g.sub ? `<div class="kg-s">${esc(g.sub)}</div>` : ''}
-    <div class="msg ${cls}" style="display:block">${esc(g.note)}</div>${g.state === 'open' ? '<button class="btn big kgbtn" id="kGiftBtn">Погасить подарок</button>' : ''}</div>`;
+  const who = r ? `<div class="kg-who">${esc(r.name)}</div>${r.card ? `<div class="kg-card">Карта ${esc(r.card)}</div>` : ''}` : '';
+  return `<div class="card kgift${r ? ' gm' : ''}" id="kGift"><div class="kg-h">🎁 Подарок к завтраку</div>${who}<div class="kg-t">${esc(g.title)}</div>${g.sub ? `<div class="kg-s">${esc(g.sub)}</div>` : ''}
+    <div class="msg ${cls}" style="display:block">${esc(g.note)}</div>${g.state === 'open' ? '<button class="btn big kgbtn" id="kGiftBtn">Погасить подарок</button>' : ''}${r && r.note ? `<div class="kg-hint">${esc(r.note)}</div>` : ''}</div>`;
 }
 function bindKassaGift(g) {
   const b = $('kGiftBtn'); if (!b || !g) return;
@@ -2138,7 +2193,8 @@ function bindKassaGift(g) {
     if (g.geo && !geo) { haptic('error'); b.disabled = false; b.textContent = 'Погасить подарок'; return geoDenied ? openGeoSettings() : alertMsg('Не получилось определить геолокацию. Включите её на телефоне и нажмите ещё раз'); }
     b.textContent = 'Гасим подарок…';
     try { const r = await api('giftRedeem', { token: g.token, geo }); haptic('success');
-      $('kGift').innerHTML = `${checkSvg()}<div class="kg-h" style="margin-top:6px">Подарок выдан</div><div class="kg-t">${esc(r.title)}</div><div class="msg ok" style="display:block">${esc(r.note)}</div>`; }
+      $('kGift').innerHTML = `${checkSvg()}<div class="kg-h" style="margin-top:6px">Подарок выдан${r.visit ? ' · визит засчитан' : ''}</div>${r.name ? `<div class="kg-who">${esc(r.name)}</div>` : ''}<div class="kg-t">${esc(r.title)}</div><div class="msg ok" style="display:block">${esc(r.note)}</div>`;
+      loadKassaLog(); }
     catch (e) { haptic('error'); b.disabled = false; b.textContent = 'Погасить подарок'; alertMsg(e.message); }
   };
 }
@@ -2178,7 +2234,10 @@ $('scanGuest').onclick = async () => {
   try {
     const geo = await Promise.race([geoP, sleep(3500).then(() => null)]);
     const r = await api('scan', { qr, preview: true, geo });
-    if (r.preview) { // шаг 1: показываем, что положено, — ничего ещё не записано
+    if (r.giftMode) { // у гостя подарок к завтраку — одна кнопка «Погасить подарок», скидки нет
+      tick(); kassaResult(placeHtml(r.place) + giftKassaHtml(r.gift, r));
+      bindKassaGift(r.gift); bindPlace(r.place);
+    } else if (r.preview) { // шаг 1: показываем, что положено, — ничего ещё не записано
       tick();
       const pct = r.percent ? '−' + r.percent + '%' : '';
       kassaResult(`${placeHtml(r.place)}<div class="card kres preview"><div class="who">${esc(r.name)}</div>${r.card ? `<div class="grp">Карта ${esc(r.card)}</div>` : ''}
@@ -2202,7 +2261,7 @@ async function loadKassaLog() {
     $('kLog').innerHTML = r.scans.length ? r.scans.map((x) => {
       const d = new Date(x.ts);
       const when = d.toDateString() === today ? d.toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' }) : fmtTime(x.ts);
-      const res = !x.ok ? '<span class="tag off">отказ</span>' : x.kind === 'noact' ? `<span class="tag off">не активировал${x.percent ? ' −' + esc(x.percent) + '%' : ''}</span>` : x.kind === 'waiting' ? '<span class="tag warn">ждёт активации</span>' : x.kind === 'again' ? '<span class="tag">повтор</span>' : x.percent ? `<span class="tag on">−${esc(x.percent)}%</span>` : '<span class="tag">визит</span>';
+      const res = !x.ok ? '<span class="tag off">отказ</span>' : x.kind === 'noact' ? `<span class="tag off">не активировал${x.percent ? ' −' + esc(x.percent) + '%' : ''}</span>` : x.kind === 'waiting' ? '<span class="tag warn">ждёт активации</span>' : x.kind === 'gift' ? '<span class="tag on">🎁 подарок</span>' : x.kind === 'again' ? '<span class="tag">повтор</span>' : x.percent ? `<span class="tag on">−${esc(x.percent)}%</span>` : '<span class="tag">визит</span>';
       return `<div class="li"><span class="grow">${esc(x.name || 'Карта не найдена')} <span style="color:var(--text-3)">${esc(x.card)}</span>${res}${x.reason ? `<span class="sub">${esc(x.reason)}</span>` : ''}</span><time>${when}</time></div>`;
     }).join('') : '<div class="empty">Сканов пока нет</div>';
   } catch (e) { if (seq === kLogSeq) $('kLog').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
