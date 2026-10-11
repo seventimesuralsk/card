@@ -521,6 +521,58 @@
   @keyframes crownf { 50% { transform: translateX(-50%) translateY(-8px); } }
   .cn-crown { top: 50%; z-index: 4; pointer-events: none; }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+  /* ── подарок к завтраку ── */
+  .gift .gh { display: flex; align-items: center; gap: 14px; }
+  .gift .gi { width: 48px; height: 48px; border-radius: 15px; flex: none; display: grid; place-items: center; font-size: 24px; background: linear-gradient(140deg, #9a2a42, #5a0f20); box-shadow: 0 8px 18px rgba(109,21,40,.25); }
+  .gift .gt { font-size: 17px; font-weight: 700; letter-spacing: -.02em; line-height: 1.2; }
+  .gift .gs { color: var(--text-2); font-size: 14px; margin-top: 2px; }
+  .gift .gbtn { position: relative; overflow: hidden; background: linear-gradient(135deg, #8f2239, #5a0f20); color: #fff; }
+  .gift .gbtn::after { content: ""; position: absolute; top: 0; bottom: 0; width: 40%; left: -60%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.35), transparent); transform: skewX(-18deg); animation: gshine 2.8s var(--ease) infinite; }
+  @keyframes gshine { 0% { left: -60%; } 55%, 100% { left: 130%; } }
+  .gift .prize { margin-top: 14px; padding: 14px 16px; border-radius: 16px; display: flex; gap: 14px; align-items: center; background: color-mix(in srgb, #8f2239 9%, var(--surface)); }
+  .gift .prize .pe { font-size: 32px; line-height: 1; }
+  .gift .prize b { display: block; font-size: 18px; letter-spacing: -.02em; }
+  .gift .prize span { font-size: 13.5px; color: var(--text-2); }
+  .gift .gchip { display: inline-block; margin-top: 10px; padding: 5px 11px; border-radius: 99px; font-size: 12.5px; font-weight: 600; background: color-mix(in srgb, var(--orange) 15%, transparent); color: var(--orange); }
+  .gift .gchip.ok { background: color-mix(in srgb, var(--green) 14%, transparent); color: var(--green); }
+  .gift .gchip.off { background: var(--fill); color: var(--text-2); }
+  .gift .terms { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--sep); font-size: 12.5px; line-height: 1.55; color: var(--text-2); }
+  .gift .terms b { color: var(--text); font-weight: 600; }
+  .gift .terms .no { color: #b23a4a; font-weight: 600; }
+  .grv { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; background: rgba(10,6,8,.55); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); opacity: 0; transition: opacity .5s var(--ease); padding: 24px; }
+  .grv.on { opacity: 1; }
+  .grv-in { position: relative; width: 100%; max-width: 360px; height: 460px; }
+  .gbx { position: absolute; left: 50%; top: 120px; width: 150px; height: 130px; margin-left: -75px; transform: translateY(40px) scale(.8); opacity: 0; transition: transform .9s var(--spring), opacity .5s; }
+  .grv.on .gbx { transform: none; opacity: 1; }
+  .gbx .bd { position: absolute; left: 8px; right: 8px; bottom: 0; height: 92px; border-radius: 14px; background: linear-gradient(150deg, #a8324d, #5a0f20); box-shadow: 0 24px 50px rgba(0,0,0,.35); }
+  .gbx .ld { position: absolute; left: 0; right: 0; top: 18px; height: 34px; border-radius: 12px; background: linear-gradient(150deg, #c0475f, #6d1528); box-shadow: 0 6px 14px rgba(0,0,0,.25); transition: transform .9s cubic-bezier(.2,.9,.25,1), opacity .9s; }
+  .gbx .rb { position: absolute; left: 50%; top: 18px; bottom: 0; width: 18px; margin-left: -9px; background: linear-gradient(90deg, #e9cf9b, #fff3d8, #c9a063); }
+  .gbx .bow { position: absolute; left: 50%; top: -2px; width: 60px; height: 26px; margin-left: -30px; transition: transform .9s cubic-bezier(.2,.9,.25,1), opacity .9s; }
+  .gbx .bow::before, .gbx .bow::after { content: ""; position: absolute; top: 0; width: 28px; height: 22px; border-radius: 50% 50% 40% 40%; border: 6px solid #e9cf9b; }
+  .gbx .bow::before { left: 0; transform: rotate(-18deg); } .gbx .bow::after { right: 0; transform: rotate(18deg); }
+  .gbx.shake { animation: gshake .9s ease-in-out; }
+  @keyframes gshake { 0%, 100% { transform: none; } 15% { transform: rotate(-6deg); } 30% { transform: rotate(6deg); } 45% { transform: rotate(-5deg) translateY(-4px); } 60% { transform: rotate(4deg); } 75% { transform: rotate(-2deg) translateY(-2px); } }
+  .gbx.open .ld { transform: translate(40px, -150px) rotate(38deg); opacity: 0; }
+  .gbx.open .bow { transform: translate(-50px, -170px) rotate(-40deg); opacity: 0; }
+  .gbx.gone { transition: transform .8s var(--ease), opacity .6s; transform: translateY(80px) scale(.9); opacity: 0; }
+  .glow { position: absolute; left: 50%; top: 170px; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: radial-gradient(circle, rgba(255,230,190,.95), rgba(255,200,150,0) 70%); transform: scale(0); transition: transform 1.1s var(--ease), opacity 1.2s; }
+  .glow.on { transform: scale(46); opacity: 0; }
+  .gp { position: absolute; left: 0; right: 0; top: 40px; padding: 26px 22px 22px; border-radius: 26px; background: var(--surface); text-align: center; transform: translateY(30px) scale(.92); opacity: 0; transition: transform .9s var(--spring), opacity .6s var(--ease); box-shadow: 0 30px 80px rgba(0,0,0,.35); }
+  .gp.on { transform: none; opacity: 1; }
+  .gp .e { font-size: 58px; line-height: 1; }
+  .gp .k { margin-top: 10px; font-size: 12px; font-weight: 700; letter-spacing: .28em; color: #8f2239; }
+  .gp .t { margin-top: 6px; font-size: 26px; font-weight: 700; letter-spacing: -.03em; line-height: 1.15; }
+  .gp .s { margin-top: 4px; color: var(--text-2); }
+  .gp .terms { margin-top: 14px; padding: 12px 14px; border-radius: 14px; background: var(--fill); font-size: 13px; line-height: 1.5; text-align: left; color: var(--text-2); }
+  .gp .terms b { color: var(--text); } .gp .terms .no { color: #b23a4a; font-weight: 600; }
+  .gp .btn { margin-top: 16px; background: linear-gradient(135deg, #8f2239, #5a0f20); color: #fff; }
+  .gconf i { position: absolute; left: 50%; top: 170px; width: 8px; height: 12px; border-radius: 2px; opacity: 0; }
+  /* касса: подарок */
+  .kgift .kg-h { font-size: 12.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #8f2239; }
+  .kgift .kg-t { font-size: 22px; font-weight: 700; letter-spacing: -.02em; margin-top: 6px; }
+  .kgift .kg-s { color: var(--text-2); font-size: 14px; }
+  .kgift .kgbtn { background: linear-gradient(135deg, #8f2239, #5a0f20); color: #fff; }
 </style>
 </head>
 <body>
@@ -574,6 +626,8 @@
       <div class="fine" style="margin-top:10px">Чтобы получить скидку, покажите кассиру ваш QR — он ниже 👇</div>
     </div>
 
+
+    <div class="card gift hidden" id="giftBox"></div>
     <div class="card qrcard hidden" id="qrBox">
       <div class="qrtitle">Ваш QR для скидки</div>
       <div class="qrwrap" id="qrWrap"><div id="qr"></div><div class="qrover">Создаём новый QR…<br>подождите</div></div>
@@ -842,7 +896,7 @@
 <script>
 // URL своего Apps Script (…/exec)
 // Версия карты — показывается в админке рядом с версией сервера
-const APP_VERSION = 'v22';
+const APP_VERSION = 'v23';
 const API_URL = 'https://script.google.com/macros/s/AKfycbw2iXb0fbYhQg4VFYEeBZZQZ8fjV34-PzjUdsqHz58ikXibTVL5Tl6LiO3OUz2nj_kg6w/exec';
 
 const tg = window.Telegram?.WebApp;
@@ -1227,6 +1281,7 @@ function renderCard(c) {
     : '<div class="muted">Визитов пока нет. Покажите QR кассиру при покупке — визит засчитается.</div>';
   maybeReveal(c, ok && !blocked);
   welcomeCountdown(c.welcome, ok && !blocked);
+  if (!ok || blocked) renderGift(null); else if (c.gift !== undefined) renderGift(c.gift); else renderGift();
   showNotice(c.notice);
 }
 
@@ -1904,6 +1959,103 @@ $('invCodeBtn').onclick = async () => {
   $('invCodeBtn').disabled = false;
 };
 
+
+// ══════════ Подарок к завтраку ══════════
+// Открыть — с 8:00 до 12:00, погасить у кассира — до 17:00. Только с завтраком и только на точках из условий
+let giftSt = null, giftTimer = 0, giftBusy = false;
+const hm = (h) => h + ':00';
+const dayRu = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString('ru', { day: 'numeric', month: 'long' });
+function giftTermsHtml(s) {
+  return `<b>Только с завтраком.</b> Действует на ${s.branches.map(esc).join(' и ')}${s.other && s.other.length ? `<br><span class="no">На ${s.other.map(esc).join(', ')} подарки не действуют</span>` : ''}<br>Открыть — с ${hm(s.open)} до ${hm(s.close)}, получить у кассира — до ${hm(s.use)}`;
+}
+function giftPhase(s) {
+  const now = Date.now(); let p = s.phase;
+  if (p === 'got' && !s.test && s.useUntil && now >= s.useUntil) p = 'expired';
+  if (p === 'before' && s.opensAt && now >= s.opensAt) p = 'open';
+  if (p === 'open' && !s.test && s.closesAt && now >= s.closesAt) p = 'closed';
+  if (p === 'soon' && s.startsAt && now >= s.startsAt) p = 'open';
+  return p;
+}
+function paintGift() {
+  const s = giftSt, box = $('giftBox');
+  if (!s) { box.classList.add('hidden'); return; }
+  const p = giftPhase(s), prize = s.prize;
+  const head = (t, sub) => `<div class="gh"><div class="gi">🎁</div><div><div class="gt">${t}</div><div class="gs">${sub}</div></div></div>`;
+  const pz = prize ? `<div class="prize"><span class="pe">${esc(prize.e)}</span><div><b>${esc(prize.title)}</b><span>${esc(prize.sub)}</span></div></div>` : '';
+  let h = '';
+  if (p === 'soon') h = head('Подарки к завтраку', `С ${dayRu(s.startDay)} каждое утро — подарок в этой карте`);
+  else if (p === 'before') h = head('Подарок к завтраку', `Откроется сегодня в ${hm(s.open)}`);
+  else if (p === 'open') h = head('Ваш подарок к завтраку ждёт', `Откройте до ${hm(s.close)}${s.test ? ' · проверка главного админа' : ''}`) + `<button class="btn big gbtn" id="giftOpen">Открыть подарок</button>`;
+  else if (p === 'closed') h = head('Подарок к завтраку', `Сегодня подарки открывались до ${hm(s.close)}. Завтра с ${hm(s.open)} — новый`);
+  else if (p === 'got') h = head('Ваш подарок сегодня', `Закажите завтрак и покажите QR кассиру до ${hm(s.use)}`) + pz + '<span class="gchip">Ждёт кассира</span>';
+  else if (p === 'used') h = head('Подарок получен', 'Приятного аппетита! Завтра — новый подарок') + pz + '<span class="gchip ok">Выдан ✓</span>';
+  else if (p === 'expired') h = head('Срок подарка вышел', `Подарок нужно было получить до ${hm(s.use)}. Завтра с ${hm(s.open)} — новый`) + pz + '<span class="gchip off">Не получен</span>';
+  box.innerHTML = h + `<div class="terms">${giftTermsHtml(s)}</div>`;
+  box.classList.remove('hidden');
+  const b = $('giftOpen'); if (b) b.onclick = openGift;
+}
+function renderGift(s) {
+  if (s !== undefined) giftSt = s; // обновление QR приходит без поля — держим прошлое
+  clearInterval(giftTimer); paintGift(); if (giftSt) giftTimer = setInterval(paintGift, 30000);
+}
+async function openGift() {
+  if (giftBusy) return; giftBusy = true; tick();
+  const b = $('giftOpen'); if (b) { b.disabled = true; b.textContent = 'Открываем…'; }
+  try {
+    const r = await api('giftOpen');
+    if (me?.card) me.card.gift = r.gift;
+    await playGift(r.gift);
+    renderGift(r.gift);
+  } catch (e) { haptic('error'); alertMsg(e.message); if (b) { b.disabled = false; b.textContent = 'Открыть подарок'; } }
+  giftBusy = false;
+}
+function playGift(s) {
+  return new Promise((done) => {
+    const p = s.prize || {};
+    let ov = $('giftRv');
+    if (!ov) { document.body.insertAdjacentHTML('beforeend', `<div class="grv hidden" id="giftRv"><div class="grv-in"><div class="glow" id="gGlow"></div><div class="gbx" id="gBox"><div class="bd"></div><div class="rb"></div><div class="ld"></div><div class="bow"></div></div><div class="gconf" id="gConf"></div>
+      <div class="gp" id="gCard"><div class="e" id="gE"></div><div class="k">ВАШ ПОДАРОК</div><div class="t" id="gT"></div><div class="s" id="gS"></div><div class="terms" id="gTerms"></div><button class="btn big" id="gOk">Отлично</button></div></div></div>`); ov = $('giftRv'); }
+    $('gE').textContent = p.e || '🎁'; $('gT').textContent = p.title || ''; $('gS').textContent = p.sub || '';
+    $('gTerms').innerHTML = giftTermsHtml(s);
+    const box = $('gBox'), card = $('gCard'), glow = $('gGlow'), conf = $('gConf');
+    box.className = 'gbx'; card.classList.remove('on'); glow.classList.remove('on'); conf.innerHTML = '';
+    ov.classList.remove('hidden'); void ov.offsetWidth; ov.classList.add('on');
+    const close = () => { ov.classList.remove('on'); setTimeout(() => { ov.classList.add('hidden'); done(); }, 450); };
+    $('gOk').onclick = () => { tick(); close(); };
+    const show = () => { card.classList.add('on'); haptic('success'); };
+    if (calm) { box.classList.add('gone'); return show(); }
+    try { Snd.init(); } catch {}
+    setTimeout(() => { box.classList.add('shake'); tick(); }, 650);
+    setTimeout(() => {
+      box.classList.remove('shake'); box.classList.add('open'); glow.classList.add('on');
+      try { Snd.play('thump'); Snd.play('shimmer'); } catch {}
+      const cols = ['#8f2239', '#c0475f', '#e9cf9b', '#f6e7d6', '#5a0f20'];
+      conf.innerHTML = Array.from({ length: 36 }, () => '<i></i>').join('');
+      conf.querySelectorAll('i').forEach((el, i) => { const a = Math.random() * Math.PI * 2, d = 90 + Math.random() * 150;
+        el.style.background = cols[i % cols.length];
+        el.animate([{ opacity: 1, transform: 'translate(0,0) rotate(0)' }, { opacity: 0, transform: `translate(${Math.cos(a) * d}px, ${Math.sin(a) * d * .8 + 120}px) rotate(${Math.random() * 720}deg)` }], { duration: 1500 + Math.random() * 600, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'forwards' }); });
+    }, 1600);
+    setTimeout(() => box.classList.add('gone'), 2200);
+    setTimeout(show, 2350);
+  });
+}
+// касса: подарок гостя отдельной карточкой
+function giftKassaHtml(g) {
+  if (!g) return '';
+  const cls = g.state === 'open' ? 'warn' : g.state === 'used' ? '' : 'err';
+  return `<div class="card kgift" id="kGift"><div class="kg-h">🎁 Подарок к завтраку</div><div class="kg-t">${esc(g.title)}</div>${g.sub ? `<div class="kg-s">${esc(g.sub)}</div>` : ''}
+    <div class="msg ${cls}" style="display:block">${esc(g.note)}</div>${g.state === 'open' ? '<button class="btn big kgbtn" id="kGiftBtn">Погасить подарок</button>' : ''}</div>`;
+}
+function bindKassaGift(g) {
+  const b = $('kGiftBtn'); if (!b || !g) return;
+  b.onclick = async () => {
+    b.disabled = true; b.textContent = 'Гасим подарок…';
+    try { const r = await api('giftRedeem', { token: g.token }); haptic('success');
+      $('kGift').innerHTML = `${checkSvg()}<div class="kg-h" style="margin-top:6px">Подарок выдан</div><div class="kg-t">${esc(r.title)}</div><div class="msg ok" style="display:block">${esc(r.note)}</div>`; }
+    catch (e) { haptic('error'); b.disabled = false; b.textContent = 'Погасить подарок'; alertMsg(e.message); }
+  };
+}
+
 // ══════════ Касса: один скан — одна операция, скидка применяется сразу ══════════
 function kassaResult(html) { const el = $('kRes'); el.innerHTML = html; enter(el); }
 // Итог операции на кассе: зелёный — применено сейчас, оранжевый — уже было сегодня, красный — отказ
@@ -1912,14 +2064,16 @@ function kassaFinal(r) {
     haptic('warning');
     kassaResult(`<div class="card kres again"><div class="warn-ico">!</div><div class="who">${esc(r.name)}</div>${r.card ? `<div class="grp" style="color:var(--text-2);font-weight:400">Карта ${esc(r.card)}</div>` : ''}
       <div class="hero-num">${r.percent ? '−' + esc(r.percent) + '%' : 'Визит'}</div><div class="grp">${esc(r.group)}</div></div>
-      <div class="msg warn" style="display:block">${esc(r.note)}</div>`);
+      <div class="msg warn" style="display:block">${esc(r.note)}</div>${giftKassaHtml(r.gift)}`);
+    bindKassaGift(r.gift);
     return;
   }
   haptic('success');
   const visitOnly = r.kind === 'visit' || !r.percent;
   kassaResult(`<div class="card kres">${checkSvg('big')}<div class="who">${esc(r.name)}</div>${r.card ? `<div class="grp">Карта ${esc(r.card)}</div>` : ''}
     <div class="hero-num" id="kPct">${visitOnly ? 'Визит' : '−0%'}</div><div class="grp">${esc(r.group)}</div></div>
-    <div class="msg ${visitOnly ? 'warn' : 'ok'}" style="display:block">${esc(r.note)}</div>`);
+    <div class="msg ${visitOnly ? 'warn' : 'ok'}" style="display:block">${esc(r.note)}</div>${giftKassaHtml(r.gift)}`);
+  bindKassaGift(r.gift);
   if (!visitOnly) countTo($('kPct'), r.percent, '%', '−', 700);
 }
 const kassaFail = (e) => { haptic('error'); kassaResult(`<div class="card kres bad"><div class="cross"></div>${e.data?.guest ? `<div class="who">${esc(e.data.guest)}</div>` : ''}<div class="grp" style="color:var(--red)">${esc(e.message)}</div></div>`); };
@@ -1941,8 +2095,9 @@ $('scanGuest').onclick = async () => {
       const pct = r.percent ? '−' + r.percent + '%' : '';
       kassaResult(`<div class="card kres preview"><div class="who">${esc(r.name)}</div>${r.card ? `<div class="grp">Карта ${esc(r.card)}</div>` : ''}
         <div class="hero-num">${pct ? esc(pct) : 'Без скидки'}</div><div class="grp">${esc(r.group)}</div>
-        <button class="btn big kapply" id="kApply">${pct ? 'Активировать скидку ' + esc(pct) : 'Засчитать визит'}</button></div>`);
+        <button class="btn big kapply" id="kApply">${pct ? 'Активировать скидку ' + esc(pct) : 'Засчитать визит'}</button></div>${giftKassaHtml(r.gift)}`);
       $('kApply').onclick = () => kassaApply(r.token, $('kApply'));
+      bindKassaGift(r.gift);
     } else kassaFinal(r); // повтор за день, день регистрации или старый сервер — сразу итог
   } catch (e) { kassaFail(e); }
   $('scanGuest').disabled = false;
