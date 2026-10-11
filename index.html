@@ -549,12 +549,14 @@
   .gift .gref { display: block; margin: 10px auto 0; padding: 4px 10px; border: 0; background: none; color: var(--text-3); font: inherit; font-size: 12.5px; text-decoration: underline; text-underline-offset: 3px; }
   .gift .gref:disabled { opacity: .6; }
   .kres .kgh { font-size: 26px; letter-spacing: -.02em; line-height: 1.15; margin: 12px 0 6px; }
-  .kres.give { background: linear-gradient(150deg, #a02a45, #5a0f20); color: #fff; }
-  .kres.give .who, .kres.give .grp { color: #fff; }
-  .kres.give .kgv { font-size: 15px; font-weight: 800; letter-spacing: .22em; text-transform: uppercase; opacity: .9; }
-  .kres.give .kgh { font-size: 30px; color: #fff; }
-  .kres.give .ge { font-size: 64px; line-height: 1; margin-top: 8px; animation: gclb 1.6s ease-in-out infinite; }
-  @keyframes gclb { 50% { transform: scale(1.1) rotate(-6deg); } }
+  /* «ВЫДАЙ ПОДАРОК» — компактно: заметно, но вместе с подсказкой влезает в экран */
+  .kres.give { padding: 16px 18px; text-align: left; background: linear-gradient(150deg, #a02a45, #5a0f20); color: #fff; }
+  .kres.give .kgv { font-size: 12px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; opacity: .85; }
+  .kres.give .gr { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+  .kres.give .ge { font-size: 36px; line-height: 1; flex: none; }
+  .kres.give .kgh { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -.02em; line-height: 1.2; color: #fff; }
+  .kres.give .gw { margin-top: 8px; font-size: 14px; opacity: .85; }
+  .kres.give .gn { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.22); font-size: 13.5px; line-height: 1.4; }
   .gift .glink { padding: 0; border: 0; background: none; color: var(--text); font: inherit; font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
   .grules .gr-h { text-align: center; font-size: 19px; font-weight: 700; letter-spacing: -.02em; margin: 4px 0 0; }
   .grules .gr-s { text-align: center; font-size: 13px; color: var(--text-2); margin: 2px 0 12px; }
@@ -949,7 +951,7 @@
 <script>
 // URL своего Apps Script (…/exec)
 // Версия карты — показывается в админке рядом с версией сервера
-const APP_VERSION = 'v30';
+const APP_VERSION = 'v31';
 const API_URL = 'https://script.google.com/macros/s/AKfycbw2iXb0fbYhQg4VFYEeBZZQZ8fjV34-PzjUdsqHz58ikXibTVL5Tl6LiO3OUz2nj_kg6w/exec';
 
 const tg = window.Telegram?.WebApp;
@@ -2225,9 +2227,10 @@ function kassaFinal(r) {
   if (r.kind === 'gift' && !r.again) { // один скан с подарком — крупно «ВЫДАЙ ПОДАРОК», кнопок нет
     haptic('success');
     const t = String(r.gift?.title || '🎁 Подарок'), sp = t.indexOf(' '), em = sp > 0 ? t.slice(0, sp) : '🎁', name = sp > 0 ? t.slice(sp + 1) : t;
-    kassaResult(`${placeHtml(r.place)}<div class="card kres give"><div class="kgv">Выдай подарок</div><div class="ge">${esc(em)}</div><div class="hero-num kgh">${esc(name)}</div><div class="who">${esc(r.name)}</div>${r.card ? `<div class="grp">Карта ${esc(r.card)}</div>` : ''}${r.visit ? '<div class="grp">визит засчитан</div>' : ''}</div>
-      <div class="msg ok" style="display:block">${esc(r.note)}</div>`);
-    bindPlace(r.place);
+    const who = [r.name, r.card ? 'карта ' + r.card : '', r.visit ? 'визит засчитан' : ''].filter(Boolean).join(' · ');
+    kassaResult(`${placeHtml(r.place)}<div class="card kres give"><div class="kgv">Выдай подарок</div><div class="gr"><span class="ge">${esc(em)}</span><div class="kgh">${esc(name)}</div></div>
+      <div class="gw">${esc(who)}</div><div class="gn">${esc(r.note)}</div></div>`);
+    bindPlace(r.place); $('kRes').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); // на маленьком экране — сразу видно
     return;
   }
   if (r.again) { // этот гость сегодня уже был: показываем, что уже применено, — без зелёной галочки, чтобы не провели второй раз
