@@ -548,34 +548,13 @@
   .gift .gft b { color: var(--text); font-weight: 600; }
   .gift .gref { display: block; margin: 10px auto 0; padding: 4px 10px; border: 0; background: none; color: var(--text-3); font: inherit; font-size: 12.5px; text-decoration: underline; text-underline-offset: 3px; }
   .gift .gref:disabled { opacity: .6; }
-  .gift .ghold { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
-  .gift .ghold .gfill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: rgba(255,255,255,.28); pointer-events: none; }
-  .gift .ghold.hold .gfill { width: 100%; transition: width 1s linear; }
-  .gift .ghold .gl { position: relative; }
-  .gift .ghint { margin-top: 6px; text-align: center; font-size: 12.5px; color: var(--text-3); }
-  .gift .ghint.shake { animation: shake .45s both; color: #8f2239; }
-  .gift .gshow { margin-top: 12px; }
-  /* живой экран подарка — кассир смотрит: время идёт, кольцо крутится, скриншот не пройдёт */
-  .gcl { position: fixed; inset: 0; z-index: 95; display: grid; place-items: center; padding: 24px; color: #fff; text-align: center; background: linear-gradient(160deg, #a02a45, #5a0f20 55%, #2c0610); opacity: 0; transition: opacity .4s var(--ease); overflow: hidden; }
-  .gcl.on { opacity: 1; }
-  .gcl::before { content: ""; position: absolute; width: 140vmax; height: 140vmax; left: 50%; top: 50%; margin: -70vmax 0 0 -70vmax; background: radial-gradient(circle at 30% 30%, rgba(255,214,170,.28), transparent 40%), radial-gradient(circle at 70% 70%, rgba(255,120,150,.22), transparent 42%); animation: gclspin 9s linear infinite; }
-  @keyframes gclspin { to { transform: rotate(360deg); } }
-  .gcl-in { position: relative; width: 100%; max-width: 360px; }
-  .gcl-k { font-size: 12px; font-weight: 700; letter-spacing: .26em; opacity: .85; }
-  .gcl-ring { position: relative; width: 150px; height: 150px; margin: 22px auto 0; border-radius: 50%; display: grid; place-items: center; }
-  .gcl-ring::before { content: ""; position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, #ffe2b8, #fff, #ff9fb4, #ffe2b8); animation: gclspin 2.4s linear infinite; }
-  .gcl-ring::after { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: #fff; }
-  .gcl-ring span { position: relative; z-index: 1; font-size: 64px; line-height: 1; animation: gclb 1.6s ease-in-out infinite; }
-  @keyframes gclb { 50% { transform: scale(1.1) rotate(-6deg); } }
-  .gcl-t { margin-top: 18px; font-size: 28px; font-weight: 700; letter-spacing: -.03em; line-height: 1.15; }
-  .gcl-s { margin-top: 4px; font-size: 15px; opacity: .85; }
-  .gcl-time { margin-top: 22px; font-size: 54px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1; }
-  .gcl-date { margin-top: 6px; font-size: 14px; opacity: .85; }
-  .gcl-who { margin-top: 14px; display: inline-block; padding: 6px 14px; border-radius: 99px; background: rgba(255,255,255,.16); font-size: 14px; font-weight: 600; }
-  .gcl-p { margin-top: 18px; font-size: 15px; font-weight: 600; }
-  .gcl-ok { margin-top: 18px; width: 100%; padding: 15px; border: 0; border-radius: 16px; background: #fff; color: #5a0f20; font: inherit; font-size: 17px; font-weight: 700; }
-  .gcl-f { margin-top: 10px; font-size: 12.5px; opacity: .75; font-variant-numeric: tabular-nums; }
   .kres .kgh { font-size: 26px; letter-spacing: -.02em; line-height: 1.15; margin: 12px 0 6px; }
+  .kres.give { background: linear-gradient(150deg, #a02a45, #5a0f20); color: #fff; }
+  .kres.give .who, .kres.give .grp { color: #fff; }
+  .kres.give .kgv { font-size: 15px; font-weight: 800; letter-spacing: .22em; text-transform: uppercase; opacity: .9; }
+  .kres.give .kgh { font-size: 30px; color: #fff; }
+  .kres.give .ge { font-size: 64px; line-height: 1; margin-top: 8px; animation: gclb 1.6s ease-in-out infinite; }
+  @keyframes gclb { 50% { transform: scale(1.1) rotate(-6deg); } }
   .gift .glink { padding: 0; border: 0; background: none; color: var(--text); font: inherit; font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
   .grules .gr-h { text-align: center; font-size: 19px; font-weight: 700; letter-spacing: -.02em; margin: 4px 0 0; }
   .grules .gr-s { text-align: center; font-size: 13px; color: var(--text-2); margin: 2px 0 12px; }
@@ -978,7 +957,7 @@
 <script>
 // URL своего Apps Script (…/exec)
 // Версия карты — показывается в админке рядом с версией сервера
-const APP_VERSION = 'v28';
+const APP_VERSION = 'v29';
 const API_URL = 'https://script.google.com/macros/s/AKfycbw2iXb0fbYhQg4VFYEeBZZQZ8fjV34-PzjUdsqHz58ikXibTVL5Tl6LiO3OUz2nj_kg6w/exec';
 
 const tg = window.Telegram?.WebApp;
@@ -2065,7 +2044,7 @@ function fmtCd(ms) {
 // под подарком на анимации открытия — коротко: с завтраком и где
 function giftTermsHtml(s) {
   const nt = giftNotes(s);
-  return `<b>Покажите QR кассиру с завтраком до ${hm(giftBf(s))}</b> — заберёте подарок когда удобно, до ${hm(s.use)}<br>${s.branches.map((b) => esc(b) + (nt[b] ? ' · ' + esc(nt[b]) : '')).join('<br>')}${s.other && s.other.length ? `<br><span class="no">${s.other.map(esc).join(', ')} — не действует</span>` : ''}`;
+  return `<b>Покажите QR кассиру с завтраком до ${hm(giftBf(s))}</b> — подарок сразу или позже, до ${hm(s.use)}<br>${s.branches.map((b) => esc(b) + (nt[b] ? ' · ' + esc(nt[b]) : '')).join('<br>')}${s.other && s.other.length ? `<br><span class="no">${s.other.map(esc).join(', ')} — не действует</span>` : ''}`;
 }
 // «Условия акции» — юридически, коротко, на один экран без прокрутки
 function giftRulesList(s) {
@@ -2074,7 +2053,7 @@ function giftRulesList(s) {
   return [
     `Акцию проводят кофейни Seven Times (г. Уральск)${from ? ' с ' + dayRu(from) : ''} на ${br}.${oth}`,
     `Участник — владелец карты Seven Times с подтверждённым номером. Подарок открывается в карте с ${hm(s.open)} до ${hm(s.close)}, один на карту в день; вид подарка — случайный.`,
-    `Подарок предоставляется <b>только при заказе завтрака</b>: кассир сканирует QR из карты до ${bf} в день открытия. Получить подарок можно сразу или позже — до ${end} того же дня, нажав в карте «Забрать подарок» и показав экран кассиру. Без скана до ${bf} подарок аннулируется.`,
+    `Подарок предоставляется <b>только при заказе завтрака</b>: кассир сканирует QR из карты до ${bf} в день открытия. Подарок выдаёт кассир по QR из карты — сразу или позже, до ${end} того же дня. Без скана до ${bf} подарок аннулируется.`,
     `<b>В один день — либо подарок, либо скидка по карте.</b> Со скана с подарком скидки и купоны по карте до конца дня не применяются; после применения скидки подарок не предоставляется. До скана от подарка можно отказаться в карте.`,
     'Подарок не обменивается на деньги и не передаётся. Организатор вправе изменить или завершить акцию, уведомив в канале @seventimesuralsk.',
   ];
@@ -2101,7 +2080,7 @@ function paintGift() {
   giftShown = p || '';
   // нет подарков, отказался или сегодня уже была скидка (подарок не открывал) — блока нет, всё как обычно
   if (!s || p === 'refused' || (p === 'blocked' && !s.prize)) { box.classList.add('hidden'); if (qt) qt.textContent = 'Ваш QR для скидки'; return; }
-  if (qt) qt.textContent = p === 'got' ? 'Ваш QR — для подарка' : 'Ваш QR для скидки'; // после скана подарок забирают кнопкой, не QR
+  if (qt) qt.textContent = p === 'got' || p === 'earned' ? 'Ваш QR — для подарка' : 'Ваш QR для скидки';
   const pz = s.prize, nt = giftNotes(s);
   const cd = (label, to) => `<div class="cd"><i>${label}</i><b data-cd="${to || 0}">${fmtCd((to || 0) - Date.now())}</b></div>`;
   const st = (cls, t) => `<div class="cd ${cls}"><b>${t}</b></div>`;
@@ -2113,61 +2092,17 @@ function paintGift() {
   else if (p === 'open') body = row('🎁', 'Подарок ждёт', s.test ? 'проверка главного админа' : `открыть до ${hm(s.close)}`, s.closesAt && !s.test ? cd('осталось', s.closesAt) : '') + '<button class="btn big gbtn" id="giftOpen">Открыть подарок</button>';
   else if (p === 'closed') body = row('🎁', 'Новый подарок', `завтра с ${hm(s.open)}`, cd('через', s.opensAt));
   else if (p === 'got') body = prz(s.orderUntil ? cd(`завтрак до ${hm(giftBf(s))}`, s.orderUntil) : cd('осталось', s.useUntil)); // старый сервер — без orderUntil
-  else if (p === 'earned') body = prz(cd('осталось', s.useUntil)) + // кассир отсканировал до 12:00 — забрать до 00:00
-    '<button class="btn big gbtn ghold" id="giftClaim"><span class="gfill"></span><span class="gl">Забрать подарок</span></button><div class="ghint" id="giftHint">Удерживайте 1 секунду — у кассы</div>';
-  else if (p === 'used') { body = prz(st('ok', 'Получен ✓')) + (claimFresh(s) ? '<button class="btn big sec gshow" id="giftShow">Показать экран кассиру</button>' : ''); full = false; }
+  else if (p === 'earned') body = prz(cd('осталось', s.useUntil)); // кассир отсканировал до 12:00 — забрать до 00:00, просто показать QR
+  else if (p === 'used') { body = prz(st('ok', 'Получен ✓')); full = false; }
   else if (p === 'expired') { body = prz(st('off', 'Сгорел')); full = false; }
   else if (p === 'blocked') { body = prz(st('off', 'Не действует')); full = false; }
   const places = full ? `<div class="gpl">${s.branches.map((b) => `<div>${ICON_YES}<span>${esc(b)}${nt[b] ? ` <em>· ${esc(nt[b])}</em>` : ''}</span></div>`).join('')}${(s.other || []).map((b) => `<div class="n">${ICON_NO}<span>${esc(b)} · не действует</span></div>`).join('')}</div>` : '';
-  const foot = p === 'earned' ? `<b>Вы можете забрать подарок до ${hm(s.use)}</b>` : p === 'got' && s.orderUntil ? `<b>Только с завтраком</b> · покажите QR кассиру до ${hm(giftBf(s))}` : `<b>Только с завтраком</b> · завтраки до ${hm(giftBf(s))}`;
+  const foot = p === 'earned' ? `<b>Вы можете забрать подарок до ${hm(s.use)}</b> · покажите QR кассиру` : p === 'got' && s.orderUntil ? `<b>Только с завтраком</b> · покажите QR кассиру до ${hm(giftBf(s))}` : `<b>Только с завтраком</b> · завтраки до ${hm(giftBf(s))}`;
   box.innerHTML = `<div class="gk">${kick}</div>${body}${places}<div class="gft"><span>${foot}</span><button class="glink" id="giftRulesBtn">Условия акции</button></div>${p === 'got' && s.from !== undefined ? '<button class="gref" id="giftRefuse">Отказаться от подарка</button>' : ''}`;
   box.classList.remove('hidden');
   const b = $('giftOpen'); if (b) b.onclick = openGift;
   const rf = $('giftRefuse'); if (rf) rf.onclick = refuseGift;
-  const cl = $('giftClaim'); if (cl) bindHold(cl, 1000, claimGift);
-  const sh = $('giftShow'); if (sh) sh.onclick = () => { tick(); showClaim(giftSt); };
   $('giftRulesBtn').onclick = openGiftRules;
-}
-// «Забрать подарок»: удержать 1 секунду (случайный тычок дома подарок не сожжёт)
-function bindHold(btn, ms, done) {
-  let t = 0;
-  const start = (e) => { if (btn.disabled) return; e.preventDefault(); btn.classList.add('hold'); tick(); t = setTimeout(() => { t = 0; btn.classList.remove('hold'); done(); }, ms); };
-  const stop = () => { if (!t) return; clearTimeout(t); t = 0; btn.classList.remove('hold'); const h = $('giftHint'); if (h) { h.classList.remove('shake'); void h.offsetWidth; h.classList.add('shake'); } };
-  btn.addEventListener('pointerdown', start);
-  ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => btn.addEventListener(ev, stop));
-  btn.addEventListener('contextmenu', (e) => e.preventDefault());
-}
-const CLAIM_SHOW = 5 * 60e3; // живой экран — 5 минут после «Забрать»
-const claimFresh = (s) => s && s.usedAt && Date.now() - s.usedAt < CLAIM_SHOW;
-async function claimGift() {
-  if (giftBusy) return; giftBusy = true; haptic('success');
-  const b = $('giftClaim'); if (b) { b.disabled = true; b.querySelector('.gl').textContent = 'Забираем…'; }
-  try { const r = await api('giftClaim'); if (me?.card) me.card.gift = r.gift; renderGift(r.gift); showClaim(r.gift); }
-  catch (e) { haptic('error'); alertMsg(e.message); paintGift(); }
-  giftBusy = false;
-}
-// Живой экран для кассира: подарок, часы с секундами, крутящееся кольцо. Через 5 минут закрывается сам
-let claimTimer = 0;
-function showClaim(s) {
-  if (!s || !s.prize) return;
-  let ov = $('gClaim');
-  if (!ov) { document.body.insertAdjacentHTML('beforeend', `<div class="gcl hidden" id="gClaim"><div class="gcl-in"><div class="gcl-k">SEVEN TIMES · ПОДАРОК</div><div class="gcl-ring"><span id="gclE"></span></div>
-    <div class="gcl-t" id="gclT"></div><div class="gcl-s" id="gclS"></div><div class="gcl-time" id="gclTime"></div><div class="gcl-date" id="gclDate"></div><div class="gcl-who" id="gclWho"></div>
-    <div class="gcl-p">Покажите этот экран кассиру</div><button class="gcl-ok" id="gclOk">Готово</button><div class="gcl-f" id="gclLeft"></div></div></div>`); ov = $('gClaim'); }
-  const used = s.usedAt || Date.now(), t2 = (ts) => new Date(ts).toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' });
-  $('gclE').textContent = s.prize.e || '🎁'; $('gclT').textContent = s.prize.title || ''; $('gclS').textContent = s.prize.sub || '';
-  $('gclWho').textContent = me?.card?.name || '';
-  $('gclDate').textContent = new Date(used).toLocaleDateString('ru', { day: 'numeric', month: 'long' }) + ' · забран в ' + t2(used);
-  const close = () => { clearInterval(claimTimer); ov.classList.remove('on'); setTimeout(() => ov.classList.add('hidden'), 400); paintGift(); };
-  const upd = () => {
-    const now = Date.now(), left = used + CLAIM_SHOW - now;
-    if (left <= 0) return close();
-    $('gclTime').textContent = new Date(now).toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    $('gclLeft').textContent = 'Экран активен ещё ' + Math.floor(left / 60000) + ':' + p2(Math.floor(left / 1000) % 60);
-  };
-  $('gclOk').onclick = () => { tick(); close(); };
-  clearInterval(claimTimer); upd(); claimTimer = setInterval(upd, 1000);
-  ov.classList.remove('hidden'); void ov.offsetWidth; ov.classList.add('on');
 }
 // обратный отсчёт — раз в секунду; сменилась фаза (8:00, 12:00, 17:00) — перерисовываем
 function giftTick() {
@@ -2322,11 +2257,15 @@ function bindKassaGift(g) {
 function kassaResult(html) { const el = $('kRes'); el.innerHTML = html; enter(el); }
 // Итог операции на кассе: зелёный — применено сейчас, оранжевый — уже было сегодня, красный — отказ
 function kassaFinal(r) {
-  if (r.kind === 'gift' && !r.again) { // один скан с подарком: завтрак записан, подарок гость заберёт сам — кнопок нет
+  if (r.kind === 'gift' && !r.again) { // подарок — только сканом, кнопок нет
     haptic('success');
-    kassaResult(`${placeHtml(r.place)}<div class="card kres">${checkSvg('big')}<div class="who">${esc(r.name)}</div>${r.card ? `<div class="grp">Карта ${esc(r.card)}</div>` : ''}
-      <div class="hero-num kgh">${esc(r.gift?.title || '🎁 Подарок')}</div><div class="grp">${esc(r.group)}</div></div>
-      <div class="msg ok" style="display:block">${esc(r.note)}</div>`);
+    const t = String(r.gift?.title || '🎁 Подарок'), sp = t.indexOf(' '), em = sp > 0 ? t.slice(0, sp) : '🎁', name = sp > 0 ? t.slice(sp + 1) : t;
+    kassaResult(r.give // скан 2 (или GIFT_LATER=0): крупно «ВЫДАЙ ПОДАРОК»
+      ? `${placeHtml(r.place)}<div class="card kres give"><div class="kgv">Выдай подарок</div><div class="ge">${esc(em)}</div><div class="hero-num kgh">${esc(name)}</div><div class="who">${esc(r.name)}</div>${r.card ? `<div class="grp">Карта ${esc(r.card)}</div>` : ''}</div>
+        <div class="msg ok" style="display:block">${esc(r.note)}</div>`
+      : `${placeHtml(r.place)}<div class="card kres">${checkSvg('big')}<div class="who">${esc(r.name)}</div>${r.card ? `<div class="grp">Карта ${esc(r.card)}</div>` : ''}
+        <div class="hero-num kgh">${esc(t)}</div><div class="grp">${esc(r.group)}</div></div>
+        <div class="msg warn" style="display:block">${esc(r.note)}</div>`);
     bindPlace(r.place);
     return;
   }
