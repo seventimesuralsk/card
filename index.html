@@ -1017,7 +1017,7 @@
 <script>
 // URL своего Apps Script (…/exec)
 // Версия карты — показывается в админке рядом с версией сервера
-const APP_VERSION = 'v48';
+const APP_VERSION = 'v49';
 const API_URL = 'https://script.google.com/macros/s/AKfycbwCLm3j8qUh76MsQheAd3fjOsC2UE7o8FRNkzp2CG4I0o99hxj-PBwK9Z0-jBo3nh0H4w/exec';
 
 const tg = window.Telegram?.WebApp;
@@ -1310,6 +1310,8 @@ async function api(action, data = {}) {
       if (i < tries) { await sleep(600 * i); continue; }
       throw new Error(NET_ERR);
     } finally { clearTimeout(timer); }
+    // карта открыта в Telegram, но подпись не прошла — бот сменил токен или сессия старая: просто переоткрыть
+    if (j && !j.ok && tg?.initData && /Открой карту через бота/.test(j.error || '')) j.error = 'Закройте карту и откройте её заново — она обновится';
     if (!j || !j.ok) { const err = new Error((j && j.error) || 'Ошибка'); err.data = j; throw err; }
     giftClock(j);
     return j;
